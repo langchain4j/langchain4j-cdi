@@ -34,7 +34,7 @@ Go to each example `README.md` to see how to execute the example.
 
 == Contributing
 
-If you want to contribute, please have a look at link:https://github.com/langchain4j/langchain4j-community/blob/main/CONTRIBUTING.md[CONTRIBUTING.md].
+If you want to contribute, please have a look at link:https://github.com/langchain4j/langchain4j-community/blob/main/CONTRIBUTING.md[CONTRIBUTING.md]. Attend the weekly calls on Fridays. Joining details can be found https://calendar.google.com/calendar/u/0/embed?src=gbnbc373ga40n0tvbl88nkc3r4@group.calendar.google.com.
 
 == License
 
