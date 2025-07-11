@@ -36,6 +36,9 @@ Go to each example `README.md` to see how to execute the example.
 
 If you want to contribute, please have a look at link:https://github.com/langchain4j/langchain4j-community/blob/main/CONTRIBUTING.md[CONTRIBUTING.md].
 
+== Meetings
+Attend the https://calendar.google.com/calendar/embed?src=gbnbc373ga40n0tvbl88nkc3r4%40group.calendar.google.com[weekly meeting] on Fridays.
+
 == License
 
 This project is licensed under the Apache License 2.0 - see the link:LICENSE[LICENSE] file for details.
