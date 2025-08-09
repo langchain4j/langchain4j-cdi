@@ -26,15 +26,15 @@ public class CommonAIServiceCreator {
     private static final Logger LOGGER = Logger.getLogger(CommonAIServiceCreator.class);
 
     public static <X> X create(Instance<Object> lookup, Class<X> interfaceClass) {
-        RegisterAIService annotation = interfaceClass.getAnnotation(RegisterAIService.class);
-        String chatModelName = Objects.requireNonNull(annotation).chatModelName();
-        if (chatModelName == null || chatModelName.isBlank() || "#default".equals(chatModelName)) {
-            chatModelName = Objects.requireNonNull(annotation).chatLanguageModelName();
+        RegisterAIService annotation = Objects.requireNonNull(interfaceClass.getAnnotation(RegisterAIService.class));
+        String chatModelName = annotation.chatModelName();
+        if (chatModelName == null || chatModelName.isBlank()) {
+            chatModelName = annotation.chatLanguageModelName();
         }
         Instance<ChatModel> chatLanguageModel = getInstance(lookup, ChatModel.class, chatModelName);
-        String streamingChatModelName = Objects.requireNonNull(annotation).streamingChatModelName();
-        if (streamingChatModelName == null || streamingChatModelName.isBlank() || "#default".equals(streamingChatModelName)) {
-            streamingChatModelName = Objects.requireNonNull(annotation).streamingChatLanguageModelName();
+        String streamingChatModelName = annotation.streamingChatModelName();
+        if (streamingChatModelName == null || streamingChatModelName.isBlank()) {
+            streamingChatModelName = annotation.streamingChatLanguageModelName();
         }
         Instance<StreamingChatModel> streamingChatModel = getInstance(lookup, StreamingChatModel.class, streamingChatModelName);
         Instance<ContentRetriever> contentRetriever = getInstance(lookup, ContentRetriever.class,
