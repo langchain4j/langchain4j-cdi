@@ -26,15 +26,21 @@ public class CommonAIServiceCreator {
     private static final Logger LOGGER = Logger.getLogger(CommonAIServiceCreator.class);
 
     public static <X> X create(Instance<Object> lookup, Class<X> interfaceClass) {
-        RegisterAIService annotation = Objects.requireNonNull(interfaceClass.getAnnotation(RegisterAIService.class));
-        String chatModelName = annotation.chatModelName();
-        if (chatModelName == null || chatModelName.isBlank()) {
-            chatModelName = annotation.chatLanguageModelName();
+        RegisterAIService annotation = interfaceClass.getAnnotation(RegisterAIService.class);
+        String chatModelName = Objects.requireNonNull(annotation).chatModelName();
+        if (chatModelName == null || chatModelName.isBlank() || "#default".equals(chatModelName)) {
+        	String _chatModelName = Objects.requireNonNull(annotation).chatLanguageModelName();
+        	if (_chatModelName != null && !_chatModelName.isBlank() && !"#default".equals(_chatModelName)) {
+        		chatModelName = _chatModelName;
+        	}
         }
         Instance<ChatModel> chatLanguageModel = getInstance(lookup, ChatModel.class, chatModelName);
-        String streamingChatModelName = annotation.streamingChatModelName();
-        if (streamingChatModelName == null || streamingChatModelName.isBlank()) {
-            streamingChatModelName = annotation.streamingChatLanguageModelName();
+        String streamingChatModelName = Objects.requireNonNull(annotation).streamingChatModelName();
+        if (streamingChatModelName == null || streamingChatModelName.isBlank() || "#default".equals(streamingChatModelName)) {
+        	String _streamingChatModelName = Objects.requireNonNull(annotation).streamingChatLanguageModelName();
+        	if (_streamingChatModelName != null && !_streamingChatModelName.isBlank() && !"#default".equals(_streamingChatModelName)) {
+        		streamingChatModelName = _streamingChatModelName;
+        	}
         }
         Instance<StreamingChatModel> streamingChatModel = getInstance(lookup, StreamingChatModel.class, streamingChatModelName);
         Instance<ContentRetriever> contentRetriever = getInstance(lookup, ContentRetriever.class,
