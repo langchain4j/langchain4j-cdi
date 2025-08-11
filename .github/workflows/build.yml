@@ -33,7 +33,7 @@ jobs:
     name: build with jdk 17
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: checkout
 
       - uses: actions/setup-java@v4
@@ -55,7 +55,7 @@ jobs:
       - name: git configure long path
         run: git config --global core.longpaths true
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         name: checkout
 
       - uses: actions/setup-java@v4
