@@ -44,20 +44,6 @@ public class Langchain4JFaultToleranceExtension implements Extension {
                 FaultToleranceInterceptor.class.getName());
     }
 
-    //    <T> void processAnnotatedType(@Observes @WithAnnotations({ Asynchronous.class, Bulkhead.class, CircuitBreaker.class,
-    //            Fallback.class, Retry.class, Timeout.class }) ProcessAnnotatedType<T> pat, BeanManager bm) {
-    //        if (pat.getAnnotatedType().getJavaClass().isInterface()
-    //                && pat.getAnnotatedType().getJavaClass().isAnnotationPresent(RegisterAIService.class)) {
-    //            pat.configureAnnotatedType()
-    //                    .remove(annotation -> annotation instanceof ApplyFaultTolerance)
-    //                    .add(new ApplyFaultToleranceLiteral())
-    //                    .methods()
-    //                    .forEach(configurator -> configurator.remove(annotation -> annotation instanceof ApplyFaultTolerance)
-    //                            .add(new ApplyFaultToleranceLiteral()));
-    //
-    //        }
-    //    }
-
     <X> void applyFaultTolerance(@Observes ProcessSyntheticBean<X> event, BeanManager bm) {
         Bean<X> bean = event.getBean();
         if (bean.getStereotypes().contains(RegisterAIService.class)) {
