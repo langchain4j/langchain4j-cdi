@@ -101,7 +101,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Object getTarget() {
-                    // TODO Auto-generated method stub
                     return target;
                 }
 
