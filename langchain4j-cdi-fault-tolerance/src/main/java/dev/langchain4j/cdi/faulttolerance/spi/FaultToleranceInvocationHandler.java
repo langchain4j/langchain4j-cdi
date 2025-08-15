@@ -107,7 +107,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Object getTimer() {
-                    // TODO Auto-generated method stub
                     return invocationContext.getTimer();
                 }
 
