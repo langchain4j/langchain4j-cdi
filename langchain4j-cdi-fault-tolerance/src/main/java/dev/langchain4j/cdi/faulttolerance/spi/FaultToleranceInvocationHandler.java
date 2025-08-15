@@ -137,7 +137,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Map<String, Object> getContextData() {
-                    // TODO Auto-generated method stub
                     return invocationContext.getContextData();
                 }
 
