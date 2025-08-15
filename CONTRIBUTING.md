@@ -2,6 +2,7 @@ Thank you for investing your time and effort in contributing to our project, we 
 
 # General guidelines
 
+- Fork the repo and create PRs from your fork. Please don't create remote branches. The remote branches should only be `main` and the released branches.
 - If you want to contribute a bug fix or a new feature that isn't listed in the [issues](https://github.com/langchain4j/langchain4j-cdi/issues) yet, please open a new issue for it. We will prioritize is shortly.
 - Follow [Google's Best Practices for Java Libraries](https://jlbp.dev/)
 - Keep the code compatible with Java 17.
@@ -30,7 +31,7 @@ Please note that we do not have the capacity to review PRs immediately. We ask f
 
 # Opening a draft PR
 
-- Please open the PR as a draft initially. Once it is reviewed and approved, we will then ask you to finalize it (see section below).
+- Please open the PR from your fork as a draft initially. Once it is reviewed and approved, we will then ask you to finalize it (see section below).
 - Fill in all the sections of the PR template.
 - Please make it easier to review your PR:
   - Keep changes as small as possible.
