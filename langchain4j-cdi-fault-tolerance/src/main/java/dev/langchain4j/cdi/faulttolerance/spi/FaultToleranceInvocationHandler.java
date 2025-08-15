@@ -119,7 +119,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Constructor<?> getConstructor() {
-                    // TODO Auto-generated method stub
                     return invocationContext.getConstructor();
                 }
 
