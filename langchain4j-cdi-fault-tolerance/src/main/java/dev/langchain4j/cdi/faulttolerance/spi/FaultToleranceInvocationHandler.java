@@ -125,7 +125,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Object[] getParameters() {
-                    // TODO Auto-generated method stub
                     return args;
                 }
 
