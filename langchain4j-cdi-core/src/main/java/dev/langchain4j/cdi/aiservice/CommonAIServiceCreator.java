@@ -29,18 +29,19 @@ public class CommonAIServiceCreator {
         RegisterAIService annotation = interfaceClass.getAnnotation(RegisterAIService.class);
         String chatModelName = Objects.requireNonNull(annotation).chatModelName();
         if (chatModelName == null || chatModelName.isBlank() || "#default".equals(chatModelName)) {
-        	String _chatModelName = Objects.requireNonNull(annotation).chatLanguageModelName();
-        	if (_chatModelName != null && !_chatModelName.isBlank() && !"#default".equals(_chatModelName)) {
-        		chatModelName = _chatModelName;
-        	}
+            String _chatModelName = Objects.requireNonNull(annotation).chatLanguageModelName();
+            if (_chatModelName != null && !_chatModelName.isBlank() && !"#default".equals(_chatModelName)) {
+                chatModelName = _chatModelName;
+            }
         }
         Instance<ChatModel> chatLanguageModel = getInstance(lookup, ChatModel.class, chatModelName);
         String streamingChatModelName = Objects.requireNonNull(annotation).streamingChatModelName();
         if (streamingChatModelName == null || streamingChatModelName.isBlank() || "#default".equals(streamingChatModelName)) {
-        	String _streamingChatModelName = Objects.requireNonNull(annotation).streamingChatLanguageModelName();
-        	if (_streamingChatModelName != null && !_streamingChatModelName.isBlank() && !"#default".equals(_streamingChatModelName)) {
-        		streamingChatModelName = _streamingChatModelName;
-        	}
+            String _streamingChatModelName = Objects.requireNonNull(annotation).streamingChatLanguageModelName();
+            if (_streamingChatModelName != null && !_streamingChatModelName.isBlank()
+                    && !"#default".equals(_streamingChatModelName)) {
+                streamingChatModelName = _streamingChatModelName;
+            }
         }
         Instance<StreamingChatModel> streamingChatModel = getInstance(lookup, StreamingChatModel.class, streamingChatModelName);
         Instance<ContentRetriever> contentRetriever = getInstance(lookup, ContentRetriever.class,
