@@ -143,7 +143,6 @@ public class FaultToleranceInvocationHandler implements InvocationHandler {
 
                 @Override
                 public Object proceed() throws Exception {
-                    // TODO Auto-generated method stub
                     return InterceptorChain.this.invoke(invocationContext, beanManager);
                 }
             };
