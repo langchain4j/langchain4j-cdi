@@ -22,6 +22,7 @@
 
     <packaging>pom</packaging>
     <name>LangChain4J CDI Parent POM</name>
+    <description>Experimentation around LLM and CDI (JakartaEE and Eclipse Microprofile)</description>
     <url>https://github.com/langchain4j/langchain4j-cdi</url>
     <inceptionYear>2024</inceptionYear>
 
@@ -55,8 +56,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <dev.langchain4j.version>1.2.0</dev.langchain4j.version>
-        <dev.langchain4j.community.version>1.2.0-beta8</dev.langchain4j.community.version>
+        <dev.langchain4j.version>1.3.0</dev.langchain4j.version>
+        <dev.langchain4j.community.version>1.3.0-beta9</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
 
@@ -465,7 +466,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.8</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
