@@ -1,24 +1,27 @@
 package dev.langchain4j.cdi.faulttolerance.spi;
 
+import java.lang.annotation.Annotation;
+import java.util.Set;
 import java.util.logging.Logger;
 
+import org.eclipse.microprofile.faulttolerance.Asynchronous;
+import org.eclipse.microprofile.faulttolerance.Bulkhead;
+import org.eclipse.microprofile.faulttolerance.CircuitBreaker;
+import org.eclipse.microprofile.faulttolerance.Fallback;
+import org.eclipse.microprofile.faulttolerance.Retry;
+import org.eclipse.microprofile.faulttolerance.Timeout;
+
+import dev.langchain4j.cdi.core.portableextension.LangChain4JAIServiceBean;
+import dev.langchain4j.cdi.faulttolerance.spi.ApplyFaultTolerance.ApplyFaultToleranceLiteral;
+import dev.langchain4j.cdi.spi.RegisterAIService;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.AnnotatedMethod;
 import jakarta.enterprise.inject.spi.AnnotatedType;
 import jakarta.enterprise.inject.spi.Bean;
 import jakarta.enterprise.inject.spi.BeanManager;
-import jakarta.enterprise.inject.spi.DeploymentException;
+import jakarta.enterprise.inject.spi.BeforeBeanDiscovery;
 import jakarta.enterprise.inject.spi.Extension;
 import jakarta.enterprise.inject.spi.ProcessSyntheticBean;
-
-import org.eclipse.microprofile.faulttolerance.exceptions.FaultToleranceDefinitionException;
-
-import dev.langchain4j.cdi.core.portableextension.LangChain4JAIServiceBean;
-import dev.langchain4j.cdi.spi.RegisterAIService;
-import io.smallrye.faulttolerance.FaultToleranceBinding;
-import io.smallrye.faulttolerance.autoconfig.FaultToleranceMethod;
-import io.smallrye.faulttolerance.config.FaultToleranceMethods;
-import io.smallrye.faulttolerance.config.FaultToleranceOperation;
 
 /**
  * @author Buhake Sindi
@@ -28,28 +31,37 @@ public class Langchain4JFaultToleranceExtension implements Extension {
 
     private static final Logger LOGGER = Logger.getLogger(Langchain4JFaultToleranceExtension.class.getName());
 
-    <X> void validateFaultToleranceOperations(@Observes ProcessSyntheticBean<X> event, BeanManager bm) {
-        Bean<X> bean = event.getBean();
-        LOGGER.info("validateFaultToleranceOperations: Synthetic Event -> " + bean.getBeanClass());
-        try {
-            AnnotatedType<?> annotatedType = bm.createAnnotatedType(bean.getBeanClass());
-            for (AnnotatedMethod<?> annotatedMethod : annotatedType.getMethods()) {
-                FaultToleranceMethod method = FaultToleranceMethods.create(annotatedType.getJavaClass(), annotatedMethod);
-                if (method.isLegitimate()) {
-                    FaultToleranceOperation operation = FaultToleranceOperation.create(method);
-                    operation.validate();
-                    LOGGER.info("Found: " + operation);
+    private static final Set<Class<? extends Annotation>> FAULT_TOLERANCE_ANNOTATIONS = Set.of(Retry.class,
+            CircuitBreaker.class,
+            Bulkhead.class,
+            Timeout.class,
+            Asynchronous.class,
+            Fallback.class);
 
-                    if (bean.getStereotypes().contains(RegisterAIService.class)) {
-                        //Add Fault Tolerance interceptor Binding
-                        ((LangChain4JAIServiceBean<X>) bean).getInterceptorBindings()
-                                .add(FaultToleranceBinding.Literal.INSTANCE);
-                    }
+    void registerInterceptorBindings(@Observes BeforeBeanDiscovery bbd, BeanManager bm) {
+        bbd.addInterceptorBinding(bm.createAnnotatedType(ApplyFaultTolerance.class));
+        bbd.addAnnotatedType(bm.createAnnotatedType(ApplyFaultToleranceInterceptor.class),
+                ApplyFaultToleranceInterceptor.class.getName());
+    }
+
+    <X> void applyFaultTolerance(@Observes ProcessSyntheticBean<X> event, BeanManager bm) {
+        Bean<X> bean = event.getBean();
+        if (bean.getStereotypes().contains(RegisterAIService.class)) {
+            AnnotatedType<?> annotatedType = bm.createAnnotatedType(event.getBean().getBeanClass());
+            for (AnnotatedMethod<?> annotatedMethod : annotatedType.getMethods()) {
+                if (isFaultToleranceMethod(annotatedMethod)) {
+                    LOGGER.info("applyFaultTolerance: Synthetic Bean of type -> " + bean.getBeanClass());
+
+                    //Add Fault Tolerance interceptor Binding
+                    ((LangChain4JAIServiceBean<X>) bean).getInterceptorBindings().add(new ApplyFaultToleranceLiteral());
                 }
             }
-        } catch (FaultToleranceDefinitionException e) {
-            // TODO Auto-generated catch block
-            throw new DeploymentException(e);
         }
+    }
+
+    boolean isFaultToleranceMethod(AnnotatedMethod<?> annotatedMethod) {
+
+        return FAULT_TOLERANCE_ANNOTATIONS.stream()
+                .anyMatch(annotationClass -> annotatedMethod.isAnnotationPresent(annotationClass));
     }
 }

@@ -15,8 +15,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>io.smallrye</groupId>
-            <artifactId>smallrye-fault-tolerance</artifactId>
+        	<groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+		    <artifactId>microprofile-fault-tolerance-api</artifactId>
+		    <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>

@@ -3,7 +3,12 @@
     	<!-- Eclipse Microprofile 6.1 -->
     	<!-- See details here: https://openliberty.io/docs/ref/feature/#microProfile-6.1.html -->
     	<feature>microProfile-6.1</feature>
-    	<feature>mpTelemetry-2.0</feature>
+    	
+		<!-- microProfile 6.1 Feature contains the following features below:
+	    	<feature>mpTelemetry-2.0</feature>
+	    	<feature>mpFaultTolerance-4.0</feature>
+	    	<feature>mpMetrics-5.1</feature>
+    	-->
     </featureManager>
     
     <webApplication location="${project.name}.war" contextRoot="/">
