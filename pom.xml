@@ -63,6 +63,7 @@
 
         <!-- MP -->
         <version.eclipse.microprofile.config>3.1</version.eclipse.microprofile.config>
+        <version.eclipse.microprofile.fault-tolerance>4.1.2</version.eclipse.microprofile.fault-tolerance>
         <version.eclipse.microprofile.telemetry>2.0.1</version.eclipse.microprofile.telemetry>
 
         <version.asm>9.7</version.asm>
@@ -93,6 +94,11 @@
                 <artifactId>microprofile-config-api</artifactId>
                 <version>${version.eclipse.microprofile.config}</version>
             </dependency>
+            <dependency>
+			    <groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+			    <artifactId>microprofile-fault-tolerance-api</artifactId>
+			    <version>${version.eclipse.microprofile.fault-tolerance}</version>
+			</dependency>
             <dependency>
                 <groupId>org.eclipse.microprofile.telemetry</groupId>
                 <artifactId>microprofile-telemetry-api</artifactId>

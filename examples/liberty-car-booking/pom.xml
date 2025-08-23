@@ -53,6 +53,12 @@
                 <version>2.10.0</version>
                 <scope>provided</scope>
             </dependency>
+
+            <dependency>
+                <groupId>io.smallrye</groupId>
+                <artifactId>smallrye-fault-tolerance</artifactId>
+                <version>${version.io.smallrye.fault-tolerance}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -75,6 +81,11 @@
         <dependency>
             <groupId>io.opentelemetry.instrumentation</groupId>
             <artifactId>opentelemetry-instrumentation-annotations</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.smallrye</groupId>
+            <artifactId>smallrye-fault-tolerance</artifactId>
         </dependency>
 		
         <dependency>
