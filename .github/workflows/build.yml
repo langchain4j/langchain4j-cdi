@@ -30,17 +30,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: build with jdk 17
+    name: build with jdk 21, target 17
 
     steps:
       - uses: actions/checkout@v5
         name: checkout
 
       - uses: actions/setup-java@v5
-        name: set up jdk 17
+        name: set up jdk 21
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
 
@@ -49,7 +49,8 @@ jobs:
 
   build-windows:
     runs-on: windows-latest
-    name: build with jdk 17 on windows
+    name: build with jdk 21 on windows (target 17)
+
     steps:
       - name: git configure long path
         run: git config --global core.longpaths true
@@ -58,10 +59,10 @@ jobs:
         name: checkout
 
       - uses: actions/setup-java@v5
-        name: set up jdk 17
+        name: set up jdk 21
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
 

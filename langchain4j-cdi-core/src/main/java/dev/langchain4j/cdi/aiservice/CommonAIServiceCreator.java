@@ -21,27 +21,41 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolProvider;
 
+/**
+ * Utility to build LangChain4j AiServices proxies from CDI beans and the @RegisterAIService metadata.
+ * <p>
+ * The method create() inspects the provided service interface for @RegisterAIService and tries to resolve
+ * optional collaborating beans from the CDI container (by name or default):
+ * - ChatModel or StreamingChatModel
+ * - ContentRetriever or RetrievalAugmentor (RetrievalAugmentor has priority)
+ * - ToolProvider, or if missing, instantiate tools classes declared in the annotation via no-arg constructors
+ * - ChatMemory or ChatMemoryProvider
+ * - ModerationModel
+ * <p>
+ * Only the components that are resolvable are wired into the AiServices builder.
+ */
 public class CommonAIServiceCreator {
 
     private static final Logger LOGGER = Logger.getLogger(CommonAIServiceCreator.class.getName());
 
+    /**
+     * Create a LangChain4j AI service proxy for the given annotated interface.
+     *
+     * @param lookup CDI Instance used to resolve named beans (models, tools, memories, etc.).
+     * @param interfaceClass the AI service interface annotated with {@link dev.langchain4j.cdi.spi.RegisterAIService}.
+     * @return a runtime proxy implementing the given interface.
+     */
     public static <X> X create(Instance<Object> lookup, Class<X> interfaceClass) {
         RegisterAIService annotation = interfaceClass.getAnnotation(RegisterAIService.class);
         String chatModelName = Objects.requireNonNull(annotation).chatModelName();
-        if (chatModelName == null || chatModelName.isBlank() || "#default".equals(chatModelName)) {
-            String _chatModelName = Objects.requireNonNull(annotation).chatLanguageModelName();
-            if (_chatModelName != null && !_chatModelName.isBlank() && !"#default".equals(_chatModelName)) {
-                chatModelName = _chatModelName;
-            }
-        }
-        Instance<ChatModel> chatLanguageModel = getInstance(lookup, ChatModel.class, chatModelName);
         String streamingChatModelName = Objects.requireNonNull(annotation).streamingChatModelName();
-        if (streamingChatModelName == null || streamingChatModelName.isBlank() || "#default".equals(streamingChatModelName)) {
-            String _streamingChatModelName = Objects.requireNonNull(annotation).streamingChatLanguageModelName();
-            if (_streamingChatModelName != null && !_streamingChatModelName.isBlank()
-                    && !"#default".equals(_streamingChatModelName)) {
-                streamingChatModelName = _streamingChatModelName;
-            }
+        // Instances
+        Instance<ChatModel> chatModelInstance = getInstance(lookup, ChatModel.class, chatModelName);
+        // If neither name is provided, try to resolve default ChatModel to satisfy AiServices requirement
+        if ((chatModelInstance == null || !chatModelInstance.isResolvable())
+                && (streamingChatModelName == null || streamingChatModelName.isBlank())) {
+            // try default chat model
+            chatModelInstance = lookup.select(ChatModel.class);
         }
         Instance<StreamingChatModel> streamingChatModel = getInstance(lookup, StreamingChatModel.class, streamingChatModelName);
         Instance<ContentRetriever> contentRetriever = getInstance(lookup, ContentRetriever.class,
@@ -51,21 +65,22 @@ public class CommonAIServiceCreator {
         Instance<ToolProvider> toolProvider = getInstance(lookup, ToolProvider.class, annotation.toolProviderName());
 
         AiServices<X> aiServices = AiServices.builder(interfaceClass);
-        if (chatLanguageModel != null && chatLanguageModel.isResolvable()) {
-            LOGGER.fine("ChatModel " + chatLanguageModel.get());
-            aiServices.chatModel(chatLanguageModel.get());
+        if (chatModelInstance != null && chatModelInstance.isResolvable()) {
+            LOGGER.fine("ChatModel " + chatModelInstance.get());
+            aiServices.chatModel(chatModelInstance.get());
         }
         if (streamingChatModel != null && streamingChatModel.isResolvable()) {
             LOGGER.fine("StreamingChatModel " + streamingChatModel.get());
             aiServices.streamingChatModel(streamingChatModel.get());
         }
-        if (contentRetriever != null && contentRetriever.isResolvable()) {
-            LOGGER.fine("ContentRetriever " + contentRetriever.get());
-            aiServices.contentRetriever(contentRetriever.get());
-        }
+        // AiServices requires only one of [retriever, contentRetriever, retrievalAugmentor].
+        // If a RetrievalAugmentor is provided, prefer it and do not set ContentRetriever.
         if (retrievalAugmentor != null && retrievalAugmentor.isResolvable()) {
             LOGGER.fine("RetrievalAugmentor " + retrievalAugmentor.get());
             aiServices.retrievalAugmentor(retrievalAugmentor.get());
+        } else if (contentRetriever != null && contentRetriever.isResolvable()) {
+            LOGGER.fine("ContentRetriever " + contentRetriever.get());
+            aiServices.contentRetriever(contentRetriever.get());
         }
         boolean noToolProvider = true;
         if (toolProvider != null && toolProvider.isResolvable()) {
@@ -111,6 +126,11 @@ public class CommonAIServiceCreator {
         return aiServices.build();
     }
 
+    /**
+     * Resolve a CDI Instance for the given type and name.
+     * If name is "#default", select the default bean of the given type.
+     * If name is blank or null, returns null (meaning: do not attempt to resolve).
+     */
     private static <X> Instance<X> getInstance(Instance<Object> lookup, Class<X> type, String name) {
         LOGGER.fine("CDI get instance of type '" + type + "' with name '" + name + "'");
         if (name != null && !name.isBlank()) {

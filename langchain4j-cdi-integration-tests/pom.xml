@@ -15,6 +15,7 @@
         <module>langchain4j-cdi-integration-tests-common</module>
         <module>langchain4j-cdi-integration-tests-jakartaee</module>
         <module>langchain4j-cdi-integration-tests-quarkus</module>
+        <module>langchain4j-cdi-integration-tests-helidon</module>
     </modules>
 
     <properties>
@@ -61,15 +62,5 @@
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>onJdk21</id>
-            <activation>
-                <jdk>[21,)</jdk>
-            </activation>
-            <modules>
-                <module>langchain4j-cdi-integration-tests-helidon</module>
-            </modules>
-        </profile>
-    </profiles>
+
 </project>

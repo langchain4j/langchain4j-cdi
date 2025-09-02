@@ -18,29 +18,28 @@ public class LangChain4JPluginsPortableExtension implements Extension {
     private static final Logger LOGGER = Logger.getLogger(LangChain4JPluginsPortableExtension.class.getName());
     private LLMConfig llmConfig;
 
-    void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery,
-            @SuppressWarnings("unused") BeanManager beanManager)
+    void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager)
             throws ClassNotFoundException {
         if (llmConfig == null) {
             llmConfig = LLMConfigProvider.getLlmConfig();
         }
 
-        CommonLLMPluginCreator.createAllLLMBeans(
+        CommonLLMPluginCreator.prepareAllLLMBeans(
                 llmConfig,
                 beanData -> {
-                    LOGGER.fine("Add Bean " + beanData.getTargetClass() + " " + beanData.getScopeClass() + " "
-                            + beanData.getBeanName());
+                    LOGGER.fine("Add Bean " + beanData.targetClass() + " " + beanData.scopeClass() + " "
+                            + beanData.beanName());
 
                     afterBeanDiscovery.addBean()
-                            .types(beanData.getTargetClass())
-                            .addTypes(beanData.getTargetClass().getInterfaces())
-                            .scope(beanData.getScopeClass())
-                            .name(beanData.getBeanName())
-                            .qualifiers(NamedLiteral.of(beanData.getBeanName()))
-                            .produceWith(beanData.getCallback());
+                            .types(beanData.targetClass())
+                            .addTypes(beanData.targetClass().getInterfaces())
+                            .scope(beanData.scopeClass())
+                            .name(beanData.beanName())
+                            .qualifiers(NamedLiteral.of(beanData.beanName()))
+                            .produceWith(beanData.callback());
 
-                    LOGGER.info("Types: " + beanData.getTargetClass() + ","
-                            + Arrays.stream(beanData.getTargetClass().getInterfaces()).map(Class::getName)
+                    LOGGER.info("Types: " + beanData.targetClass() + ","
+                            + Arrays.stream(beanData.targetClass().getInterfaces()).map(Class::getName)
                                     .collect(Collectors.joining(",")));
 
                 });
