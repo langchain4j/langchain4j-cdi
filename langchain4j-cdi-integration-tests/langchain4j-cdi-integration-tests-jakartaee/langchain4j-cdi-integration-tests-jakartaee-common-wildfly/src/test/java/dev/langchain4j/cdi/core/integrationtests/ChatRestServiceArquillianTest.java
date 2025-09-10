@@ -37,7 +37,9 @@ public class ChatRestServiceArquillianTest {
                         ChatRestService.class,
                         JaxRsApplication.class,
                         DummyLLConfig.class,
-                        ChatModelMock.class)
+                        ChatModelMock.class,
+                        EmbeddingStoreString.class,
+                        EmbeddingStoreTextSegment.class)
                 .addAsLibraries(
                         Maven.resolver()
                                 .loadPomFromFile("pom.xml")
@@ -70,7 +72,7 @@ public class ChatRestServiceArquillianTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         String result = response.readEntity(String.class);
-        assertThat(result).isNotNull().isEqualTo("ok");
+        assertThat(result).isNotNull().isEqualTo("ok EmbeddingStoreTextSegment{}");
 
         client.close();
     }

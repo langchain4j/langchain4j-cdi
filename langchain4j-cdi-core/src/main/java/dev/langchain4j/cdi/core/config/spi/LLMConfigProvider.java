@@ -5,6 +5,11 @@ import java.util.List;
 import java.util.ServiceLoader;
 import java.util.logging.Logger;
 
+/**
+ * Bootstrap and access point for the LLMConfig implementation.
+ * <p>
+ * It discovers an implementation via ServiceLoader and initializes it lazily on first access.
+ */
 public class LLMConfigProvider {
 
     private static LLMConfig llmConfig;

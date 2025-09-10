@@ -16,5 +16,5 @@ public interface ProducerFunction<R> {
      * @param beanName: the name of the bean.
      * @return the created bean.
      */
-    R produce(Instance<R> lookup, String beanName);
+    R produce(Instance<R> lookup, String beanName, LLMConfig llmConfig);
 }
