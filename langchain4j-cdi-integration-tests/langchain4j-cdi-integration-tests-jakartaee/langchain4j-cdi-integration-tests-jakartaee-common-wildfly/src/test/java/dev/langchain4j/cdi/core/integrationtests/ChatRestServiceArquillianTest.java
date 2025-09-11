@@ -23,6 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import dev.langchain4j.cdi.integrationtests.ChatAiService;
 import dev.langchain4j.cdi.integrationtests.ChatRestService;
+import java.io.File;
+import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 
 @ExtendWith(ArquillianExtension.class)
 public class ChatRestServiceArquillianTest {
@@ -31,7 +33,7 @@ public class ChatRestServiceArquillianTest {
     @Deployment
     public static WebArchive createDeployment() {
         // Include the application classes and the portable extension as a library
-        return ShrinkWrap.create(WebArchive.class, "chat-test.war")
+        WebArchive archive = ShrinkWrap.create(WebArchive.class, "chat-test.war")
                 .addClasses(
                         ChatAiService.class,
                         ChatRestService.class,
@@ -50,10 +52,11 @@ public class ChatRestServiceArquillianTest {
                                 .withTransitivity()
                                 .asFile())
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
-                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
+                //                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
                 .addAsResource("llm-config.properties")
-                .addAsResource("META-INF/services/jakarta.enterprise.inject.spi.Extension")
+                //                .addAsResource("META-INF/services/jakarta.enterprise.inject.spi.Extension")
                 .addAsResource("META-INF/services/dev.langchain4j.cdi.core.config.spi.LLMConfig");
+        return archive;
     }
 
     @SuppressWarnings("unused")
