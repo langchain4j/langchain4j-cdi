@@ -1,14 +1,13 @@
 package dev.langchain4j.cdi.plugin;
 
+import dev.langchain4j.cdi.core.config.spi.LLMConfig;
+import dev.langchain4j.cdi.core.config.spi.LLMConfigProvider;
+import dev.langchain4j.cdi.spi.AISyntheticBeanCreatorClassProvider;
 import jakarta.enterprise.inject.build.compatible.spi.BuildCompatibleExtension;
 import jakarta.enterprise.inject.build.compatible.spi.Synthesis;
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanBuilder;
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticComponents;
 import jakarta.enterprise.inject.literal.NamedLiteral;
-
-import dev.langchain4j.cdi.core.config.spi.LLMConfig;
-import dev.langchain4j.cdi.core.config.spi.LLMConfigProvider;
-import dev.langchain4j.cdi.spi.AISyntheticBeanCreatorClassProvider;
 
 import java.util.logging.Logger;
 
@@ -28,32 +27,22 @@ public class LangChain4JPluginsBuildCompatibleExtension implements BuildCompatib
         }
         LOGGER.info("CDI BCE Langchain4j plugin");
 
-        /*
-         * dev.langchain4j.plugin.content-retriever.class=dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever
-         * dev.langchain4j.plugin.content-retriever.scope=jakarta.enterprise.context.ApplicationScoped
-         * dev.langchain4j.plugin.content-retriever.config.api-key=${azure.openai.api.key}
-         * dev.langchain4j.plugin.content-retriever.config.endpoint=${azure.openai.endpoint}
-         * dev.langchain4j.plugin.content-retriever.config.embedding-store.lookup-name=myMemoryEmbeddingStore
-         * dev.langchain4j.plugin.content-retriever.config.embedding-model.lookup-name=my-model
-         */
-        // get bean name like content-retiever or "my-model"
-
-        CommonLLMPluginCreator.createAllLLMBeans(
+        CommonLLMPluginCreator.prepareAllLLMBeans(
                 llmConfig,
                 beanData -> {
                     SyntheticBeanBuilder<Object> builder = (SyntheticBeanBuilder<Object>) syntheticComponents
-                            .addBean(beanData.getTargetClass());
+                            .addBean(beanData.targetClass());
 
                     builder.createWith(AISyntheticBeanCreatorClassProvider.getSyntheticBeanCreatorClass())
-                            .type(beanData.getTargetClass())
-                            .scope(beanData.getScopeClass())
-                            .name(beanData.getBeanName())
-                            .qualifier(NamedLiteral.of(beanData.getBeanName()))
-                            .withParam(PARAM_BEANNAME, beanData.getBeanName())
-                            .withParam(PARAM_TARGET_CLASS, beanData.getTargetClass())
-                            .withParam(PARAM_BUILDER_CLASS, beanData.getBuilderClass());
+                            .type(beanData.targetClass())
+                            .scope(beanData.scopeClass())
+                            .name(beanData.beanName())
+                            .qualifier(NamedLiteral.of(beanData.beanName()))
+                            .withParam(PARAM_BEANNAME, beanData.beanName())
+                            .withParam(PARAM_TARGET_CLASS, beanData.targetClass())
+                            .withParam(PARAM_BUILDER_CLASS, beanData.builderClass());
 
-                    for (Class<?> newInterface : beanData.getTargetClass().getInterfaces())
+                    for (Class<?> newInterface : beanData.targetClass().getInterfaces())
                         builder.type(newInterface);
                 });
     }
