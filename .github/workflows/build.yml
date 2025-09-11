@@ -41,6 +41,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          check-latest: true
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
 
@@ -62,6 +63,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+          check-latest: true
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
 
