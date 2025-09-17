@@ -18,7 +18,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>dev.langchain4j.cdi</groupId>
     <artifactId>langchain4j-cdi-parent</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>0.0.4</version>
 
     <packaging>pom</packaging>
     <name>LangChain4J CDI Parent POM</name>
@@ -55,7 +55,8 @@
         <connection>scm:git:git://github.com/langchain4j/langchain4j-cdi.git</connection>
         <developerConnection>scm:git:git@github.com:langchain4j/langchain4j-cdi.git</developerConnection>
         <url>https://github.com/langchain4j/langchain4j-cdi</url>
-    </scm>
+      <tag>0.0.4</tag>
+  </scm>
 
     <issueManagement>
         <system>GitHub</system>
