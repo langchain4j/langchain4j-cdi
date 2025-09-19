@@ -52,9 +52,9 @@
     <scm>
         <connection>scm:git:git://github.com/langchain4j/langchain4j-cdi.git</connection>
         <developerConnection>scm:git:git@github.com:langchain4j/langchain4j-cdi.git</developerConnection>
+        <tag>HEAD</tag>
         <url>https://github.com/langchain4j/langchain4j-cdi</url>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <issueManagement>
         <system>GitHub</system>

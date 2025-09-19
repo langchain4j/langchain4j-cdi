@@ -64,9 +64,12 @@ jobs:
     steps:
       - name: "Determine tag"
         run: "echo \"RELEASE_TAG=${{ github.event.inputs.version }}\" >> $GITHUB_ENV"
+      - name: "Determine Previous tag"
+        run: |
+          PREVIOUS_TAG=`git tag --sort -taggerdate | head -2 | tail -1`
+          echo \"PREVIOUS_TAG=$PREVIOUS_TAG\" >> $GITHUB_ENV
       - name: "Determine Release Name"
         run: "echo \"RELEASE_NAME=LangChain4J CDI ${{ github.event.inputs.version }}\" >> $GITHUB_ENV"
-
       - name: "Create release"
         uses: "actions/github-script@v8"
         with:
@@ -81,6 +84,7 @@ jobs:
                 prerelease: false,
                 repo: context.repo.repo,
                 tag_name: process.env.RELEASE_TAG,
+                previous_tag_name: process.env.PREVIOUS_TAG
               });
 
               core.exportVariable('RELEASE_ID', response.data.id);
