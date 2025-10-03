@@ -12,6 +12,7 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
 @RegisterAIService(
         scope = ApplicationScoped.class,
         tools = BookingService.class,
+        contentRetrieverName="docRagRetriever",
         chatMemoryName = "chat-ai-service-memory")
 public interface ChatAiService {
 
