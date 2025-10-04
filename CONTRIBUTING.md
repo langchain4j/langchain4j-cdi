@@ -4,6 +4,12 @@ Thank you for investing your time and effort in contributing to our project, we 
 
 **Build Requirements**: While this project targets JDK 17, you must use at least JDK 21 for building as some integration tests cannot be run on Java 17.
 
+**git lfs**: This repository uses `git lfs` to correctly handle large binaries such as the advocacy presentations in the `presentations/` directory. If you haven't already configured git lfs: do these three things first:
+
+1. `git lfs install`
+2. `git lfs pull`
+3. `git lfs checkout`
+
 # General guidelines
 
 - Fork the repo and create PRs from your fork. Please don't create remote branches. The remote branches should only be `main` and the released branches.
