@@ -20,7 +20,7 @@
 
     <properties>
         <project.report.sourceEncoding>UTF-8</project.report.sourceEncoding>
-        <microprofile-api.version>6.1</microprofile-api.version>
+        <microprofile-api.version>7.1</microprofile-api.version>
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <war-plugin.version>3.4.0</war-plugin.version>
         <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
