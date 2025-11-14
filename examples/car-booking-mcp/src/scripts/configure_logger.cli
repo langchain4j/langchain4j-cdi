@@ -1,0 +1,7 @@
+/subsystem=logging/logger=io.smallrye.llm:add(level=TRACE)
+/subsystem=logging/logger=org.wildfly.extension.mcp:add(level=DEBUG)
+/subsystem=logging/logger=org.wildfly.extension.mcp.injection:add(level=DEBUG)
+/subsystem=logging/logger=org.jboss.weld:add(level=TRACE)
+
+/subsystem=undertow/server=default-server/http-listener=default:write-attribute(name=read-timeout, value=0)
+/subsystem=undertow/server=default-server/http-listener=default:write-attribute(name=write-timeout, value=0)

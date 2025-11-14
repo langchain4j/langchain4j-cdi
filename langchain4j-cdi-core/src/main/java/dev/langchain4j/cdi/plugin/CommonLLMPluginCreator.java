@@ -9,6 +9,7 @@ import jakarta.enterprise.inject.Instance;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +91,16 @@ public class CommonLLMPluginCreator {
                 + builderClass);
         String currentProperty = "";
         try {
-            Object builder = targetClass.getMethod("builder").invoke(null);
+            Object builder = null;
+            try {
+                builder = targetClass.getMethod("builder").invoke(null);
+            } catch (NoSuchMethodException e) {
+                builder = targetClass
+                        .getClassLoader()
+                        .loadClass(targetClass.getName() + "$Builder")
+                        .getConstructor(new Class[0])
+                        .newInstance(new Object[0]);
+            }
             Set<String> properties = llmConfig.getPropertyNamesForBean(beanName);
             for (String property : properties) {
                 currentProperty = property;
@@ -110,8 +120,26 @@ public class CommonLLMPluginCreator {
                     Type genericType = propertyFieldInBuilder.getGenericType();
                     Object value = llmConfig.getBeanPropertyValue(lookup, beanName, propertyKey, genericType);
                     try {
-                        setterMethod.invoke(builder, value);
-                        propertySet = true;
+                        if (genericType instanceof ParameterizedType pt) {
+                            genericType = pt.getRawType();
+                        }
+                        boolean isList = List.class.isAssignableFrom((Class) genericType);
+                        boolean isSet = Set.class.isAssignableFrom((Class) genericType);
+                        if ((value instanceof List && isList) || (value instanceof Set && isSet)) {
+                            setterMethod.invoke(builder, value);
+                            propertySet = true;
+                        } else {
+                            if (isList) {
+                                setterMethod.invoke(builder, List.of(value));
+                                propertySet = true;
+                            } else if (isSet) {
+                                setterMethod.invoke(builder, Set.of(value));
+                                propertySet = true;
+                            } else {
+                                setterMethod.invoke(builder, value);
+                                propertySet = true;
+                            }
+                        }
                     } catch (ReflectiveOperationException e) {
                     }
                 } else {
