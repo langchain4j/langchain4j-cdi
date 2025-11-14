@@ -20,6 +20,8 @@
         <module>liberty-car-booking</module>
         <module>payara-car-booking</module>
         <module>quarkus-car-booking</module>
+        <module>car-booking-mcp</module>
+        <module>liberty-car-booking-mcp</module>
     </modules>
 
     <dependencyManagement>
