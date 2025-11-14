@@ -19,9 +19,10 @@
 
     <properties>
         <!-- MP -->
+        <microprofile.version>7.1</microprofile.version>
         <version.eclipse.microprofile.config>3.1</version.eclipse.microprofile.config>
         <version.eclipse.microprofile.fault-tolerance>4.1.2</version.eclipse.microprofile.fault-tolerance>
-        <version.eclipse.microprofile.telemetry>2.0.1</version.eclipse.microprofile.telemetry>
+        <version.eclipse.microprofile.telemetry>2.1</version.eclipse.microprofile.telemetry>
 
         <!-- SmallRye -->
         <version.smallrye.common>2.9.0</version.smallrye.common>
@@ -32,6 +33,13 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.eclipse.microprofile</groupId>
+                <artifactId>microprofile</artifactId>
+                <version>${microprofile.version}</version>
+                <type>pom</type>
+                <scope>provided</scope>
+            </dependency>
             <dependency>
                 <groupId>io.smallrye.common</groupId>
                 <artifactId>smallrye-common-bom</artifactId>
