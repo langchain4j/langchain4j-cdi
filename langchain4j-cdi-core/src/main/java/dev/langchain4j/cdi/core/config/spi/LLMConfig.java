@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,6 +37,7 @@ public abstract class LLMConfig {
 
     public static final String CLASS = "class";
     public static final String SCOPE = "scope";
+    private static final Logger LOGGER = Logger.getLogger(LLMConfig.class.getName());
 
     public abstract void init();
 
@@ -127,30 +130,55 @@ public abstract class LLMConfig {
         if (stringValue.startsWith("lookup:")) {
             String lookupableBean = stringValue.substring("lookup:".length());
             switch (lookupableBean) {
-                case "@default":
-                    if (type instanceof ParameterizedType) return selectByBeanManager((ParameterizedType) type);
-                    else return lookup.select((Class) type).get();
-                case "@all":
+                case "@default" -> {
+                    if (type instanceof ParameterizedType parameterizedType) {
+                        return selectByBeanManager(parameterizedType);
+                    }
+                    return lookup.select((Class) type).get();
+                }
+                case "@all" -> {
                     if (type instanceof ParameterizedType pt) {
                         Type actualTypeArgument = pt.getActualTypeArguments()[0];
                         Stream<?> toReturn;
-                        if (actualTypeArgument instanceof ParameterizedType) {
-                            toReturn = selectAllByBeanManager((ParameterizedType) actualTypeArgument).stream();
+                        if (actualTypeArgument instanceof ParameterizedType parameterizedType) {
+                            toReturn = selectAllByBeanManager(parameterizedType).stream();
                         } else {
                             toReturn = lookup.select((Class<?>) actualTypeArgument).stream();
                         }
-                        if (pt.getRawType().equals(List.class)) {
+                        if (List.class.equals(pt.getRawType())) {
                             return toReturn.toList();
-                        } else if (pt.getRawType().equals(Set.class)) {
-                            return toReturn.collect(Collectors.toSet());
-                        } else {
-                            throw new IllegalConfigurationException("@all can only be used with List or Set");
                         }
-                    } else {
-                        throw new IllegalConfigurationException("Cannot use @all for non generic types");
+                        if (pt.getRawType().equals(Set.class)) {
+                            return toReturn.collect(Collectors.toSet());
+                        }
+                        throw new IllegalConfigurationException("@all can only be used with List or Set");
                     }
-                default:
+                    throw new IllegalConfigurationException("Cannot use @all for non generic types");
+                }
+                default -> {
+                    lookupableBean = lookupableBean.charAt(0) == '@' ? lookupableBean.substring(1) : lookupableBean;
+                    if (type instanceof ParameterizedType pt) {
+                        try {
+                            return getInstance(lookup, (Class<?>) type, lookupableBean)
+                                    .get();
+                        } catch (ClassCastException ex) {
+                            for (Type actualType : pt.getActualTypeArguments()) {
+                                try {
+                                    return getInstance(lookup, (Class<?>) actualType, lookupableBean)
+                                            .get();
+                                } catch (ClassCastException e) {
+                                    LOGGER.log(
+                                            Level.INFO,
+                                            "Cannot use find a bean named " + lookupableBean + " of type " + actualType,
+                                            e);
+                                }
+                            }
+                        }
+                        throw new IllegalConfigurationException(
+                                "Cannot use find a bean named " + lookupableBean + " of type " + type);
+                    }
                     return getInstance(lookup, (Class<?>) type, lookupableBean).get();
+                }
             }
         } else {
             return getBeanPropertyValue(beanName, propertyName, type);
