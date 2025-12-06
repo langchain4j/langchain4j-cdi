@@ -13,8 +13,12 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <helidon.version>4.2.3</helidon.version>
+        <helidon.version>4.3.2</helidon.version>
         <skipITs>true</skipITs>
+        <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
+        <maven.compiler.source combine.self="override">21</maven.compiler.source>
+        <maven.compiler.target combine.self="override">21</maven.compiler.target>
+        <maven.compiler.release combine.self="override">21</maven.compiler.release>
     </properties>
 
     <dependencyManagement>
@@ -47,24 +51,8 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-core</artifactId>
-            <version>${dev.langchain4j.version}</version>
             <!-- We MUST force the version because helidon embed a previous version -->
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <!-- SmallRye LLM dependencies -->
-        <dependency>
-            <groupId>dev.langchain4j.cdi</groupId>
-            <artifactId>langchain4j-cdi-integration-tests-common</artifactId>
-            <version>${project.version}</version>
+            <version>${dev.langchain4j.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>
@@ -73,6 +61,11 @@
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi</groupId>
+            <artifactId>langchain4j-cdi-integration-tests-common</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <!-- Helidon dependencies -->
         <dependency>
@@ -97,6 +90,16 @@
         <dependency>
             <groupId>io.helidon.microprofile.testing</groupId>
             <artifactId>helidon-microprofile-testing-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

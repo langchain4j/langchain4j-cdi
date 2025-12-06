@@ -37,9 +37,10 @@ The project is structured into several modules, each serving a specific purpose:
 - **`langchain4j-cdi-core`**: Fundamental CDI integration classes and SPI definitions
 - **`langchain4j-cdi-portable-ext`**: Portable CDI extension implementation for runtime service registration
 - **`langchain4j-cdi-build-compatible-ext`**: Build-time CDI extension for ahead-of-time compilation scenarios
-- **`langchain4j-cdi-config`**: MicroProfile Config integration for external configuration
-- **`langchain4j-cdi-fault-tolerance`**: MicroProfile Fault Tolerance integration for resilient AI services
-- **`langchain4j-cdi-telemetry`**: MicroProfile Telemetry integration for observability and monitoring
+- **`langchain4j-cdi-mp`**: MicroProfile specific integration
+  - **`langchain4j-cdi-config`**: MicroProfile Config integration for external configuration
+  - **`langchain4j-cdi-fault-tolerance`**: MicroProfile Fault Tolerance integration for resilient AI services
+  - **`langchain4j-cdi-telemetry`**: MicroProfile Telemetry integration for observability and monitoring
 
 ## 🚀 Quick Start
 

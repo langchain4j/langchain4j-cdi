@@ -19,10 +19,9 @@ Warning: you must first configure the application to connect to an LLM that supp
 
 The project has been developped and tested with:
 
-* Java 22 (Temurin OpenJDK distro)
-* Helidon 4.0.7
-* Helidon CLI 3.0.4
-* LangChain4j 0.30.0
+* Java 21+
+* Helidon 4.3.2
+* LangChain4j 1.9.1
 * Maven 3.9.5
 * Testing against Llama 3.1 using local Ollama instance. 
 

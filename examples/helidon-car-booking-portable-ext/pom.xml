@@ -11,7 +11,13 @@
     <name>Langchain4J CDI Examples: Helidon Car Booking Portable Extension</name>
 
     <properties>
+        <helidon.version>4.3.2</helidon.version>
         <mainClass>io.helidon.Main</mainClass>
+
+        <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
+        <maven.compiler.source combine.self="override">21</maven.compiler.source>
+        <maven.compiler.target combine.self="override">21</maven.compiler.target>
+        <maven.compiler.release combine.self="override">21</maven.compiler.release>
     </properties>
 
     <dependencyManagement>
@@ -19,25 +25,36 @@
             <dependency>
                 <groupId>io.helidon</groupId>
                 <artifactId>helidon-bom</artifactId>
-                <version>4.0.12</version>
+                <version>${helidon.version}</version>
                 <type>pom</type>
-                <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.helidon.integrations.langchain4j</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.helidon.integrations.langchain4j.providers</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>io.helidon</groupId>
                 <artifactId>helidon-dependencies</artifactId>
-                <version>4.0.12</version>
+                <version>${helidon.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>dev.langchain4j</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
-        <dependency>
-            <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-ollama</artifactId>
-        </dependency>
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-portable-ext</artifactId>
@@ -98,16 +115,57 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-core</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-http-client</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-http-client-jdk</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-hugging-face</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.community.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-open-ai</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.community.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-embeddings</artifactId>
+            <!-- We MUST force the version because helidon embed a previous version -->
+            <version>${dev.langchain4j.community.version}</version>
+        </dependency>
         <!-- Logging dependencies -->
         <dependency>
             <groupId>io.helidon.logging</groupId>
