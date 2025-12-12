@@ -60,7 +60,7 @@
             <artifactId>langchain4j-cdi-portable-ext</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j.cdi</groupId>
+            <groupId>dev.langchain4j.cdi-mp</groupId>
             <artifactId>langchain4j-cdi-config</artifactId>
         </dependency>
         <!-- Adds all features available in MicroProfile -->

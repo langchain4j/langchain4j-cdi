@@ -28,7 +28,7 @@
         </dependency>
         <!-- TEST -->
         <dependency>
-            <groupId>dev.langchain4j.cdi</groupId>
+            <groupId>dev.langchain4j.cdi-mp</groupId>
             <artifactId>langchain4j-cdi-config</artifactId>
             <scope>test</scope>
         </dependency>

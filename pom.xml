@@ -140,7 +140,7 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j.cdi</groupId>
+                <groupId>dev.langchain4j.cdi-mp</groupId>
                 <artifactId>langchain4j-cdi-config</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -150,12 +150,12 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j.cdi</groupId>
+                <groupId>dev.langchain4j.cdi-mp</groupId>
                 <artifactId>langchain4j-cdi-telemetry</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j.cdi</groupId>
+                <groupId>dev.langchain4j.cdi-mp</groupId>
                 <artifactId>langchain4j-cdi-fault-tolerance</artifactId>
                 <version>${project.version}</version>
             </dependency>
