@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <helidon.version>4.3.2</helidon.version>
+        <helidon.version>4.3.4</helidon.version>
         <skipITs>true</skipITs>
         <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
         <maven.compiler.source combine.self="override">21</maven.compiler.source>
