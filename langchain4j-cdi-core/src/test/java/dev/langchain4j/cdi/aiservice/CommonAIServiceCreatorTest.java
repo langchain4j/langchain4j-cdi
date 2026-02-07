@@ -3,6 +3,7 @@ package dev.langchain4j.cdi.aiservice;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
@@ -25,6 +26,7 @@ class CommonAIServiceCreatorTest {
     static class ToolAImpl implements ToolA {
         public ToolAImpl() {}
 
+        @Tool
         public String ping() {
             return "pong";
         }
