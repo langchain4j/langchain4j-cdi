@@ -63,6 +63,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.build.outputTimestamp>2026-02-19T20:10:00Z</project.build.outputTimestamp>
 
         <dev.langchain4j.version>1.11.0</dev.langchain4j.version>
         <dev.langchain4j.community.version>1.11.0-beta19</dev.langchain4j.community.version>
