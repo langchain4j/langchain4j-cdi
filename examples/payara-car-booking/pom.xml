@@ -12,7 +12,7 @@
     <name>Langchain4J CDI Examples: Payara Car Booking</name>
 
     <properties>
-        <payara.version>6.2025.6</payara.version>
+        <payara.version>6.2025.11</payara.version>
         <format.skip>true</format.skip>
         <!-- war plugin with sorts import do not support java 21-->
     </properties>
