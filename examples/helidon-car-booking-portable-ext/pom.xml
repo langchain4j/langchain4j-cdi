@@ -11,7 +11,7 @@
     <name>Langchain4J CDI Examples: Helidon Car Booking Portable Extension</name>
 
     <properties>
-        <helidon.version>4.3.2</helidon.version>
+        <helidon.version>4.3.4</helidon.version>
         <mainClass>io.helidon.Main</mainClass>
 
         <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
