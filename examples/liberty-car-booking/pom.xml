@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.langchain4j.cdi.examples</groupId>
         <artifactId>examples</artifactId>
-        <version>1.2.0-SNAPSHOT</version>
+        <version>1.2.0-Beta1</version>
     </parent>
 
     <artifactId>liberty-car-booking</artifactId>
@@ -24,8 +24,8 @@
         <compiler-plugin.version>3.13.0</compiler-plugin.version>
         <war-plugin.version>3.4.0</war-plugin.version>
         <!-- We need only javac to use the release parameter. OpenLiberty doesn't depend on maven-compiler-plugin.' -->
-        <maven.compiler.source combine.self="override"/>
-        <maven.compiler.target combine.self="override"/>
+        <maven.compiler.source combine.self="override" />
+        <maven.compiler.target combine.self="override" />
 
         <version.io.smallrye.fault-tolerance>6.7.3</version.io.smallrye.fault-tolerance>
         <!--Strictly for OpenLiberty-->
