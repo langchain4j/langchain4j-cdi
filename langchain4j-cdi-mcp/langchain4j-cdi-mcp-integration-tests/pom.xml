@@ -21,7 +21,7 @@
 
     <properties>
         <junit-jupiter.version>5.12.2</junit-jupiter.version>
-        <assertj.version>3.27.3</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <arquillian-bom.version>1.8.0.Final</arquillian-bom.version>
         <mcp-server-api.version>1.0.0-Beta1</mcp-server-api.version>
     </properties>
