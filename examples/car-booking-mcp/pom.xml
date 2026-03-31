@@ -20,7 +20,7 @@
     <parent>
         <groupId>dev.langchain4j.cdi.examples</groupId>
         <artifactId>examples</artifactId>
-        <version>1.2.0-Beta1</version>
+        <version>1.2.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>car-booking-mcp</artifactId>
