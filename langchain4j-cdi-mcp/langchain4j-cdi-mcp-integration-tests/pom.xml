@@ -23,7 +23,6 @@
         <junit-jupiter.version>5.12.2</junit-jupiter.version>
         <assertj.version>3.27.3</assertj.version>
         <arquillian-bom.version>1.8.0.Final</arquillian-bom.version>
-        <mcp-server-api.version>1.0.0-Beta1</mcp-server-api.version>
     </properties>
 
     <dependencyManagement>
@@ -58,11 +57,6 @@
                 <artifactId>langchain4j-mcp</artifactId>
                 <version>${dev.langchain4j.community.version}</version>
                 <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.mcp-java</groupId>
-                <artifactId>mcp-server-api</artifactId>
-                <version>${mcp-server-api.version}</version>
             </dependency>
             <dependency>
                 <groupId>dev.langchain4j.cdi.mcp</groupId>

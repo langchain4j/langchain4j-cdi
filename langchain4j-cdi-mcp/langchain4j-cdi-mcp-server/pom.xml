@@ -16,14 +16,12 @@
         <dependency>
             <groupId>org.mcp-java</groupId>
             <artifactId>mcp-annotations</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
 
         <!-- MCP Server API (interfaces: McpLog, Progress, Cancellation, etc.) -->
         <dependency>
             <groupId>org.mcp-java</groupId>
             <artifactId>mcp-server-api</artifactId>
-            <version>1.0.0-Beta1</version>
         </dependency>
 
         <!-- Jakarta EE APIs - provided -->

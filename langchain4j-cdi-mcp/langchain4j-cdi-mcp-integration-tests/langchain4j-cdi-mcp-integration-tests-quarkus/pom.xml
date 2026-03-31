@@ -34,7 +34,6 @@
         <dependency>
             <groupId>dev.langchain4j.cdi.mcp</groupId>
             <artifactId>langchain4j-cdi-mcp-integration-tests-common</artifactId>
-            <version>${project.version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.junit.jupiter</groupId>
