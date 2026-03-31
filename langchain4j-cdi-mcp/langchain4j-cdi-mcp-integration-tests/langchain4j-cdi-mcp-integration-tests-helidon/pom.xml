@@ -12,7 +12,7 @@
     <name>Langchain4J CDI: MCP Integration Tests Helidon</name>
 
     <properties>
-        <helidon.version>4.3.2</helidon.version>
+        <helidon.version>4.3.4</helidon.version>
         <skipITs>true</skipITs>
         <maven.compiler.source combine.self="override">21</maven.compiler.source>
         <maven.compiler.target combine.self="override">21</maven.compiler.target>
