@@ -47,6 +47,7 @@
         <module>langchain4j-cdi-build-compatible-ext</module>
         <module>langchain4j-cdi-core</module>
         <module>langchain4j-cdi-mp</module>
+        <module>langchain4j-cdi-mcp</module>
     </modules>
 
     <scm>
@@ -63,7 +64,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2026-03-12T08:30:07Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-03-27T08:37:14Z</project.build.outputTimestamp>
 
         <dev.langchain4j.version>1.12.2</dev.langchain4j.version>
         <dev.langchain4j.community.version>1.12.2-beta22</dev.langchain4j.community.version>
@@ -149,6 +150,22 @@
             <dependency>
                 <groupId>dev.langchain4j.cdi.mp</groupId>
                 <artifactId>langchain4j-cdi-telemetry</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <!-- MCP -->
+            <dependency>
+                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <artifactId>langchain4j-cdi-mcp-server</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <artifactId>langchain4j-cdi-mcp-portable-ext</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <artifactId>langchain4j-cdi-mcp-build-compatible-ext</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

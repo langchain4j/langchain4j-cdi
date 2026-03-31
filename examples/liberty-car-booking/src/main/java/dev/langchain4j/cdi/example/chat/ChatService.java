@@ -10,7 +10,6 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 import java.util.logging.Logger;
-import org.eclipse.microprofile.metrics.annotation.Timed;
 
 @ApplicationScoped
 @ServerEndpoint(
@@ -29,7 +28,6 @@ public class ChatService {
     }
 
     @OnMessage
-    @Timed(name = "chatProcessingTime", absolute = true, description = "Time needed chatting to the agent.")
     public void onMessage(String message, Session session) {
 
         logger.info("Server received message \"" + message + "\" " + "from session: " + session.getId());

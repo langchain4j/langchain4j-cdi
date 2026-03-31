@@ -17,20 +17,11 @@ This example is based on a simplified car booking application inspired from the 
 
 ## Running the Demo
 
-### Option 1: Dev Mode
+Start Liberty in dev mode:
 
 ```bash
 mvn liberty:dev
 ```
-
-### Option 2: Production Mode
-
-```bash
-mvn package
-mvn liberty:start
-```
-
-To stop: `mvn liberty:stop`
 
 ## Using the Demo
 

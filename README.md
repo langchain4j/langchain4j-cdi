@@ -24,6 +24,7 @@ Enterprise CDI extension for LangChain4j - inject AI services directly into your
 - [RAG (Retrieval Augmented Generation)](#rag-retrieval-augmented-generation)
 - [Chat Memory](#chat-memory)
 - [MicroProfile Integration](#microprofile-integration)
+- [MCP Server](langchain4j-cdi-mcp/README.md) — Expose your CDI beans as an MCP server
 - [Examples](#examples)
 - [Troubleshooting](#troubleshooting)
 
