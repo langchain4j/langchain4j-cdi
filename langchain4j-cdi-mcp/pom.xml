@@ -10,16 +10,29 @@
 
     <groupId>dev.langchain4j.cdi.mcp</groupId>
     <artifactId>langchain4j-cdi-mcp</artifactId>
-    <version>1.1.0-Beta1-SNAPSHOT</version>
+    <version>1.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Langchain4J CDI: MCP Server</name>
 
     <modules>
         <module>langchain4j-cdi-mcp-server</module>
-        <module>langchain4j-cdi-mcp-portable-ext</module>
         <module>langchain4j-cdi-mcp-build-compatible-ext</module>
-        <module>langchain4j-cdi-mcp-integration-tests</module>
-        <module>langchain4j-cdi-mcp-example-helidon</module>
+        <module>langchain4j-cdi-mcp-portable-ext</module>
     </modules>
 
+    <profiles>
+        <profile>
+            <id>unpublished</id>
+            <activation>
+                <property>
+                    <name>performRelease</name>
+                    <value>!true</value>
+                </property>
+            </activation>
+            <modules>
+                <module>langchain4j-cdi-mcp-integration-tests</module>
+                <module>langchain4j-cdi-mcp-example-helidon</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
