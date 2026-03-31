@@ -70,6 +70,7 @@
         <dev.langchain4j.community.version>1.12.2-beta22</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
+        <org.mcp-java.version>1.0.0-Beta1</org.mcp-java.version>
 
         <version.asm>9.7</version.asm>
         <weld-junit5.version>4.0.5.Final</weld-junit5.version>
@@ -183,6 +184,18 @@
                 <artifactId>smallrye-config</artifactId>
                 <version>3.8.1</version>
                 <scope>test</scope>
+            </dependency>
+            <!-- MCP Common Annotations -->
+            <dependency>
+                <groupId>org.mcp-java</groupId>
+                <artifactId>mcp-annotations</artifactId>
+                <version>${org.mcp-java.version}</version>
+            </dependency>
+            <!-- MCP Server API (interfaces: McpLog, Progress, Cancellation, etc.) -->
+            <dependency>
+                <groupId>org.mcp-java</groupId>
+                <artifactId>mcp-server-api</artifactId>
+                <version>${org.mcp-java.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
