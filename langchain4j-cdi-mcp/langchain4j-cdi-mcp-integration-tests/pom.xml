@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.langchain4j.cdi.mcp</groupId>
         <artifactId>langchain4j-cdi-mcp</artifactId>
-        <version>1.1.0-Beta1-SNAPSHOT</version>
+        <version>1.2.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -23,6 +23,7 @@
         <junit-jupiter.version>5.12.2</junit-jupiter.version>
         <assertj.version>3.27.3</assertj.version>
         <arquillian-bom.version>1.8.0.Final</arquillian-bom.version>
+        <mcp-server-api.version>1.0.0-Beta1</mcp-server-api.version>
     </properties>
 
     <dependencyManagement>
@@ -55,8 +56,18 @@
             <dependency>
                 <groupId>dev.langchain4j</groupId>
                 <artifactId>langchain4j-mcp</artifactId>
-                <version>${dev.langchain4j.version}-beta22</version>
+                <version>${dev.langchain4j.community.version}</version>
                 <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.mcp-java</groupId>
+                <artifactId>mcp-server-api</artifactId>
+                <version>${mcp-server-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <artifactId>langchain4j-cdi-mcp-integration-tests-common</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -65,13 +76,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
-            <version>${junit-jupiter.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
