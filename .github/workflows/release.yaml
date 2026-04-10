@@ -75,7 +75,7 @@ jobs:
       - name: "Determine Release Name"
         run: "echo \"RELEASE_NAME=LangChain4J CDI ${{ github.event.inputs.version }}\" >> $GITHUB_ENV"
       - name: "Create release"
-        uses: "actions/github-script@v8"
+        uses: "actions/github-script@v9"
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
           script: |
