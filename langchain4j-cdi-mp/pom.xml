@@ -21,7 +21,7 @@
     <properties>
         <!-- MP -->
         <microprofile.version>6.1</microprofile.version>
-        <version.eclipse.microprofile.config>3.1</version.eclipse.microprofile.config>
+        <version.eclipse.microprofile.config>3.1.1</version.eclipse.microprofile.config>
         <version.eclipse.microprofile.fault-tolerance>4.1.2</version.eclipse.microprofile.fault-tolerance>
         <version.eclipse.microprofile.telemetry>2.0.1</version.eclipse.microprofile.telemetry>
 
