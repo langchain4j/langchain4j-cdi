@@ -3,7 +3,7 @@ package dev.langchain4j.cdi.mcp.server.registry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.mcp_java.annotations.resources.Resource;
+import org.mcp_java.server.resources.Resource;
 
 class McpResourceRegistryTest {
 

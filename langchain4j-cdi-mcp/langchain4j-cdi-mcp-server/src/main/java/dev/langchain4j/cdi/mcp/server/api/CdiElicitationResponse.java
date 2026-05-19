@@ -6,7 +6,7 @@ import jakarta.json.JsonValue;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.mcp_java.server.ElicitationResponse;
+import org.mcp_java.server.elicitation.ElicitationResponse;
 
 /** Implementation of {@link ElicitationResponse} backed by a JSON-RPC result. */
 public class CdiElicitationResponse implements ElicitationResponse {
@@ -15,6 +15,11 @@ public class CdiElicitationResponse implements ElicitationResponse {
 
     CdiElicitationResponse(JsonObject json) {
         this.json = json;
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return Map.of();
     }
 
     @Override

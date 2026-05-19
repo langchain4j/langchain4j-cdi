@@ -2,8 +2,10 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.math.BigDecimal;
-import org.mcp_java.server.ProgressNotification;
-import org.mcp_java.server.ProgressToken;
+import java.util.Map;
+import java.util.Optional;
+import org.mcp_java.server.progress.ProgressNotification;
+import org.mcp_java.server.progress.ProgressToken;
 
 /** Implementation of {@link ProgressNotification} that delegates to {@link McpProgressReporter}. */
 public class CdiProgressNotification implements ProgressNotification {
@@ -29,12 +31,12 @@ public class CdiProgressNotification implements ProgressNotification {
 
     @Override
     public ProgressToken token() {
-        return rawToken != null ? new ProgressToken(rawToken) : null;
+        return rawToken != null ? CdiProgress.progressToken(rawToken) : null;
     }
 
     @Override
-    public BigDecimal total() {
-        return totalValue;
+    public Optional<BigDecimal> total() {
+        return Optional.ofNullable(totalValue);
     }
 
     @Override
@@ -43,8 +45,13 @@ public class CdiProgressNotification implements ProgressNotification {
     }
 
     @Override
-    public String message() {
-        return message;
+    public Optional<String> message() {
+        return Optional.ofNullable(message);
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return Map.of();
     }
 
     @Override
@@ -102,6 +109,16 @@ public class CdiProgressNotification implements ProgressNotification {
         @Override
         public Builder setMessage(String message) {
             this.message = message;
+            return this;
+        }
+
+        @Override
+        public Builder putMetadata(String key, Object value) {
+            return this;
+        }
+
+        @Override
+        public Builder setMetadata(Map<String, Object> metadata) {
             return this;
         }
 

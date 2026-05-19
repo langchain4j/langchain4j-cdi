@@ -1,9 +1,9 @@
 package dev.langchain4j.cdi.mcp.server.fixtures;
 
-import org.mcp_java.annotations.tools.Tool;
-import org.mcp_java.annotations.tools.ToolArg;
 import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
+import org.mcp_java.server.progress.Progress;
+import org.mcp_java.server.tools.Tool;
+import org.mcp_java.server.tools.ToolArg;
 
 public class LoggingTool {
 

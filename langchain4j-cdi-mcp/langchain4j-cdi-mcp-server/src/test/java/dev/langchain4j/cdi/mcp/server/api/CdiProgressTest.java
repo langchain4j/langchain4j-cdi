@@ -5,9 +5,9 @@ import static org.mockito.Mockito.*;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import org.junit.jupiter.api.Test;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.ProgressNotification;
-import org.mcp_java.server.ProgressTracker;
+import org.mcp_java.server.progress.Progress;
+import org.mcp_java.server.progress.ProgressNotification;
+import org.mcp_java.server.progress.ProgressTracker;
 
 class CdiProgressTest {
 
@@ -25,7 +25,7 @@ class CdiProgressTest {
         Progress progress = new CdiProgress("tok-123", reporter);
 
         assertThat(progress.token()).isPresent();
-        assertThat(progress.token().get().value()).isEqualTo("tok-123");
+        assertThat(progress.token().get().asString()).isEqualTo("tok-123");
     }
 
     @Test
@@ -53,7 +53,7 @@ class CdiProgressTest {
                 progress.trackerBuilder().setTotal(100).setDefaultStep(10).build();
 
         assertThat(tracker.progress().intValue()).isEqualTo(0);
-        assertThat(tracker.total().intValue()).isEqualTo(100);
+        assertThat(tracker.total().get().intValue()).isEqualTo(100);
 
         tracker.advanceAndForget();
         assertThat(tracker.progress().intValue()).isEqualTo(10);

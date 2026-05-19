@@ -18,7 +18,11 @@
         </dependency>
         <dependency>
             <groupId>org.mcp-java</groupId>
-            <artifactId>mcp-annotations</artifactId>
+            <artifactId>mcp-server-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mcp-java</groupId>
+            <artifactId>mcp-model</artifactId>
         </dependency>
         <dependency>
             <groupId>jakarta.enterprise</groupId>

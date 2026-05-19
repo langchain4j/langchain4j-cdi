@@ -2,8 +2,8 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpElicitationManager;
 import dev.langchain4j.cdi.mcp.server.transport.McpSession;
-import org.mcp_java.server.Elicitation;
-import org.mcp_java.server.ElicitationRequest;
+import org.mcp_java.server.elicitation.Elicitation;
+import org.mcp_java.server.elicitation.ElicitationRequest;
 
 /** Implementation of {@link Elicitation} that delegates to {@link McpElicitationManager}. */
 public class CdiElicitation implements Elicitation {

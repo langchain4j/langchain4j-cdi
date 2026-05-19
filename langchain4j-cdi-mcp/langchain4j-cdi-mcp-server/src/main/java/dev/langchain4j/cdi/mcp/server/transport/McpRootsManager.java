@@ -7,9 +7,10 @@ import jakarta.json.JsonObject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import org.mcp_java.model.roots.Root;
+import org.mcp_java.server.roots.Root;
 
 /**
  * Manages file roots reported by MCP clients. Roots represent the base directories or URIs that the client has made
@@ -65,9 +66,26 @@ public class McpRootsManager {
         JsonArray rootsArray = result.getJsonArray("roots");
         return rootsArray.stream()
                 .map(v -> (JsonObject) v)
-                .map(obj -> Root.of(
-                        obj.containsKey("uri") ? obj.getString("uri") : "",
-                        obj.containsKey("name") ? obj.getString("name") : ""))
+                .map(obj -> {
+                    String uri = obj.containsKey("uri") ? obj.getString("uri") : "";
+                    String name = obj.containsKey("name") ? obj.getString("name") : null;
+                    return (Root) new Root() {
+                        @Override
+                        public String uri() {
+                            return uri;
+                        }
+
+                        @Override
+                        public Optional<String> name() {
+                            return Optional.ofNullable(name);
+                        }
+
+                        @Override
+                        public Map<String, Object> metadata() {
+                            return Map.of();
+                        }
+                    };
+                })
                 .toList();
     }
 }

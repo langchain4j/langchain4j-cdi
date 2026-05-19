@@ -2,10 +2,10 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.util.Optional;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.ProgressNotification;
-import org.mcp_java.server.ProgressToken;
-import org.mcp_java.server.ProgressTracker;
+import org.mcp_java.server.progress.Progress;
+import org.mcp_java.server.progress.ProgressNotification;
+import org.mcp_java.server.progress.ProgressToken;
+import org.mcp_java.server.progress.ProgressTracker;
 
 /** Implementation of {@link Progress} that wraps a progress token and delegates to {@link McpProgressReporter}. */
 public class CdiProgress implements Progress {
@@ -23,7 +23,7 @@ public class CdiProgress implements Progress {
         if (rawToken == null) {
             return Optional.empty();
         }
-        return Optional.of(new ProgressToken(rawToken));
+        return Optional.of(progressToken(rawToken));
     }
 
     @Override
@@ -34,5 +34,43 @@ public class CdiProgress implements Progress {
     @Override
     public ProgressTracker.Builder trackerBuilder() {
         return new CdiProgressTracker.CdiBuilder(rawToken, progressReporter);
+    }
+
+    static ProgressToken progressToken(Object rawToken) {
+        if (rawToken instanceof Number n) {
+            return new ProgressToken() {
+                @Override
+                public Type type() {
+                    return Type.INTEGER;
+                }
+
+                @Override
+                public Number asInteger() {
+                    return n;
+                }
+
+                @Override
+                public String asString() {
+                    return null;
+                }
+            };
+        }
+        String s = rawToken.toString();
+        return new ProgressToken() {
+            @Override
+            public Type type() {
+                return Type.STRING;
+            }
+
+            @Override
+            public Number asInteger() {
+                return null;
+            }
+
+            @Override
+            public String asString() {
+                return s;
+            }
+        };
     }
 }

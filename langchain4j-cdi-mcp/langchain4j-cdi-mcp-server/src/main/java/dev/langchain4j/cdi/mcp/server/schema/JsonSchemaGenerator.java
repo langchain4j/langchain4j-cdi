@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.List;
 import java.util.Set;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcp_java.server.tools.ToolArg;
 
 public class JsonSchemaGenerator {
 

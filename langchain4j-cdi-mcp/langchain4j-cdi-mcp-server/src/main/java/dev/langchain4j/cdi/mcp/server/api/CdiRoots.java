@@ -3,8 +3,8 @@ package dev.langchain4j.cdi.mcp.server.api;
 import dev.langchain4j.cdi.mcp.server.transport.McpRootsManager;
 import dev.langchain4j.cdi.mcp.server.transport.McpSession;
 import java.util.List;
-import org.mcp_java.model.roots.Root;
-import org.mcp_java.server.Roots;
+import org.mcp_java.server.roots.Root;
+import org.mcp_java.server.roots.Roots;
 
 /** Implementation of {@link Roots} that delegates to {@link McpRootsManager}. */
 public class CdiRoots implements Roots {
