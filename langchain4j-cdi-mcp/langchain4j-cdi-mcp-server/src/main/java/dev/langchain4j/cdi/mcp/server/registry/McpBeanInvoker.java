@@ -18,7 +18,7 @@ import jakarta.json.JsonValue;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcp_java.server.tools.ToolArg;
 
 /** Shared utility for invoking CDI bean methods with JSON arguments. */
 @ApplicationScoped

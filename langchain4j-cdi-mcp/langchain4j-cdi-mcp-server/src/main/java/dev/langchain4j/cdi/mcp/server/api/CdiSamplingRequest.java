@@ -5,13 +5,18 @@ import jakarta.json.JsonObject;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.mcp_java.model.sampling.ModelPreferences;
-import org.mcp_java.model.sampling.SamplingMessage;
-import org.mcp_java.server.SamplingRequest;
-import org.mcp_java.server.SamplingResponse;
+import java.util.Optional;
+import org.mcp_java.server.Role;
+import org.mcp_java.server.content.SamplingMessageContentBlock;
+import org.mcp_java.server.content.TextContent;
+import org.mcp_java.server.sampling.ModelPreferences;
+import org.mcp_java.server.sampling.SamplingMessage;
+import org.mcp_java.server.sampling.SamplingRequest;
+import org.mcp_java.server.sampling.SamplingResponse;
 
 /** Implementation of {@link SamplingRequest} that delegates to {@link McpSamplingManager}. */
 public class CdiSamplingRequest implements SamplingRequest {
@@ -21,9 +26,9 @@ public class CdiSamplingRequest implements SamplingRequest {
     private final List<String> stopSequences;
     private final String systemPrompt;
     private final BigDecimal temperature;
-    private final IncludeContext includeContext;
+    private final SamplingRequest.IncludeContext includeContext;
     private final ModelPreferences modelPreferences;
-    private final Map<String, Object> metadata;
+    private final Map<String, Object> meta;
     private final McpSamplingManager samplingManager;
     private final String sessionId;
 
@@ -33,9 +38,9 @@ public class CdiSamplingRequest implements SamplingRequest {
             List<String> stopSequences,
             String systemPrompt,
             BigDecimal temperature,
-            IncludeContext includeContext,
+            SamplingRequest.IncludeContext includeContext,
             ModelPreferences modelPreferences,
-            Map<String, Object> metadata,
+            Map<String, Object> meta,
             McpSamplingManager samplingManager,
             String sessionId) {
         this.maxTokens = maxTokens;
@@ -45,7 +50,7 @@ public class CdiSamplingRequest implements SamplingRequest {
         this.temperature = temperature;
         this.includeContext = includeContext;
         this.modelPreferences = modelPreferences;
-        this.metadata = metadata;
+        this.meta = meta;
         this.samplingManager = samplingManager;
         this.sessionId = sessionId;
     }
@@ -66,28 +71,28 @@ public class CdiSamplingRequest implements SamplingRequest {
     }
 
     @Override
-    public String systemPrompt() {
-        return systemPrompt;
+    public Optional<String> systemPrompt() {
+        return Optional.ofNullable(systemPrompt);
     }
 
     @Override
-    public BigDecimal temperature() {
-        return temperature;
+    public Optional<BigDecimal> temperature() {
+        return Optional.ofNullable(temperature);
     }
 
     @Override
-    public IncludeContext includeContext() {
-        return includeContext;
+    public Optional<SamplingRequest.IncludeContext> includeContext() {
+        return Optional.ofNullable(includeContext);
     }
 
     @Override
-    public ModelPreferences modelPreferences() {
-        return modelPreferences;
+    public Optional<ModelPreferences> modelPreferences() {
+        return Optional.ofNullable(modelPreferences);
     }
 
     @Override
     public Map<String, Object> metadata() {
-        return metadata;
+        return meta;
     }
 
     @Override
@@ -102,7 +107,10 @@ public class CdiSamplingRequest implements SamplingRequest {
                 .map(m -> {
                     Map<String, Object> map = new LinkedHashMap<>();
                     map.put("role", m.role().toString());
-                    map.put("content", m.content());
+                    List<SamplingMessageContentBlock> content = m.content();
+                    if (!content.isEmpty() && content.get(0) instanceof TextContent tc) {
+                        map.put("content", tc.text());
+                    }
                     return map;
                 })
                 .toList();
@@ -110,7 +118,7 @@ public class CdiSamplingRequest implements SamplingRequest {
         Map<String, Object> modelPrefsMap = null;
         if (modelPreferences != null) {
             modelPrefsMap = new LinkedHashMap<>();
-            modelPrefsMap.put("hints", modelPreferences.hints());
+            modelPrefsMap.put("names", modelPreferences.names());
         }
 
         JsonObject result = samplingManager.createMessage(sessionId, messageMaps, modelPrefsMap, (int) maxTokens);
@@ -118,7 +126,9 @@ public class CdiSamplingRequest implements SamplingRequest {
             return null;
         }
 
-        return new SamplingResponse(null, result.getString("model", null), null, result.getString("stopReason", null));
+        String model = result.getString("model", null);
+        String stopReason = result.getString("stopReason", null);
+        return new CdiSamplingResponse(model, stopReason);
     }
 
     static class CdiBuilder implements SamplingRequest.Builder {
@@ -130,9 +140,9 @@ public class CdiSamplingRequest implements SamplingRequest {
         private List<String> stopSequences = List.of();
         private String systemPrompt;
         private BigDecimal temperature;
-        private IncludeContext includeContext;
+        private SamplingRequest.IncludeContext includeContext;
         private ModelPreferences modelPreferences;
-        private Map<String, Object> metadata = Map.of();
+        private Map<String, Object> meta = Map.of();
 
         CdiBuilder(McpSamplingManager samplingManager, String sessionId) {
             this.samplingManager = samplingManager;
@@ -140,8 +150,24 @@ public class CdiSamplingRequest implements SamplingRequest {
         }
 
         @Override
-        public Builder addMessage(SamplingMessage message) {
-            messages.add(message);
+        public Builder addMessage(Role role, SamplingMessageContentBlock... content) {
+            List<SamplingMessageContentBlock> contentList = Arrays.asList(content);
+            messages.add(new SamplingMessage() {
+                @Override
+                public Role role() {
+                    return role;
+                }
+
+                @Override
+                public List<SamplingMessageContentBlock> content() {
+                    return contentList;
+                }
+
+                @Override
+                public Map<String, Object> metadata() {
+                    return Map.of();
+                }
+            });
             return this;
         }
 
@@ -164,7 +190,7 @@ public class CdiSamplingRequest implements SamplingRequest {
         }
 
         @Override
-        public Builder setIncludeContext(IncludeContext includeContext) {
+        public Builder setIncludeContext(SamplingRequest.IncludeContext includeContext) {
             this.includeContext = includeContext;
             return this;
         }
@@ -176,12 +202,6 @@ public class CdiSamplingRequest implements SamplingRequest {
         }
 
         @Override
-        public Builder setMetadata(Map<String, Object> metadata) {
-            this.metadata = metadata;
-            return this;
-        }
-
-        @Override
         public Builder setStopSequences(List<String> stopSequences) {
             this.stopSequences = stopSequences;
             return this;
@@ -189,7 +209,20 @@ public class CdiSamplingRequest implements SamplingRequest {
 
         @Override
         public Builder setTimeout(Duration timeout) {
-            // timeout is not directly used in our implementation
+            return this;
+        }
+
+        @Override
+        public Builder putMetadata(String key, Object value) {
+            Map<String, Object> updated = new LinkedHashMap<>(meta);
+            updated.put(key, value);
+            this.meta = updated;
+            return this;
+        }
+
+        @Override
+        public Builder setMetadata(Map<String, Object> metadata) {
+            this.meta = metadata;
             return this;
         }
 
@@ -203,7 +236,7 @@ public class CdiSamplingRequest implements SamplingRequest {
                     temperature,
                     includeContext,
                     modelPreferences,
-                    metadata,
+                    meta,
                     samplingManager,
                     sessionId);
         }

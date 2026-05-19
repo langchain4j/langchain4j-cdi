@@ -9,12 +9,12 @@ import dev.langchain4j.cdi.mcp.server.transport.McpSession;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.mcp_java.server.Cancellation;
-import org.mcp_java.server.Elicitation;
 import org.mcp_java.server.McpConnection;
 import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.Roots;
-import org.mcp_java.server.Sampling;
+import org.mcp_java.server.elicitation.Elicitation;
+import org.mcp_java.server.progress.Progress;
+import org.mcp_java.server.roots.Roots;
+import org.mcp_java.server.sampling.Sampling;
 
 /**
  * Factory that creates MCP framework type instances from request context. Used by {@code McpBeanInvoker} to inject

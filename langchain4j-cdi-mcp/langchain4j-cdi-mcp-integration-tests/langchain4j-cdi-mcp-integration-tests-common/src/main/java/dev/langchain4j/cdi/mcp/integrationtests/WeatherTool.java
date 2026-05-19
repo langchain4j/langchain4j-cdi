@@ -1,8 +1,8 @@
 package dev.langchain4j.cdi.mcp.integrationtests;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.tools.Tool;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcp_java.server.tools.Tool;
+import org.mcp_java.server.tools.ToolArg;
 
 @ApplicationScoped
 public class WeatherTool {

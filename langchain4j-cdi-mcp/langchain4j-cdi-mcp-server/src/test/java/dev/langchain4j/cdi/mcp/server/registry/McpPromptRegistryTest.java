@@ -3,8 +3,8 @@ package dev.langchain4j.cdi.mcp.server.registry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.prompts.PromptArg;
+import org.mcp_java.server.prompts.Prompt;
+import org.mcp_java.server.prompts.PromptArg;
 
 class McpPromptRegistryTest {
 

@@ -2,10 +2,11 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import org.mcp_java.server.ProgressToken;
-import org.mcp_java.server.ProgressTracker;
+import org.mcp_java.server.progress.ProgressToken;
+import org.mcp_java.server.progress.ProgressTracker;
 
 /** Thread-safe implementation of {@link ProgressTracker} that delegates to {@link McpProgressReporter}. */
 public class CdiProgressTracker implements ProgressTracker {
@@ -33,7 +34,7 @@ public class CdiProgressTracker implements ProgressTracker {
 
     @Override
     public ProgressToken token() {
-        return rawToken != null ? new ProgressToken(rawToken) : null;
+        return rawToken != null ? CdiProgress.progressToken(rawToken) : null;
     }
 
     @Override
@@ -74,8 +75,8 @@ public class CdiProgressTracker implements ProgressTracker {
     }
 
     @Override
-    public BigDecimal total() {
-        return totalValue;
+    public Optional<BigDecimal> total() {
+        return Optional.ofNullable(totalValue);
     }
 
     @Override

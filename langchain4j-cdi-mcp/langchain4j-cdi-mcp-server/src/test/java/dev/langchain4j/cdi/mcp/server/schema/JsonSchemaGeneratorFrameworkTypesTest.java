@@ -7,7 +7,7 @@ import jakarta.json.JsonObject;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
 import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
+import org.mcp_java.server.progress.Progress;
 
 class JsonSchemaGeneratorFrameworkTypesTest {
 

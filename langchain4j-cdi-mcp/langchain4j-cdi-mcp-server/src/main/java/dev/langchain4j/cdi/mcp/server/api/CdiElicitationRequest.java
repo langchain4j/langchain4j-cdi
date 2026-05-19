@@ -5,8 +5,8 @@ import jakarta.json.JsonObject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.mcp_java.server.ElicitationRequest;
-import org.mcp_java.server.ElicitationResponse;
+import org.mcp_java.server.elicitation.ElicitationRequest;
+import org.mcp_java.server.elicitation.ElicitationResponse;
 
 /** Implementation of {@link ElicitationRequest} that delegates to {@link McpElicitationManager}. */
 public class CdiElicitationRequest implements ElicitationRequest {
@@ -44,6 +44,11 @@ public class CdiElicitationRequest implements ElicitationRequest {
     @SuppressWarnings("unchecked")
     public <T> T send() {
         return (T) sendAndAwait();
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return Map.of();
     }
 
     @Override
@@ -88,6 +93,16 @@ public class CdiElicitationRequest implements ElicitationRequest {
         @Override
         public Builder setTimeout(Duration timeout) {
             this.timeoutSeconds = timeout.toSeconds();
+            return this;
+        }
+
+        @Override
+        public Builder putMetadata(String key, Object value) {
+            return this;
+        }
+
+        @Override
+        public Builder setMetadata(Map<String, Object> metadata) {
             return this;
         }
 

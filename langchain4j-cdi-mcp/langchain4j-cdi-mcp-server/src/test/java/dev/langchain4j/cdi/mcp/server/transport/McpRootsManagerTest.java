@@ -40,11 +40,11 @@ class McpRootsManagerTest {
         when(requestManager.sendRequest(eq("session-1"), eq("roots/list"), any()))
                 .thenReturn(result);
 
-        List<org.mcp_java.model.roots.Root> roots = rootsManager.requestRoots("session-1");
+        List<org.mcp_java.server.roots.Root> roots = rootsManager.requestRoots("session-1");
 
         assertThat(roots).hasSize(1);
         assertThat(roots.get(0).uri()).isEqualTo("file:///home/user/project");
-        assertThat(roots.get(0).name()).isEqualTo("My Project");
+        assertThat(roots.get(0).name()).contains("My Project");
 
         // Should be cached
         assertThat(rootsManager.getRoots("session-1")).hasSize(1);
@@ -54,7 +54,7 @@ class McpRootsManagerTest {
     void shouldReturnEmptyListOnTimeout() {
         when(requestManager.sendRequest(any(), any(), any())).thenReturn(null);
 
-        List<org.mcp_java.model.roots.Root> roots = rootsManager.requestRoots("session-1");
+        List<org.mcp_java.server.roots.Root> roots = rootsManager.requestRoots("session-1");
 
         assertThat(roots).isEmpty();
     }

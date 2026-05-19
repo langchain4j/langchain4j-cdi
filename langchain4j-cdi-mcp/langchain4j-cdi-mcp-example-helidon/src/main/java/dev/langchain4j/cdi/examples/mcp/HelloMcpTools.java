@@ -1,11 +1,11 @@
 package dev.langchain4j.cdi.examples.mcp;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.prompts.PromptArg;
-import org.mcp_java.annotations.resources.Resource;
-import org.mcp_java.annotations.tools.Tool;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcp_java.server.prompts.Prompt;
+import org.mcp_java.server.prompts.PromptArg;
+import org.mcp_java.server.resources.Resource;
+import org.mcp_java.server.tools.Tool;
+import org.mcp_java.server.tools.ToolArg;
 
 @SuppressWarnings("unused")
 @ApplicationScoped

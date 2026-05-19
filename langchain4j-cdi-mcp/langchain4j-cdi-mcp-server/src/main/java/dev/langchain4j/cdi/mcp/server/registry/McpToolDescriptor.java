@@ -3,7 +3,7 @@ package dev.langchain4j.cdi.mcp.server.registry;
 import dev.langchain4j.cdi.mcp.server.schema.JsonSchemaGenerator;
 import jakarta.json.JsonObject;
 import java.lang.reflect.Method;
-import org.mcp_java.annotations.tools.Tool;
+import org.mcp_java.server.tools.Tool;
 
 public class McpToolDescriptor {
 

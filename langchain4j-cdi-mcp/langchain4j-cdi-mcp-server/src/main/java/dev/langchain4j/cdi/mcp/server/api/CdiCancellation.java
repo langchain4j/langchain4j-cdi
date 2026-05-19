@@ -15,6 +15,17 @@ public class CdiCancellation implements Cancellation {
 
     @Override
     public Result check() {
-        return new Result(cancelledFlag.get(), Optional.empty());
+        boolean cancelled = cancelledFlag != null && cancelledFlag.get();
+        return new Result() {
+            @Override
+            public boolean isRequested() {
+                return cancelled;
+            }
+
+            @Override
+            public Optional<String> reason() {
+                return Optional.empty();
+            }
+        };
     }
 }

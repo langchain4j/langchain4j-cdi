@@ -17,10 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.resources.Resource;
-import org.mcp_java.annotations.resources.ResourceTemplate;
-import org.mcp_java.annotations.tools.Tool;
+import org.mcp_java.server.prompts.Prompt;
+import org.mcp_java.server.resources.Resource;
+import org.mcp_java.server.resources.ResourceTemplate;
+import org.mcp_java.server.tools.Tool;
 
 public class McpServerPortableExtension implements Extension {
 

@@ -4,12 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.mcp_java.server.Cancellation;
-import org.mcp_java.server.Elicitation;
 import org.mcp_java.server.McpConnection;
 import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.Roots;
-import org.mcp_java.server.Sampling;
+import org.mcp_java.server.elicitation.Elicitation;
+import org.mcp_java.server.progress.Progress;
+import org.mcp_java.server.roots.Roots;
+import org.mcp_java.server.sampling.Sampling;
 
 class McpFrameworkTypesTest {
 

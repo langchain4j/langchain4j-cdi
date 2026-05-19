@@ -1,7 +1,7 @@
 package dev.langchain4j.cdi.mcp.server.registry;
 
 import java.lang.reflect.Method;
-import org.mcp_java.annotations.resources.ResourceTemplate;
+import org.mcp_java.server.resources.ResourceTemplate;
 
 public class McpResourceTemplateDescriptor {
 

@@ -4,8 +4,8 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.List;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.prompts.PromptArg;
+import org.mcp_java.server.prompts.Prompt;
+import org.mcp_java.server.prompts.PromptArg;
 
 public class McpPromptDescriptor {
 
