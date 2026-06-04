@@ -30,6 +30,10 @@ public @interface RegisterHumanInTheLoopAgent {
 
     String agentListenerName() default "";
 
-    /** CDI bean name of a {@code Supplier<?>} or {@code Function<AgenticScope, ?>} that provides the human response. */
-    String responseProviderName() default "";
+    /**
+     * Name of a static method on the annotated interface that provides the human response. The method must accept a
+     * single {@code AgenticScope} parameter and return {@code String}. When empty, the framework selects the only
+     * matching static method automatically.
+     */
+    String askUser() default "";
 }

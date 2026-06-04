@@ -12,6 +12,8 @@ import dev.langchain4j.agentic.internal.McpService;
 import dev.langchain4j.agentic.observability.AgentListener;
 import dev.langchain4j.agentic.planner.Planner;
 import dev.langchain4j.agentic.scope.AgenticScope;
+import dev.langchain4j.agentic.workflow.HumanInTheLoop;
+import dev.langchain4j.cdi.agent.CommonAgentCreator.HumanInTheLoopHolder;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
@@ -113,10 +115,38 @@ class CommonAgentCreatorTest {
         String chat(@V("question") String question);
     }
 
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(chatModelName = "#default", outputKey = "myKey")
+    interface AgentWithOutputKey {
+
+        String chat(@V("question") String question);
+    }
+
     // --- Test interface for SIMPLE topology (@Agent path) ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterSimpleAgent(chatModelName = "#default")
     interface AgenticAgent {
+
+        @Agent(description = "test agent")
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(chatModelName = "#default", outputKey = "agentOutput")
+    interface AgenticAgentWithOutputKey {
+
+        @Agent(description = "test agent")
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(
+            chatModelName = "#default",
+            name = "myAgenticAgent",
+            description = "an agentic agent",
+            outputKey = "myOutput",
+            async = true)
+    interface AgenticAgentWithMetadata {
 
         @Agent(description = "test agent")
         String process(@V("input") String input);
@@ -338,8 +368,12 @@ class CommonAgentCreatorTest {
 
     // --- Test interfaces for HUMAN_IN_THE_LOOP topology ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
-    @RegisterHumanInTheLoopAgent(responseProviderName = "myProvider")
+    @RegisterHumanInTheLoopAgent
     interface HumanInTheLoopAgent {
+
+        static String askUser(AgenticScope scope) {
+            return "approved";
+        }
 
         String process(@V("input") String input);
     }
@@ -347,6 +381,59 @@ class CommonAgentCreatorTest {
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterHumanInTheLoopAgent(outputKey = "result", description = "Waits for human approval")
     interface HumanInTheLoopAgentNoProvider {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(
+            name = "human-approval-agent",
+            description = "Asks human for approval",
+            outputKey = "approvalDecision")
+    interface HumanInTheLoopMarkerAgent {
+
+        static String askUser(AgenticScope scope) {
+            return "approved-by-marker";
+        }
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(askUser = "promptHuman")
+    interface HumanInTheLoopNamedMethod {
+
+        static String promptHuman(AgenticScope scope) {
+            return "named-response";
+        }
+
+        static String otherHelper(AgenticScope scope) {
+            return "other";
+        }
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(askUser = "nonExistent")
+    interface HumanInTheLoopBadName {
+
+        static String askUser(AgenticScope scope) {
+            return "won't match";
+        }
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent
+    interface HumanInTheLoopAmbiguous {
+
+        static String methodA(AgenticScope scope) {
+            return "a";
+        }
+
+        static String methodB(AgenticScope scope) {
+            return "b";
+        }
 
         String process(@V("input") String input);
     }
@@ -530,6 +617,16 @@ class CommonAgentCreatorTest {
         assertInstanceOf(InternalAgent.class, agent);
     }
 
+    @Test
+    void create_simpleTopology_noAgentAnnotation_propagatesOutputKey() {
+        Instance<Object> lookup = prepareLookups();
+        AgentWithOutputKey agent = CommonAgentCreator.create(lookup, AgentWithOutputKey.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        assertEquals("myKey", ((InternalAgent) agent).outputKey());
+    }
+
     // =========================================================================
     // SIMPLE topology -- @Agent path
     // =========================================================================
@@ -540,6 +637,30 @@ class CommonAgentCreatorTest {
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+    }
+
+    @Test
+    void create_simpleTopology_withAgentAnnotation_propagatesOutputKey() {
+        Instance<Object> lookup = prepareLookups();
+        AgenticAgentWithOutputKey agent = CommonAgentCreator.create(lookup, AgenticAgentWithOutputKey.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        assertEquals("agentOutput", ((InternalAgent) agent).outputKey());
+    }
+
+    @Test
+    void create_simpleTopology_withAgentAnnotation_honorsOutputKeyNameDescriptionAsync() {
+        Instance<Object> lookup = prepareLookups();
+        AgenticAgentWithMetadata agent = CommonAgentCreator.create(lookup, AgenticAgentWithMetadata.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        InternalAgent ia = (InternalAgent) agent;
+        assertEquals("myAgenticAgent", ia.name());
+        assertEquals("an agentic agent", ia.description());
+        assertEquals("myOutput", ia.outputKey());
+        assertTrue(ia.async());
     }
 
     // =========================================================================
@@ -921,16 +1042,9 @@ class CommonAgentCreatorTest {
     // =========================================================================
     // HUMAN_IN_THE_LOOP topology
     // =========================================================================
-    @SuppressWarnings("unchecked")
     @Test
-    void create_humanInTheLoopTopology_withSupplierProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_withStaticAskUserMethod_buildsProxy() {
         Instance<Object> lookup = prepareLookups();
-        java.util.function.Supplier<String> supplier = () -> "human response";
-        Instance<java.util.function.Supplier> supplierInstance = mock(Instance.class);
-        when(lookup.select(java.util.function.Supplier.class, NamedLiteral.of("myProvider")))
-                .thenReturn(supplierInstance);
-        when(supplierInstance.isResolvable()).thenReturn(true);
-        when(supplierInstance.get()).thenReturn(supplier);
 
         HumanInTheLoopAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgent.class);
 
@@ -938,44 +1052,103 @@ class CommonAgentCreatorTest {
         assertInstanceOf(InternalAgent.class, agent);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void create_humanInTheLoopTopology_withFunctionProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_responseProvider_invokesStaticMethod() {
         Instance<Object> lookup = prepareLookups();
-        java.util.function.Function<AgenticScope, String> fn = scope -> "human response";
-        Instance<java.util.function.Function> functionInstance = mock(Instance.class);
-        when(lookup.select(java.util.function.Function.class, NamedLiteral.of("myProvider")))
-                .thenReturn(functionInstance);
-        when(functionInstance.isResolvable()).thenReturn(true);
-        when(functionInstance.get()).thenReturn(fn);
-
         HumanInTheLoopAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgent.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
 
-        assertNotNull(agent);
-        assertInstanceOf(InternalAgent.class, agent);
-        // Confirm the Function was actually retrieved from CDI and wired, not silently skipped.
-        verify(functionInstance).get();
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("approved", result);
     }
 
     @Test
-    void create_humanInTheLoopTopology_withNoProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_namedMethod_responseProvider_invokesCorrectMethod() {
         Instance<Object> lookup = prepareLookups();
-        HumanInTheLoopAgentNoProvider agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class);
+        HumanInTheLoopNamedMethod agent = CommonAgentCreator.create(lookup, HumanInTheLoopNamedMethod.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
+
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("named-response", result);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_markerInterface_responseProvider_invokesStaticMethod() {
+        Instance<Object> lookup = prepareLookups();
+        HumanInTheLoopMarkerAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
+
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("approved-by-marker", result);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_withNoProvider_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class));
+        assertTrue(ex.getMessage().contains("must declare a static String(AgenticScope) method"));
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_markerInterface_buildsProxy() {
+        Instance<Object> lookup = prepareLookups();
+        HumanInTheLoopMarkerAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+        InternalAgent ia = (InternalAgent) agent;
+        assertEquals("human-approval-agent", ia.name());
+        assertEquals("Asks human for approval", ia.description());
+        assertEquals("approvalDecision", ia.outputKey());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void toAgentExecutor_humanInTheLoopProxy_returnsAgentExecutor() {
+    void toAgentExecutor_humanInTheLoopMarkerInterface_returnsAgentExecutor() {
         Instance<Object> lookup = prepareLookups();
-        HumanInTheLoopAgentNoProvider proxy = CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class);
+        HumanInTheLoopMarkerAgent proxy = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
         assertInstanceOf(InternalAgent.class, proxy);
 
         Object result = CommonAgentCreator.toAgentExecutor(proxy);
 
         assertInstanceOf(AgentExecutor.class, result);
+        assertEquals("human-approval-agent", ((InternalAgent) result).name());
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_namedAskUser_buildsProxy() {
+        Instance<Object> lookup = prepareLookups();
+
+        HumanInTheLoopNamedMethod agent = CommonAgentCreator.create(lookup, HumanInTheLoopNamedMethod.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_badName_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> CommonAgentCreator.create(lookup, HumanInTheLoopBadName.class));
+        assertTrue(ex.getMessage().contains("nonExistent"));
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_ambiguous_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> CommonAgentCreator.create(lookup, HumanInTheLoopAmbiguous.class));
+        assertTrue(ex.getMessage().contains("askUser"));
     }
 
     // =========================================================================

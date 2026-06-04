@@ -8,8 +8,8 @@ import dev.langchain4j.agentic.agent.AgentBuilder;
 import dev.langchain4j.agentic.declarative.PlannerSupplier;
 import dev.langchain4j.agentic.internal.AgentExecutor;
 import dev.langchain4j.agentic.internal.AgentInvoker;
-import dev.langchain4j.agentic.internal.AgentSpecsProvider;
 import dev.langchain4j.agentic.internal.AgentUtil;
+import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.agentic.internal.McpService;
 import dev.langchain4j.agentic.internal.NonAiAgentInstance;
@@ -52,6 +52,7 @@ import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.CDI;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,9 +63,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -138,15 +137,36 @@ public class CommonAgentCreator {
 
         Method entryMethod = findEntryMethod(interfaceClass);
         if (entryMethod != null && entryMethod.isAnnotationPresent(Agent.class)) {
-            return AgenticServices.createAgenticSystem(interfaceClass, chatModel, ctx -> {
-                var builder = ctx.agentBuilder();
-                if (streamingChatModel != null) {
-                    builder.streamingChatModel(streamingChatModel);
-                }
-                AgentComponents.resolve(ann, lookup, interfaceClass.getSimpleName())
-                        .applyTo(builder);
-                applyListener(builder::listener, ann.agentListenerName(), lookup);
-            });
+            return AgenticServices.createAgenticSystem(
+                    interfaceClass,
+                    chatModel,
+                    new AgenticServices.AgentConfigurator(
+                            ctx -> {
+                                var builder = ctx.agentBuilder();
+                                if (streamingChatModel != null) {
+                                    builder.streamingChatModel(streamingChatModel);
+                                }
+                                AgentComponents.resolve(ann, lookup, interfaceClass.getSimpleName())
+                                        .applyTo(builder);
+                                String resolvedName = CdiLookupHelper.resolveExpression(ann.name());
+                                if (hasText(resolvedName)) {
+                                    builder.name(resolvedName);
+                                }
+                                String resolvedDescription = CdiLookupHelper.resolveExpression(ann.description());
+                                if (hasText(resolvedDescription)) {
+                                    builder.description(resolvedDescription);
+                                }
+                                String resolvedOutputKey = CdiLookupHelper.resolveExpression(ann.outputKey());
+                                if (hasText(resolvedOutputKey)) {
+                                    builder.outputKey(resolvedOutputKey);
+                                }
+                                builder.async(ann.async());
+                                applyListener(builder::listener, ann.agentListenerName(), lookup);
+                            },
+                            agentClass -> {
+                                Instance<?> instance = lookup.select(agentClass);
+                                return instance.isResolvable() ? instance.get() : null;
+                            }));
         }
 
         X aiService = buildAiServiceForSimple(interfaceClass, ann, chatModel, streamingChatModel, lookup);
@@ -167,8 +187,18 @@ public class CommonAgentCreator {
                     default -> method.invoke(aiService, args);
                 };
             }
-            if (InternalAgent.class.isAssignableFrom(declaringClass)) {
+            // InternalAgent extends AgentInstance, so methods declared on AgentInstance (name,
+            // outputKey, etc.) have declaringClass == AgentInstance. The reversed direction
+            // "declaringClass.isAssignableFrom(InternalAgent.class)" returns true for both
+            // InternalAgent and its supertypes, routing the full internal-method hierarchy here.
+            if (declaringClass.isAssignableFrom(InternalAgent.class)) {
                 return method.invoke(agentInstance, args);
+            }
+            // Simple AI-service agents have no planner scope. When AgentExecutor calls
+            // withAgenticScope() via the Weld scope proxy (which now exposes AgenticScopeOwner),
+            // return this proxy unchanged so execution continues without binding a child scope.
+            if (declaringClass.isAssignableFrom(AgenticScopeOwner.class)) {
+                return method.getName().equals("withAgenticScope") ? proxy : null;
             }
             return method.invoke(aiService, args);
         };
@@ -368,24 +398,23 @@ public class CommonAgentCreator {
         return builder.build();
     }
 
-    @SuppressWarnings("unchecked")
     private static <X> X createForHumanInTheLoop(
             Instance<Object> lookup, Class<X> interfaceClass, RegisterHumanInTheLoopAgent ann) {
         HumanInTheLoop.HumanInTheLoopBuilder builder = AgenticServices.humanInTheLoopBuilder();
-        String providerName = CdiLookupHelper.resolveExpression(ann.responseProviderName());
-        if (hasText(providerName)) {
-            Object providerBean = resolveParameterizedBean(lookup, providerName, Function.class, Supplier.class);
-            if (providerBean instanceof Function fn) {
-                builder.responseProvider(fn);
-            } else if (providerBean instanceof Supplier sup) {
-                builder.responseProvider(sup);
-            } else {
-                LOGGER.log(
-                        Level.WARNING,
-                        "Response provider ''{0}'' is not resolvable as Function or Supplier, skipping",
-                        providerName);
+        String askUserMethodName = CdiLookupHelper.resolveExpression(ann.askUser());
+        Method askUserMethod = findAskUserMethodOnInterface(interfaceClass, askUserMethodName);
+        builder.responseProvider(scope -> {
+            try {
+                return askUserMethod.invoke(null, scope);
+            } catch (Exception e) {
+                Throwable cause = e instanceof java.lang.reflect.InvocationTargetException ite && ite.getCause() != null
+                        ? ite.getCause()
+                        : e;
+                if (cause instanceof RuntimeException re) throw re;
+                if (cause instanceof Error err) throw err;
+                throw new RuntimeException(cause);
             }
-        }
+        });
         String outputKey = CdiLookupHelper.resolveExpression(ann.outputKey());
         if (hasText(outputKey)) {
             builder.outputKey(outputKey);
@@ -416,7 +445,7 @@ public class CommonAgentCreator {
             if (HumanInTheLoopHolder.class.isAssignableFrom(declaringClass)) {
                 return spec;
             }
-            if (InternalAgent.class.isAssignableFrom(declaringClass)) {
+            if (declaringClass.isAssignableFrom(InternalAgent.class)) {
                 return method.invoke(agentInstance, args);
             }
             throw new UnsupportedOperationException(
@@ -539,11 +568,15 @@ public class CommonAgentCreator {
         static AgentComponents resolve(RegisterSimpleAgent ann, Instance<Object> lookup, String interfaceName) {
             ToolProvider toolProvider =
                     CdiLookupHelper.resolveSingle(lookup, ToolProvider.class, ann.toolProviderName());
-            List<Object> tools = ann.toolNames().length > 0
-                    ? CdiLookupHelper.resolveToolsByName(ann.toolNames(), lookup)
-                    : List.of();
+            List<Object> tools = new java.util.ArrayList<>();
+            if (ann.tools().length > 0) {
+                tools.addAll(CdiLookupHelper.resolveToolInstances(ann.tools(), lookup));
+            }
+            if (ann.toolNames().length > 0) {
+                tools.addAll(CdiLookupHelper.resolveToolsByName(ann.toolNames(), lookup));
+            }
             if (toolProvider != null && !tools.isEmpty()) {
-                LOGGER.warning("Both toolProviderName and toolNames[] are configured on "
+                LOGGER.warning("Both toolProviderName and tools/toolNames[] are configured on "
                         + interfaceName
                         + "; overlapping tool names will cause IllegalConfigurationException at runtime.");
             }
@@ -555,10 +588,10 @@ public class CommonAgentCreator {
             ContentRetriever contentRetriever = retrievalAugmentor == null
                     ? CdiLookupHelper.resolveSingle(lookup, ContentRetriever.class, ann.contentRetrieverName())
                     : null;
-            List<InputGuardrail> inputGuardrails =
-                    CdiLookupHelper.resolveGuardrailsByName(lookup, InputGuardrail.class, ann.inputGuardrailNames());
-            List<OutputGuardrail> outputGuardrails =
-                    CdiLookupHelper.resolveGuardrailsByName(lookup, OutputGuardrail.class, ann.outputGuardrailNames());
+            List<InputGuardrail> inputGuardrails = CdiLookupHelper.resolveInputGuardrails(
+                    lookup, ann.inputGuardrails(), ann.inputGuardrailNames(), interfaceName);
+            List<OutputGuardrail> outputGuardrails = CdiLookupHelper.resolveOutputGuardrails(
+                    lookup, ann.outputGuardrails(), ann.outputGuardrailNames(), interfaceName);
             return new AgentComponents(
                     toolProvider,
                     tools,
@@ -703,7 +736,7 @@ public class CommonAgentCreator {
     }
 
     /** Marker interface allowing {@link #toAgentExecutor} to retrieve the underlying {@link HumanInTheLoop} spec. */
-    interface HumanInTheLoopHolder {
+    public interface HumanInTheLoopHolder {
         HumanInTheLoop getHumanInTheLoop();
     }
 
@@ -811,6 +844,19 @@ public class CommonAgentCreator {
         AgentAnnotationMeta meta = AgentAnnotationMeta.detect(iface);
         if (meta == null) return null;
         Method entryMethod = findEntryMethod(iface);
+        // HITL agents may be marker interfaces with no abstract method (only static methods).
+        // Even when an entry method exists, execution must go through HumanInTheLoop.askUser
+        // on the spec rather than through the user's interface method on the CDI proxy.
+        if (bean instanceof HumanInTheLoopHolder holder) {
+            HumanInTheLoop spec = holder.getHumanInTheLoop();
+            String resolvedName = meta.name();
+            String name = hasText(resolvedName)
+                    ? resolvedName
+                    : (entryMethod != null ? entryMethod.getName() : iface.getSimpleName());
+            Method askUser = findAskUserMethod();
+            AgentInvoker invoker = AgentInvoker.fromSpec(spec, askUser, name);
+            return new AgentExecutor(invoker, spec);
+        }
         if (entryMethod == null) {
             LOGGER.log(
                     Level.WARNING,
@@ -821,11 +867,6 @@ public class CommonAgentCreator {
         }
         String resolvedName = meta.name();
         String name = hasText(resolvedName) ? resolvedName : entryMethod.getName();
-        if (bean instanceof HumanInTheLoopHolder holder) {
-            AgentSpecsProvider spec = holder.getHumanInTheLoop();
-            AgentInvoker invoker = AgentInvoker.fromSpec(spec, entryMethod, name);
-            return new AgentExecutor(invoker, ia);
-        }
         String desc = meta.description();
         String outputKey = meta.outputKey();
         boolean async = meta.async();
@@ -948,10 +989,53 @@ public class CommonAgentCreator {
         collectInterfaces(clazz.getSuperclass(), seen);
     }
 
+    private static Method findAskUserMethodOnInterface(Class<?> interfaceClass, String askUserMethodName) {
+        Predicate<Method> signature = m -> Modifier.isStatic(m.getModifiers())
+                && m.getParameterCount() == 1
+                && AgenticScope.class.isAssignableFrom(m.getParameterTypes()[0])
+                && String.class.equals(m.getReturnType());
+        if (hasText(askUserMethodName)) {
+            return Arrays.stream(interfaceClass.getDeclaredMethods())
+                    .filter(signature)
+                    .filter(m -> m.getName().equals(askUserMethodName))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "@RegisterHumanInTheLoopAgent interface " + interfaceClass.getName()
+                                    + " declares askUser=\"" + askUserMethodName
+                                    + "\" but no static String " + askUserMethodName
+                                    + "(AgenticScope) method was found"));
+        }
+        List<Method> candidates = Arrays.stream(interfaceClass.getDeclaredMethods())
+                .filter(signature)
+                .toList();
+        if (candidates.size() > 1) {
+            throw new IllegalArgumentException("@RegisterHumanInTheLoopAgent interface " + interfaceClass.getName()
+                    + " declares multiple static String(AgenticScope) methods ("
+                    + candidates.stream().map(Method::getName).collect(Collectors.joining(", "))
+                    + "); set the askUser attribute to select one");
+        }
+        if (candidates.isEmpty()) {
+            throw new IllegalArgumentException("@RegisterHumanInTheLoopAgent interface " + interfaceClass.getName()
+                    + " must declare a static String(AgenticScope) method to provide the human response");
+        }
+        return candidates.get(0);
+    }
+
+    private static Method findAskUserMethod() {
+        return AgentUtil.getAnnotatedMethodOnClass(HumanInTheLoop.class, Agent.class)
+                .orElseGet(() -> {
+                    try {
+                        return HumanInTheLoop.class.getMethod("askUser", AgenticScope.class);
+                    } catch (NoSuchMethodException e) {
+                        throw new IllegalStateException("HumanInTheLoop.askUser(AgenticScope) not found", e);
+                    }
+                });
+    }
+
     private static Method findEntryMethod(Class<?> agentInterface) {
         // Check methods declared directly on the interface first.
         List<Method> declared = Arrays.stream(agentInterface.getDeclaredMethods())
-                .filter(m -> !m.isDefault())
+                .filter(m -> !m.isDefault() && !Modifier.isStatic(m.getModifiers()))
                 .toList();
         if (declared.size() > 1) {
             throw new IllegalArgumentException("Agent interface "
@@ -966,7 +1050,7 @@ public class CommonAgentCreator {
         // interfaces. This handles the pattern where the entry method is declared in a shared base
         // interface extended by the agent interface.
         List<Method> inherited = Arrays.stream(agentInterface.getMethods())
-                .filter(m -> !m.isDefault() && !m.isSynthetic())
+                .filter(m -> !m.isDefault() && !m.isSynthetic() && !Modifier.isStatic(m.getModifiers()))
                 .distinct()
                 .toList();
         if (inherited.size() > 1) {

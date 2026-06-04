@@ -22,6 +22,7 @@
         <module>quarkus-car-booking</module>
         <module>car-booking-mcp</module>
         <module>liberty-car-booking-mcp</module>
+        <module>wildfly-car-booking</module>
     </modules>
 
     <dependencyManagement>

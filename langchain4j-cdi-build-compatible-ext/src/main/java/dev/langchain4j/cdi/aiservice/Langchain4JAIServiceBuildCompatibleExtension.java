@@ -1,5 +1,6 @@
 package dev.langchain4j.cdi.aiservice;
 
+import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.cdi.agent.AgentAnnotationMeta;
 import dev.langchain4j.cdi.agent.CommonAgentCreator;
@@ -202,9 +203,14 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
             Class<? extends java.lang.annotation.Annotation> scope =
                     meta != null ? meta.scope() : jakarta.enterprise.context.ApplicationScoped.class;
 
-            builder.createWith(AIAgentCreator.class)
+            SyntheticBeanBuilder<Object> agentBuilder = builder.createWith(AIAgentCreator.class)
                     .type(interfaceClass)
                     .type(InternalAgent.class)
+                    .type(AgenticScopeOwner.class);
+            if (meta != null && meta.annotationClass() == RegisterHumanInTheLoopAgent.class) {
+                agentBuilder.type(CommonAgentCreator.HumanInTheLoopHolder.class);
+            }
+            agentBuilder
                     .type(Object.class)
                     .scope(scope)
                     .name(beanName)

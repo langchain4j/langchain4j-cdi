@@ -100,6 +100,35 @@ public class AgentPortableExtensionTest {
         Assertions.assertEquals("namedAgent", namedBean.getName());
     }
 
+    @Test
+    void namedAgentBeanAlwaysHasNamedQualifier() {
+        // Same Liberty-container concern applies to named agents: @Named must be in getQualifiers(),
+        // not just returned by getName().
+        Set<Bean<?>> byName = beanManager.getBeans("namedAgent");
+        Assertions.assertFalse(byName.isEmpty(), "BeanManager.getBeans(name) must find named agent bean");
+
+        Bean<?> bean = byName.iterator().next();
+        boolean hasNamedQualifier = bean.getQualifiers().stream()
+                .anyMatch(q -> q instanceof Named named && named.value().equals("namedAgent"));
+        Assertions.assertTrue(hasNamedQualifier, "Named agent bean must have @Named(\"namedAgent\") qualifier");
+    }
+
+    @Test
+    void unnamedAgentBeanAlwaysHasNamedQualifier() {
+        // BeanManager.getBeans(String) on some CDI containers (e.g. Liberty) only indexes beans
+        // that carry an actual @Named qualifier — not beans that merely override getName(). Ensure
+        // LangChain4JAIAgentBean always adds @Named(getName()) so the BeanManager fallback in
+        // toAgentExecutor works on all containers.
+        String expectedName = CommonAgentCreator.AGENT_BEAN_NAME_PREFIX + MyDummyAgent.class.getName();
+        Set<Bean<?>> byName = beanManager.getBeans(expectedName);
+        Assertions.assertFalse(byName.isEmpty(), "BeanManager.getBeans(name) must find unnamed agent bean");
+
+        Bean<?> bean = byName.iterator().next();
+        boolean hasNamedQualifier = bean.getQualifiers().stream()
+                .anyMatch(q -> q instanceof Named named && named.value().equals(expectedName));
+        Assertions.assertTrue(hasNamedQualifier, "Unnamed agent bean must have @Named(getName()) qualifier");
+    }
+
     private void assertBeanScope(Class<?> beanType, Class<?> scopedClass) {
         Class<? extends Annotation> scope =
                 beanManager.getBeans(beanType).iterator().next().getScope();
