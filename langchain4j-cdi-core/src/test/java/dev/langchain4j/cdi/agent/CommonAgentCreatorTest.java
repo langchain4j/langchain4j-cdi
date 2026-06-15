@@ -5,13 +5,19 @@ import static org.mockito.Mockito.*;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.agentic.agent.AgentBuilder;
+import dev.langchain4j.agentic.agent.ErrorContext;
+import dev.langchain4j.agentic.agent.ErrorRecoveryResult;
+import dev.langchain4j.agentic.declarative.TypedKey;
 import dev.langchain4j.agentic.internal.AgentExecutor;
+import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.agentic.internal.McpClientBuilder;
 import dev.langchain4j.agentic.internal.McpService;
 import dev.langchain4j.agentic.observability.AgentListener;
 import dev.langchain4j.agentic.planner.Planner;
 import dev.langchain4j.agentic.scope.AgenticScope;
+import dev.langchain4j.agentic.scope.AgenticScopeAccess;
 import dev.langchain4j.agentic.workflow.HumanInTheLoop;
 import dev.langchain4j.cdi.agent.CommonAgentCreator.HumanInTheLoopHolder;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
@@ -42,10 +48,21 @@ import dev.langchain4j.service.V;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -347,6 +364,51 @@ class CommonAgentCreatorTest {
         String process(@V("input") String input);
     }
 
+    // --- Test interfaces for hook attribute wiring ---
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "myErrorHandler",
+            outputProviderName = "myOutputProvider",
+            beforeCallName = "myBeforeCall")
+    interface SequenceWithAllHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "wrongTypeBean",
+            outputProviderName = "wrongTypeBean",
+            beforeCallName = "wrongTypeBean")
+    interface SequenceWithWrongTypeHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "${myErrorHandler}",
+            outputProviderName = "${myOutputProvider}",
+            beforeCallName = "${myBeforeCall}")
+    interface SequenceWithExpressionHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSupervisorAgent(
+            chatModelName = "#default",
+            subAgentNames = {"workerAgent"},
+            errorHandlerName = "myErrorHandler",
+            outputProviderName = "myOutputProvider")
+    interface SupervisorWithHooks {
+
+        String process(@V("input") String input);
+    }
+
     // --- Test interfaces for PARALLEL_MAPPER topology ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterParallelMapperAgent(
@@ -475,6 +537,46 @@ class CommonAgentCreatorTest {
     interface McpClientAgentAsync {
 
         String process(@V("input") String input);
+    }
+
+    // --- TypedKey classes for resolveTypedKeyName tests ---
+    static class NamedTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return "myTypedKey";
+        }
+    }
+
+    static class BlankNameTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return "";
+        }
+    }
+
+    static class NullNameTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return null;
+        }
+    }
+
+    static class NoDefaultConstructorTypedKey implements TypedKey<String> {
+
+        @SuppressWarnings("unused")
+        private final String value;
+
+        NoDefaultConstructorTypedKey(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String name() {
+            return "unreachable";
+        }
     }
 
     // --- Missing annotation ---
@@ -1003,9 +1105,14 @@ class CommonAgentCreatorTest {
 
             McpClientAgentWithInputKeys agent = CommonAgentCreator.create(lookup, McpClientAgentWithInputKeys.class);
 
-            assertSame(mockProxy, agent);
+            assertNotNull(agent);
+            assertInstanceOf(InternalAgent.class, agent);
+            assertInstanceOf(AgenticScopeOwner.class, agent);
             verify(mcpBuilder).toolName("web_search");
             verify(mcpBuilder).inputKeys("query", "locale");
+
+            when(mockProxy.process("hello")).thenReturn("delegated");
+            assertEquals("delegated", agent.process("hello"));
         }
     }
 
@@ -1034,8 +1141,13 @@ class CommonAgentCreatorTest {
 
             McpClientAgentAsync agent = CommonAgentCreator.create(lookup, McpClientAgentAsync.class);
 
-            assertSame(mockProxy, agent);
+            assertNotNull(agent);
+            assertInstanceOf(InternalAgent.class, agent);
+            assertInstanceOf(AgenticScopeOwner.class, agent);
             verify(mcpBuilder).async(true);
+
+            when(mockProxy.process("test")).thenReturn("async-delegated");
+            assertEquals("async-delegated", agent.process("test"));
         }
     }
 
@@ -1105,6 +1217,7 @@ class CommonAgentCreatorTest {
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+        assertInstanceOf(AgenticScopeOwner.class, agent);
         InternalAgent ia = (InternalAgent) agent;
         assertEquals("human-approval-agent", ia.name());
         assertEquals("Asks human for approval", ia.description());
@@ -1131,6 +1244,7 @@ class CommonAgentCreatorTest {
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+        assertInstanceOf(AgenticScopeOwner.class, agent);
     }
 
     @Test
@@ -1445,6 +1559,306 @@ class CommonAgentCreatorTest {
         ExpressionNamedAgent agent = CommonAgentCreator.create(lookup, ExpressionNamedAgent.class);
         assertNotNull(agent);
         assertTrue(agent.toString().contains("Agent[myAgent]"));
+    }
+
+    // =========================================================================
+    // resolveTypedKeyName
+    // =========================================================================
+    @Test
+    void resolveTypedKeyName_withNamedKey_returnsName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NamedTypedKey.class);
+        assertEquals("myTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withBlankName_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(BlankNameTypedKey.class);
+        assertEquals("BlankNameTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withNullName_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NullNameTypedKey.class);
+        assertEquals("NullNameTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withNoDefaultConstructor_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NoDefaultConstructorTypedKey.class);
+        assertEquals("NoDefaultConstructorTypedKey", result);
+    }
+
+    // =========================================================================
+    // resolveOutputKey
+    // =========================================================================
+    @Test
+    void resolveOutputKey_typedKeyTakesPrecedence() {
+        String result = CommonAgentCreator.resolveOutputKey(NamedTypedKey.class, "");
+        assertEquals("myTypedKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_fallsBackToStringOutputKey() {
+        String result = CommonAgentCreator.resolveOutputKey(Agent.NoTypedKey.class, "stringKey");
+        assertEquals("stringKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_nullTypedKey_fallsBackToStringOutputKey() {
+        String result = CommonAgentCreator.resolveOutputKey(null, "stringKey");
+        assertEquals("stringKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_bothEmpty_returnsEmpty() {
+        String result = CommonAgentCreator.resolveOutputKey(Agent.NoTypedKey.class, "");
+        assertEquals("", result);
+    }
+
+    @Test
+    void resolveOutputKey_bothSet_warnsAndTypedKeyWins() {
+        Logger logger = Logger.getLogger(CommonAgentCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            String result = CommonAgentCreator.resolveOutputKey(NamedTypedKey.class, "stringKey");
+            assertEquals("myTypedKey", result);
+            assertEquals(1, records.size());
+            LogRecord record = records.get(0);
+            assertEquals(Level.WARNING, record.getLevel());
+            assertTrue(record.getMessage().contains("typedOutputKey takes precedence"));
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    // =========================================================================
+    // Hook attribute wiring (errorHandler, outputProvider, beforeCall)
+    // =========================================================================
+
+    @SuppressWarnings("unchecked")
+    private static Instance<Object> prepareLookupsWithHookBeans(String... agentNames) {
+        Instance<Object> lookup = prepareLookupsWithSubAgents(agentNames);
+
+        Function<ErrorContext, ErrorRecoveryResult> errorHandler = ctx -> ErrorRecoveryResult.throwException();
+        Instance<Object> ehInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myErrorHandler"))).thenReturn(ehInstance);
+        when(ehInstance.isResolvable()).thenReturn(true);
+        when(ehInstance.get()).thenReturn(errorHandler);
+
+        Function<AgenticScope, Object> outputProvider = scope -> "output";
+        Instance<Object> opInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myOutputProvider"))).thenReturn(opInstance);
+        when(opInstance.isResolvable()).thenReturn(true);
+        when(opInstance.get()).thenReturn(outputProvider);
+
+        Consumer<AgenticScope> beforeCall = scope -> {};
+        Instance<Object> bcInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myBeforeCall"))).thenReturn(bcInstance);
+        when(bcInstance.isResolvable()).thenReturn(true);
+        when(bcInstance.get()).thenReturn(beforeCall);
+
+        return lookup;
+    }
+
+    @Test
+    void create_sequenceTopology_wiresErrorHandler() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+    }
+
+    @Test
+    void create_sequenceTopology_wiresOutputProvider() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+    }
+
+    @Test
+    void create_sequenceTopology_wiresBeforeCall() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_sequenceTopology_logsWarningWhenHookBeansHaveWrongType() {
+        Instance<Object> lookup = prepareLookupsWithSubAgents("stepA", "stepB");
+        String wrongBean = "not-a-function";
+        Instance<Object> wrongInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("wrongTypeBean"))).thenReturn(wrongInstance);
+        when(wrongInstance.isResolvable()).thenReturn(true);
+        when(wrongInstance.get()).thenReturn(wrongBean);
+
+        Logger logger = Logger.getLogger(CommonAgentCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            SequenceWithWrongTypeHooks agent = CommonAgentCreator.create(lookup, SequenceWithWrongTypeHooks.class);
+
+            assertNotNull(agent);
+            assertEquals(3, records.size());
+            assertTrue(records.stream().allMatch(r -> r.getLevel() == Level.WARNING));
+            assertTrue(records.stream()
+                    .allMatch(r -> r.getParameters() != null && "wrongTypeBean".equals(r.getParameters()[1])));
+            assertTrue(records.stream().anyMatch(r -> "errorHandlerName".equals(r.getParameters()[0])));
+            assertTrue(records.stream().anyMatch(r -> "outputProviderName".equals(r.getParameters()[0])));
+            assertTrue(records.stream().anyMatch(r -> "beforeCallName".equals(r.getParameters()[0])));
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    @Test
+    void create_sequenceTopology_resolvesExpressionInHookNames() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithExpressionHooks agent = CommonAgentCreator.create(lookup, SequenceWithExpressionHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @Test
+    void create_sequenceTopology_noOpWhenHookNamesEmpty() {
+        Instance<Object> lookup = prepareLookupsWithSubAgents("stepA", "stepB");
+        SequenceOrchestrator agent = CommonAgentCreator.create(lookup, SequenceOrchestrator.class);
+
+        assertNotNull(agent);
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @Test
+    void create_supervisorTopology_wiresErrorHandlerAndOutputProvider() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("workerAgent");
+        SupervisorWithHooks agent = CommonAgentCreator.create(lookup, SupervisorWithHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    // =========================================================================
+    // Proxy factory methods (cdiAgentInstanceFactory / createAgentProxy)
+    // =========================================================================
+
+    private static final InvocationHandler NO_OP_HANDLER = (proxy, method, args) -> {
+        if ("toString".equals(method.getName())) return "test-proxy";
+        return null;
+    };
+
+    private static InternalAgent createStubInternalAgent() {
+        return (InternalAgent) java.lang.reflect.Proxy.newProxyInstance(
+                CommonAgentCreatorTest.class.getClassLoader(),
+                new Class<?>[] {InternalAgent.class, InvocationHandler.class},
+                NO_OP_HANDLER);
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_includesAllFrameworkInterfaces() {
+        Function<InternalAgent, Object> factory = CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+
+        Set<Class<?>> frameworkInterfaces = Set.of(AgentBuilder.interfacesToImplement(SimpleAgent.class));
+        for (Class<?> iface : frameworkInterfaces) {
+            assertTrue(iface.isInstance(proxy), "Proxy should implement " + iface.getName());
+        }
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_includesExtraInterfaces() {
+        Function<InternalAgent, Object> factory =
+                CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class, HumanInTheLoopHolder.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+
+        assertTrue(proxy instanceof HumanInTheLoopHolder, "Proxy should implement extra interface");
+        Set<Class<?>> frameworkInterfaces = Set.of(AgentBuilder.interfacesToImplement(SimpleAgent.class));
+        for (Class<?> iface : frameworkInterfaces) {
+            assertTrue(iface.isInstance(proxy), "Proxy should still implement " + iface.getName());
+        }
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_deduplicatesInterfaces() {
+        Function<InternalAgent, Object> factory =
+                CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class, InternalAgent.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+        assertNotNull(proxy);
+        long count = Arrays.stream(proxy.getClass().getInterfaces())
+                .filter(i -> i == InternalAgent.class)
+                .count();
+        assertEquals(1, count, "InternalAgent should appear only once even when passed as extra");
+    }
+
+    @Test
+    void createAgentProxy_includesFixedInterfaceSet() {
+        SimpleAgent proxy = CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER);
+
+        assertTrue(proxy instanceof SimpleAgent);
+        assertTrue(proxy instanceof InternalAgent);
+        assertTrue(proxy instanceof AgenticScopeOwner);
+        assertTrue(proxy instanceof AgenticScopeAccess);
+    }
+
+    @Test
+    void createAgentProxy_includesExtraInterfaces() {
+        SimpleAgent proxy =
+                CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER, HumanInTheLoopHolder.class);
+
+        assertTrue(proxy instanceof HumanInTheLoopHolder);
+        assertTrue(proxy instanceof InternalAgent);
+        assertTrue(proxy instanceof AgenticScopeOwner);
+        assertTrue(proxy instanceof AgenticScopeAccess);
+    }
+
+    @Test
+    void createAgentProxy_deduplicatesInterfaces() {
+        SimpleAgent proxy = CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER, InternalAgent.class);
+
+        assertNotNull(proxy);
+        long count = Arrays.stream(proxy.getClass().getInterfaces())
+                .filter(i -> i == InternalAgent.class)
+                .count();
+        assertEquals(1, count, "InternalAgent should appear only once even when passed as extra");
     }
 
     // =========================================================================
