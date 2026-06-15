@@ -38,6 +38,12 @@ public @interface RegisterLoopAgent {
 
     String agentListenerName() default "";
 
+    String errorHandlerName() default "";
+
+    String outputProviderName() default "";
+
+    String beforeCallName() default "";
+
     String[] subAgentNames() default {};
 
     int maxIterations() default 10;

@@ -46,6 +46,8 @@ public @interface RegisterA2AAgent {
 
     String agentListenerName() default "";
 
+    // TODO: add errorHandlerName when A2AAgentBuilder exposes errorHandler()
+
     /** URL of the A2A server. Required. */
     String a2aServerUrl();
 }

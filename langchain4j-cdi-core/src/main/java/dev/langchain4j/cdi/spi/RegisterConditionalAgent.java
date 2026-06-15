@@ -40,5 +40,11 @@ public @interface RegisterConditionalAgent {
 
     String agentListenerName() default "";
 
+    String errorHandlerName() default "";
+
+    String outputProviderName() default "";
+
+    String beforeCallName() default "";
+
     String[] subAgentNames() default {};
 }

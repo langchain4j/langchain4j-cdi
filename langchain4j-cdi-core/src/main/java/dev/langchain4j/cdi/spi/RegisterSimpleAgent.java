@@ -48,6 +48,8 @@ public @interface RegisterSimpleAgent {
 
     String agentListenerName() default "";
 
+    // TODO: add errorHandlerName when AgentBuilder exposes errorHandler()
+
     String chatModelName() default "#default";
 
     String streamingChatModelName() default "";

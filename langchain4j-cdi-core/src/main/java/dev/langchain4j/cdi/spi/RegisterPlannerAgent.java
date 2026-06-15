@@ -44,6 +44,12 @@ public @interface RegisterPlannerAgent {
 
     String agentListenerName() default "";
 
+    String errorHandlerName() default "";
+
+    String outputProviderName() default "";
+
+    String beforeCallName() default "";
+
     String[] subAgentNames() default {};
 
     String plannerName() default "";
