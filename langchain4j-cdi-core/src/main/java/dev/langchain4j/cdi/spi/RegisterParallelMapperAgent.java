@@ -44,6 +44,12 @@ public @interface RegisterParallelMapperAgent {
 
     String agentListenerName() default "";
 
+    String errorHandlerName() default "";
+
+    String outputProviderName() default "";
+
+    String beforeCallName() default "";
+
     String[] subAgentNames() default {};
 
     /** Key in {@link dev.langchain4j.agentic.scope.AgenticScope} that holds the list of items to map over. Required. */

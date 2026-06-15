@@ -40,6 +40,12 @@ public @interface RegisterSupervisorAgent {
 
     String agentListenerName() default "";
 
+    String errorHandlerName() default "";
+
+    String outputProviderName() default "";
+
+    // TODO: add beforeCallName when SupervisorAgentService exposes beforeCall()
+
     String[] subAgentNames() default {};
 
     String chatModelName() default "#default";

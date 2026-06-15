@@ -129,6 +129,58 @@ Resolution is performed by the `ExpressionResolver` SPI (`dev.langchain4j.cdi.sp
 - `RetrievalAugmentor` takes precedence over `ContentRetriever`
 - `ToolProvider` is preferred over the `tools` array
 
+### Registering Agents
+
+Agents are declared using one of 11 per-topology stereotype annotations. Each annotation shares a common set of attributes and may include topology-specific and hook attributes.
+
+**Common attributes (all 11 topologies):**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `scope` | `Class<? extends Annotation>` | `ApplicationScoped.class` | CDI scope |
+| `name` | `String` | `""` | Agent name |
+| `description` | `String` | `""` | Agent description |
+| `outputKey` | `String` | `""` | Key for storing output in `AgenticScope` |
+| `typedOutputKey` | `Class<? extends TypedKey<?>>` | `Agent.NoTypedKey.class` | Type-safe output key (takes precedence over `outputKey`) |
+| `optional` | `boolean` | `false` | Skip silently when arguments are missing |
+| `summarizedContext` | `String[]` | `{}` | Agent names whose context to summarize and inject |
+| `agentListenerName` | `String` | `""` | CDI bean name of an `AgentListener` |
+
+Note: `async` is available on Simple, A2A, MCP, and HITL topologies only.
+
+**Hook/callback attributes and topology availability:**
+
+| Attribute | Bean type | Topologies |
+|-----------|-----------|------------|
+| `errorHandlerName` | `Function<ErrorContext, ErrorRecoveryResult>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner, Supervisor |
+| `outputProviderName` | `Function<AgenticScope, Object>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner, Supervisor |
+| `beforeCallName` | `Consumer<AgenticScope>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner |
+
+These hooks resolve CDI beans by name. Due to Java type erasure on generics, beans are resolved as `Object` and cast — the bean must implement the correct functional interface. A warning is logged if the resolved bean has the wrong type.
+
+Topologies missing an attribute lack `output()` or `beforeCall()` on their framework builder (`AgentBuilder`, `A2AAgentBuilder`, `McpService`, `HumanInTheLoop`, `SupervisorAgentService`). TODO comments in `CommonAgentCreator` track these gaps for future framework releases.
+
+**Example — sequence agent with error handler and pre-execution hook:**
+
+```java
+@RegisterSequenceAgent(
+    name = "pipeline",
+    subAgentNames = {"step1", "step2", "step3"},
+    errorHandlerName = "pipelineErrorHandler",
+    beforeCallName = "pipelineSetup",
+    outputProviderName = "pipelineOutput"
+)
+public interface PipelineAgent {}
+```
+
+**Agent proxy creation:**
+
+`CommonAgentCreator` uses two proxy creation mechanisms:
+- **`cdiAgentInstanceFactory`**: For `@Agent`-annotated simple agents — passed as the 3rd argument to `AgentConfigurator`, delegates to `AgentBuilder.interfacesToImplement()` to include all framework-required interfaces
+- **`createAgentProxy`**: For non-`@Agent` simple agents and HITL — creates JDK proxies with `[userInterface, InternalAgent, AgenticScopeOwner, AgenticScopeAccess]` plus any extra interfaces
+
+Both mechanisms ensure all agent proxies implement `AgenticScopeAccess` (added in the 1.16.2 upgrade).
+
 ### Configuration-Based Plugin Creation
 
 Components can be created from configuration properties:

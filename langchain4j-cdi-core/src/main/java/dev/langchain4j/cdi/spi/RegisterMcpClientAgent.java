@@ -44,6 +44,8 @@ public @interface RegisterMcpClientAgent {
 
     String agentListenerName() default "";
 
+    // TODO: add errorHandlerName when McpService exposes errorHandler()
+
     /** CDI bean name of the MCP client object. Required. */
     String mcpClientName();
 

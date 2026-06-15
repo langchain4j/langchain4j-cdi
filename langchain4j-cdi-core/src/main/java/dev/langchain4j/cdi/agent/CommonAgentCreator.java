@@ -5,6 +5,8 @@ import static dev.langchain4j.cdi.aiservice.CdiLookupHelper.hasText;
 import dev.langchain4j.agentic.Agent;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.agent.AgentBuilder;
+import dev.langchain4j.agentic.agent.ErrorContext;
+import dev.langchain4j.agentic.agent.ErrorRecoveryResult;
 import dev.langchain4j.agentic.declarative.PlannerSupplier;
 import dev.langchain4j.agentic.declarative.TypedKey;
 import dev.langchain4j.agentic.internal.AgentExecutor;
@@ -20,6 +22,7 @@ import dev.langchain4j.agentic.planner.AgenticService;
 import dev.langchain4j.agentic.planner.Planner;
 import dev.langchain4j.agentic.planner.PlannerBasedService;
 import dev.langchain4j.agentic.scope.AgenticScope;
+import dev.langchain4j.agentic.scope.AgenticScopeAccess;
 import dev.langchain4j.agentic.supervisor.SupervisorAgentService;
 import dev.langchain4j.agentic.workflow.HumanInTheLoop;
 import dev.langchain4j.agentic.workflow.LoopAgentService;
@@ -54,6 +57,7 @@ import jakarta.enterprise.inject.spi.CDI;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,6 +68,7 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -86,6 +91,34 @@ public class CommonAgentCreator {
     public static final String AGENT_BEAN_NAME_PREFIX = "registeredAgent-";
 
     private static final String AGENT_TOSTRING_PREFIX = "Agent[";
+
+    static <X> Function<InternalAgent, Object> cdiAgentInstanceFactory(
+            Class<X> interfaceClass, Class<?>... extraInterfaces) {
+        return internalAgent -> {
+            InvocationHandler handler = (InvocationHandler) internalAgent;
+            Set<Class<?>> interfaces = new LinkedHashSet<>();
+            for (Class<?> iface : AgentBuilder.interfacesToImplement(interfaceClass)) {
+                interfaces.add(iface);
+            }
+            for (Class<?> extra : extraInterfaces) {
+                interfaces.add(extra);
+            }
+            return Proxy.newProxyInstance(interfaceClass.getClassLoader(), interfaces.toArray(Class[]::new), handler);
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    static <X> X createAgentProxy(Class<X> interfaceClass, InvocationHandler handler, Class<?>... extraInterfaces) {
+        Set<Class<?>> interfaces = new LinkedHashSet<>();
+        interfaces.add(interfaceClass);
+        interfaces.add(InternalAgent.class);
+        interfaces.add(AgenticScopeOwner.class);
+        interfaces.add(AgenticScopeAccess.class);
+        for (Class<?> extra : extraInterfaces) {
+            interfaces.add(extra);
+        }
+        return (X) Proxy.newProxyInstance(interfaceClass.getClassLoader(), interfaces.toArray(Class[]::new), handler);
+    }
 
     public static <X> X create(Instance<Object> lookup, Class<X> interfaceClass) {
         RegisterSimpleAgent simple = interfaceClass.getAnnotation(RegisterSimpleAgent.class);
@@ -174,7 +207,8 @@ public class CommonAgentCreator {
                             agentClass -> {
                                 Instance<?> instance = lookup.select(agentClass);
                                 return instance.isResolvable() ? instance.get() : null;
-                            }));
+                            },
+                            cdiAgentInstanceFactory(interfaceClass)));
         }
 
         X aiService = buildAiServiceForSimple(interfaceClass, ann, chatModel, streamingChatModel, lookup);
@@ -210,7 +244,7 @@ public class CommonAgentCreator {
             }
             return method.invoke(aiService, args);
         };
-        return AgentUtil.buildAgent(interfaceClass, handler);
+        return createAgentProxy(interfaceClass, handler);
     }
 
     private static <X> X buildAiServiceForSimple(
@@ -240,6 +274,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -260,6 +297,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -273,6 +313,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -293,6 +336,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -306,6 +352,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -342,6 +391,8 @@ public class CommonAgentCreator {
                 Agent.NoTypedKey.class,
                 subAgents);
         applyListener(builder::listener, ann.agentListenerName(), lookup);
+        applyErrorHandler(builder::errorHandler, ann.errorHandlerName(), lookup);
+        applyOutputProvider(builder::output, ann.outputProviderName(), lookup);
         return builder.build();
     }
 
@@ -361,6 +412,9 @@ public class CommonAgentCreator {
                 ann.typedOutputKey(),
                 ann.subAgentNames(),
                 ann.agentListenerName(),
+                ann.errorHandlerName(),
+                ann.outputProviderName(),
+                ann.beforeCallName(),
                 lookup);
     }
 
@@ -467,11 +521,7 @@ public class CommonAgentCreator {
             throw new UnsupportedOperationException(
                     "HUMAN_IN_THE_LOOP agents must be invoked through the agentic system");
         };
-        return (X) java.lang.reflect.Proxy.newProxyInstance(
-                interfaceClass.getClassLoader(),
-                new Class<?>[] {interfaceClass, InternalAgent.class, AgenticScopeOwner.class, HumanInTheLoopHolder.class
-                },
-                handler);
+        return createAgentProxy(interfaceClass, handler, HumanInTheLoopHolder.class);
     }
 
     /** Wraps a delegate agent proxy so the result implements {@link AgenticScopeOwner}. */
@@ -570,6 +620,9 @@ public class CommonAgentCreator {
             Class<? extends TypedKey<?>> typedOutputKey,
             String[] subAgentNames,
             String agentListenerName,
+            String errorHandlerName,
+            String outputProviderName,
+            String beforeCallName,
             Instance<Object> lookup) {
         List<Object> subAgents = resolveSubAgents(lookup, subAgentNames);
         configureCommonFields(
@@ -584,6 +637,9 @@ public class CommonAgentCreator {
                 typedOutputKey,
                 subAgents);
         applyListener(builder::listener, agentListenerName, lookup);
+        applyErrorHandler(builder::errorHandler, errorHandlerName, lookup);
+        applyOutputProvider(builder::output, outputProviderName, lookup);
+        applyBeforeCall(builder::beforeCall, beforeCallName, lookup);
         return builder.build();
     }
 
@@ -661,9 +717,77 @@ public class CommonAgentCreator {
 
     private static void applyListener(
             Consumer<AgentListener> setter, String agentListenerName, Instance<Object> lookup) {
+        if (!hasText(agentListenerName)) {
+            return;
+        }
         AgentListener listener = CdiLookupHelper.resolveSingle(lookup, AgentListener.class, agentListenerName);
         if (listener != null) {
             setter.accept(listener);
+        }
+    }
+
+    // TODO: outputProvider is only supported on AgenticService and SupervisorAgentService builders.
+    //  Simple, A2A, MCP, and HITL topologies lack output() on their builders (AgentBuilder, A2AAgentBuilder,
+    //  McpService, HumanInTheLoop). Add outputProviderName to those annotations when the framework exposes it.
+
+    // TODO: beforeCall is only supported on AgenticService builders (sequence, loop, parallel, parallelMapper,
+    //  conditional, planner). Supervisor, Simple, A2A, MCP, and HITL lack beforeCall() on their builders.
+    //  Add beforeCallName to those annotations when the framework exposes it.
+
+    private static void applyErrorHandler(
+            Consumer<Function<ErrorContext, ErrorRecoveryResult>> setter,
+            String errorHandlerName,
+            Instance<Object> lookup) {
+        applyHook(
+                setter,
+                errorHandlerName,
+                Function.class,
+                "errorHandlerName",
+                "Function<ErrorContext, ErrorRecoveryResult>",
+                lookup);
+    }
+
+    private static void applyOutputProvider(
+            Consumer<Function<AgenticScope, Object>> setter, String outputProviderName, Instance<Object> lookup) {
+        applyHook(
+                setter,
+                outputProviderName,
+                Function.class,
+                "outputProviderName",
+                "Function<AgenticScope, Object>",
+                lookup);
+    }
+
+    private static void applyBeforeCall(
+            Consumer<Consumer<AgenticScope>> setter, String beforeCallName, Instance<Object> lookup) {
+        applyHook(setter, beforeCallName, Consumer.class, "beforeCallName", "Consumer<AgenticScope>", lookup);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void applyHook(
+            Consumer<T> setter,
+            String beanName,
+            Class<? super T> expectedRawType,
+            String hookLabel,
+            String expectedSignature,
+            Instance<Object> lookup) {
+        if (!hasText(beanName)) {
+            return;
+        }
+        Object bean = CdiLookupHelper.resolveSingle(lookup, Object.class, beanName);
+        if (expectedRawType.isInstance(bean)) {
+            T raw = (T) bean;
+            setter.accept(raw);
+        } else if (bean != null) {
+            LOGGER.log(
+                    Level.WARNING,
+                    "{0} ''{1}'' resolved to a bean of type {2} which is not a {3}; ignoring",
+                    new Object[] {
+                        hookLabel,
+                        CdiLookupHelper.resolveExpression(beanName),
+                        bean.getClass().getName(),
+                        expectedSignature
+                    });
         }
     }
 

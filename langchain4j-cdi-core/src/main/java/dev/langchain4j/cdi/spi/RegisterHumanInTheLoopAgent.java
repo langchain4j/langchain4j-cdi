@@ -43,6 +43,8 @@ public @interface RegisterHumanInTheLoopAgent {
 
     String agentListenerName() default "";
 
+    // TODO: add errorHandlerName when HumanInTheLoop exposes errorHandler()
+
     /**
      * Name of a static method on the annotated interface that provides the human response. The method must accept a
      * single {@code AgenticScope} parameter and return {@code String}. When empty, the framework selects the only
