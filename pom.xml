@@ -68,7 +68,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputTimestamp>2026-06-05T12:39:44Z</project.build.outputTimestamp>
 
-        <dev.langchain4j.version>1.16.2</dev.langchain4j.version>
+        <dev.langchain4j.version>1.16.3</dev.langchain4j.version>
         <dev.langchain4j.agentic.version>1.16.2-beta26</dev.langchain4j.agentic.version>
         <dev.langchain4j.community.version>1.16.0-beta26</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
