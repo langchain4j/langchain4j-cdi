@@ -5,13 +5,21 @@ import static org.mockito.Mockito.*;
 
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.agentic.agent.AgentBuilder;
+import dev.langchain4j.agentic.agent.ErrorContext;
+import dev.langchain4j.agentic.agent.ErrorRecoveryResult;
+import dev.langchain4j.agentic.declarative.TypedKey;
 import dev.langchain4j.agentic.internal.AgentExecutor;
+import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.agentic.internal.McpClientBuilder;
 import dev.langchain4j.agentic.internal.McpService;
 import dev.langchain4j.agentic.observability.AgentListener;
 import dev.langchain4j.agentic.planner.Planner;
 import dev.langchain4j.agentic.scope.AgenticScope;
+import dev.langchain4j.agentic.scope.AgenticScopeAccess;
+import dev.langchain4j.agentic.workflow.HumanInTheLoop;
+import dev.langchain4j.cdi.agent.CommonAgentCreator.HumanInTheLoopHolder;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
@@ -40,10 +48,21 @@ import dev.langchain4j.service.V;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -113,10 +132,38 @@ class CommonAgentCreatorTest {
         String chat(@V("question") String question);
     }
 
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(chatModelName = "#default", outputKey = "myKey")
+    interface AgentWithOutputKey {
+
+        String chat(@V("question") String question);
+    }
+
     // --- Test interface for SIMPLE topology (@Agent path) ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterSimpleAgent(chatModelName = "#default")
     interface AgenticAgent {
+
+        @Agent(description = "test agent")
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(chatModelName = "#default", outputKey = "agentOutput")
+    interface AgenticAgentWithOutputKey {
+
+        @Agent(description = "test agent")
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSimpleAgent(
+            chatModelName = "#default",
+            name = "myAgenticAgent",
+            description = "an agentic agent",
+            outputKey = "myOutput",
+            async = true)
+    interface AgenticAgentWithMetadata {
 
         @Agent(description = "test agent")
         String process(@V("input") String input);
@@ -317,6 +364,51 @@ class CommonAgentCreatorTest {
         String process(@V("input") String input);
     }
 
+    // --- Test interfaces for hook attribute wiring ---
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "myErrorHandler",
+            outputProviderName = "myOutputProvider",
+            beforeCallName = "myBeforeCall")
+    interface SequenceWithAllHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "wrongTypeBean",
+            outputProviderName = "wrongTypeBean",
+            beforeCallName = "wrongTypeBean")
+    interface SequenceWithWrongTypeHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSequenceAgent(
+            subAgentNames = {"stepA", "stepB"},
+            errorHandlerName = "${myErrorHandler}",
+            outputProviderName = "${myOutputProvider}",
+            beforeCallName = "${myBeforeCall}")
+    interface SequenceWithExpressionHooks {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterSupervisorAgent(
+            chatModelName = "#default",
+            subAgentNames = {"workerAgent"},
+            errorHandlerName = "myErrorHandler",
+            outputProviderName = "myOutputProvider")
+    interface SupervisorWithHooks {
+
+        String process(@V("input") String input);
+    }
+
     // --- Test interfaces for PARALLEL_MAPPER topology ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterParallelMapperAgent(
@@ -338,8 +430,12 @@ class CommonAgentCreatorTest {
 
     // --- Test interfaces for HUMAN_IN_THE_LOOP topology ---
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
-    @RegisterHumanInTheLoopAgent(responseProviderName = "myProvider")
+    @RegisterHumanInTheLoopAgent
     interface HumanInTheLoopAgent {
+
+        static String askUser(AgenticScope scope) {
+            return "approved";
+        }
 
         String process(@V("input") String input);
     }
@@ -347,6 +443,59 @@ class CommonAgentCreatorTest {
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
     @RegisterHumanInTheLoopAgent(outputKey = "result", description = "Waits for human approval")
     interface HumanInTheLoopAgentNoProvider {
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(
+            name = "human-approval-agent",
+            description = "Asks human for approval",
+            outputKey = "approvalDecision")
+    interface HumanInTheLoopMarkerAgent {
+
+        static String askUser(AgenticScope scope) {
+            return "approved-by-marker";
+        }
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(askUser = "promptHuman")
+    interface HumanInTheLoopNamedMethod {
+
+        static String promptHuman(AgenticScope scope) {
+            return "named-response";
+        }
+
+        static String otherHelper(AgenticScope scope) {
+            return "other";
+        }
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent(askUser = "nonExistent")
+    interface HumanInTheLoopBadName {
+
+        static String askUser(AgenticScope scope) {
+            return "won't match";
+        }
+
+        String process(@V("input") String input);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterHumanInTheLoopAgent
+    interface HumanInTheLoopAmbiguous {
+
+        static String methodA(AgenticScope scope) {
+            return "a";
+        }
+
+        static String methodB(AgenticScope scope) {
+            return "b";
+        }
 
         String process(@V("input") String input);
     }
@@ -388,6 +537,46 @@ class CommonAgentCreatorTest {
     interface McpClientAgentAsync {
 
         String process(@V("input") String input);
+    }
+
+    // --- TypedKey classes for resolveTypedKeyName tests ---
+    static class NamedTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return "myTypedKey";
+        }
+    }
+
+    static class BlankNameTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return "";
+        }
+    }
+
+    static class NullNameTypedKey implements TypedKey<String> {
+
+        @Override
+        public String name() {
+            return null;
+        }
+    }
+
+    static class NoDefaultConstructorTypedKey implements TypedKey<String> {
+
+        @SuppressWarnings("unused")
+        private final String value;
+
+        NoDefaultConstructorTypedKey(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String name() {
+            return "unreachable";
+        }
     }
 
     // --- Missing annotation ---
@@ -530,6 +719,16 @@ class CommonAgentCreatorTest {
         assertInstanceOf(InternalAgent.class, agent);
     }
 
+    @Test
+    void create_simpleTopology_noAgentAnnotation_propagatesOutputKey() {
+        Instance<Object> lookup = prepareLookups();
+        AgentWithOutputKey agent = CommonAgentCreator.create(lookup, AgentWithOutputKey.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        assertEquals("myKey", ((InternalAgent) agent).outputKey());
+    }
+
     // =========================================================================
     // SIMPLE topology -- @Agent path
     // =========================================================================
@@ -540,6 +739,30 @@ class CommonAgentCreatorTest {
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+    }
+
+    @Test
+    void create_simpleTopology_withAgentAnnotation_propagatesOutputKey() {
+        Instance<Object> lookup = prepareLookups();
+        AgenticAgentWithOutputKey agent = CommonAgentCreator.create(lookup, AgenticAgentWithOutputKey.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        assertEquals("agentOutput", ((InternalAgent) agent).outputKey());
+    }
+
+    @Test
+    void create_simpleTopology_withAgentAnnotation_honorsOutputKeyNameDescriptionAsync() {
+        Instance<Object> lookup = prepareLookups();
+        AgenticAgentWithMetadata agent = CommonAgentCreator.create(lookup, AgenticAgentWithMetadata.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        InternalAgent ia = (InternalAgent) agent;
+        assertEquals("myAgenticAgent", ia.name());
+        assertEquals("an agentic agent", ia.description());
+        assertEquals("myOutput", ia.outputKey());
+        assertTrue(ia.async());
     }
 
     // =========================================================================
@@ -882,9 +1105,14 @@ class CommonAgentCreatorTest {
 
             McpClientAgentWithInputKeys agent = CommonAgentCreator.create(lookup, McpClientAgentWithInputKeys.class);
 
-            assertSame(mockProxy, agent);
+            assertNotNull(agent);
+            assertInstanceOf(InternalAgent.class, agent);
+            assertInstanceOf(AgenticScopeOwner.class, agent);
             verify(mcpBuilder).toolName("web_search");
             verify(mcpBuilder).inputKeys("query", "locale");
+
+            when(mockProxy.process("hello")).thenReturn("delegated");
+            assertEquals("delegated", agent.process("hello"));
         }
     }
 
@@ -913,24 +1141,22 @@ class CommonAgentCreatorTest {
 
             McpClientAgentAsync agent = CommonAgentCreator.create(lookup, McpClientAgentAsync.class);
 
-            assertSame(mockProxy, agent);
+            assertNotNull(agent);
+            assertInstanceOf(InternalAgent.class, agent);
+            assertInstanceOf(AgenticScopeOwner.class, agent);
             verify(mcpBuilder).async(true);
+
+            when(mockProxy.process("test")).thenReturn("async-delegated");
+            assertEquals("async-delegated", agent.process("test"));
         }
     }
 
     // =========================================================================
     // HUMAN_IN_THE_LOOP topology
     // =========================================================================
-    @SuppressWarnings("unchecked")
     @Test
-    void create_humanInTheLoopTopology_withSupplierProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_withStaticAskUserMethod_buildsProxy() {
         Instance<Object> lookup = prepareLookups();
-        java.util.function.Supplier<String> supplier = () -> "human response";
-        Instance<java.util.function.Supplier> supplierInstance = mock(Instance.class);
-        when(lookup.select(java.util.function.Supplier.class, NamedLiteral.of("myProvider")))
-                .thenReturn(supplierInstance);
-        when(supplierInstance.isResolvable()).thenReturn(true);
-        when(supplierInstance.get()).thenReturn(supplier);
 
         HumanInTheLoopAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgent.class);
 
@@ -938,44 +1164,105 @@ class CommonAgentCreatorTest {
         assertInstanceOf(InternalAgent.class, agent);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void create_humanInTheLoopTopology_withFunctionProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_responseProvider_invokesStaticMethod() {
         Instance<Object> lookup = prepareLookups();
-        java.util.function.Function<AgenticScope, String> fn = scope -> "human response";
-        Instance<java.util.function.Function> functionInstance = mock(Instance.class);
-        when(lookup.select(java.util.function.Function.class, NamedLiteral.of("myProvider")))
-                .thenReturn(functionInstance);
-        when(functionInstance.isResolvable()).thenReturn(true);
-        when(functionInstance.get()).thenReturn(fn);
-
         HumanInTheLoopAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgent.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
 
-        assertNotNull(agent);
-        assertInstanceOf(InternalAgent.class, agent);
-        // Confirm the Function was actually retrieved from CDI and wired, not silently skipped.
-        verify(functionInstance).get();
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("approved", result);
     }
 
     @Test
-    void create_humanInTheLoopTopology_withNoProvider_buildsProxy() {
+    void create_humanInTheLoopTopology_namedMethod_responseProvider_invokesCorrectMethod() {
         Instance<Object> lookup = prepareLookups();
-        HumanInTheLoopAgentNoProvider agent = CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class);
+        HumanInTheLoopNamedMethod agent = CommonAgentCreator.create(lookup, HumanInTheLoopNamedMethod.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
+
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("named-response", result);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_markerInterface_responseProvider_invokesStaticMethod() {
+        Instance<Object> lookup = prepareLookups();
+        HumanInTheLoopMarkerAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
+        HumanInTheLoop spec = ((HumanInTheLoopHolder) agent).getHumanInTheLoop();
+        AgenticScope scope = mock(AgenticScope.class);
+
+        Object result = spec.responseProvider().apply(scope);
+
+        assertEquals("approved-by-marker", result);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_withNoProvider_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class));
+        assertTrue(ex.getMessage().contains("must declare a static String(AgenticScope) method"));
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_markerInterface_buildsProxy() {
+        Instance<Object> lookup = prepareLookups();
+        HumanInTheLoopMarkerAgent agent = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
 
         assertNotNull(agent);
         assertInstanceOf(InternalAgent.class, agent);
+        assertInstanceOf(AgenticScopeOwner.class, agent);
+        InternalAgent ia = (InternalAgent) agent;
+        assertEquals("human-approval-agent", ia.name());
+        assertEquals("Asks human for approval", ia.description());
+        assertEquals("approvalDecision", ia.outputKey());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
-    void toAgentExecutor_humanInTheLoopProxy_returnsAgentExecutor() {
+    void toAgentExecutor_humanInTheLoopMarkerInterface_returnsAgentExecutor() {
         Instance<Object> lookup = prepareLookups();
-        HumanInTheLoopAgentNoProvider proxy = CommonAgentCreator.create(lookup, HumanInTheLoopAgentNoProvider.class);
+        HumanInTheLoopMarkerAgent proxy = CommonAgentCreator.create(lookup, HumanInTheLoopMarkerAgent.class);
         assertInstanceOf(InternalAgent.class, proxy);
 
         Object result = CommonAgentCreator.toAgentExecutor(proxy);
 
         assertInstanceOf(AgentExecutor.class, result);
+        assertEquals("human-approval-agent", ((InternalAgent) result).name());
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_namedAskUser_buildsProxy() {
+        Instance<Object> lookup = prepareLookups();
+
+        HumanInTheLoopNamedMethod agent = CommonAgentCreator.create(lookup, HumanInTheLoopNamedMethod.class);
+
+        assertNotNull(agent);
+        assertInstanceOf(InternalAgent.class, agent);
+        assertInstanceOf(AgenticScopeOwner.class, agent);
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_badName_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> CommonAgentCreator.create(lookup, HumanInTheLoopBadName.class));
+        assertTrue(ex.getMessage().contains("nonExistent"));
+    }
+
+    @Test
+    void create_humanInTheLoopTopology_ambiguous_throws() {
+        Instance<Object> lookup = prepareLookups();
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> CommonAgentCreator.create(lookup, HumanInTheLoopAmbiguous.class));
+        assertTrue(ex.getMessage().contains("askUser"));
     }
 
     // =========================================================================
@@ -1272,6 +1559,306 @@ class CommonAgentCreatorTest {
         ExpressionNamedAgent agent = CommonAgentCreator.create(lookup, ExpressionNamedAgent.class);
         assertNotNull(agent);
         assertTrue(agent.toString().contains("Agent[myAgent]"));
+    }
+
+    // =========================================================================
+    // resolveTypedKeyName
+    // =========================================================================
+    @Test
+    void resolveTypedKeyName_withNamedKey_returnsName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NamedTypedKey.class);
+        assertEquals("myTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withBlankName_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(BlankNameTypedKey.class);
+        assertEquals("BlankNameTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withNullName_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NullNameTypedKey.class);
+        assertEquals("NullNameTypedKey", result);
+    }
+
+    @Test
+    void resolveTypedKeyName_withNoDefaultConstructor_fallsBackToSimpleName() {
+        String result = CommonAgentCreator.resolveTypedKeyName(NoDefaultConstructorTypedKey.class);
+        assertEquals("NoDefaultConstructorTypedKey", result);
+    }
+
+    // =========================================================================
+    // resolveOutputKey
+    // =========================================================================
+    @Test
+    void resolveOutputKey_typedKeyTakesPrecedence() {
+        String result = CommonAgentCreator.resolveOutputKey(NamedTypedKey.class, "");
+        assertEquals("myTypedKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_fallsBackToStringOutputKey() {
+        String result = CommonAgentCreator.resolveOutputKey(Agent.NoTypedKey.class, "stringKey");
+        assertEquals("stringKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_nullTypedKey_fallsBackToStringOutputKey() {
+        String result = CommonAgentCreator.resolveOutputKey(null, "stringKey");
+        assertEquals("stringKey", result);
+    }
+
+    @Test
+    void resolveOutputKey_bothEmpty_returnsEmpty() {
+        String result = CommonAgentCreator.resolveOutputKey(Agent.NoTypedKey.class, "");
+        assertEquals("", result);
+    }
+
+    @Test
+    void resolveOutputKey_bothSet_warnsAndTypedKeyWins() {
+        Logger logger = Logger.getLogger(CommonAgentCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            String result = CommonAgentCreator.resolveOutputKey(NamedTypedKey.class, "stringKey");
+            assertEquals("myTypedKey", result);
+            assertEquals(1, records.size());
+            LogRecord record = records.get(0);
+            assertEquals(Level.WARNING, record.getLevel());
+            assertTrue(record.getMessage().contains("typedOutputKey takes precedence"));
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    // =========================================================================
+    // Hook attribute wiring (errorHandler, outputProvider, beforeCall)
+    // =========================================================================
+
+    @SuppressWarnings("unchecked")
+    private static Instance<Object> prepareLookupsWithHookBeans(String... agentNames) {
+        Instance<Object> lookup = prepareLookupsWithSubAgents(agentNames);
+
+        Function<ErrorContext, ErrorRecoveryResult> errorHandler = ctx -> ErrorRecoveryResult.throwException();
+        Instance<Object> ehInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myErrorHandler"))).thenReturn(ehInstance);
+        when(ehInstance.isResolvable()).thenReturn(true);
+        when(ehInstance.get()).thenReturn(errorHandler);
+
+        Function<AgenticScope, Object> outputProvider = scope -> "output";
+        Instance<Object> opInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myOutputProvider"))).thenReturn(opInstance);
+        when(opInstance.isResolvable()).thenReturn(true);
+        when(opInstance.get()).thenReturn(outputProvider);
+
+        Consumer<AgenticScope> beforeCall = scope -> {};
+        Instance<Object> bcInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("myBeforeCall"))).thenReturn(bcInstance);
+        when(bcInstance.isResolvable()).thenReturn(true);
+        when(bcInstance.get()).thenReturn(beforeCall);
+
+        return lookup;
+    }
+
+    @Test
+    void create_sequenceTopology_wiresErrorHandler() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+    }
+
+    @Test
+    void create_sequenceTopology_wiresOutputProvider() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+    }
+
+    @Test
+    void create_sequenceTopology_wiresBeforeCall() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithAllHooks agent = CommonAgentCreator.create(lookup, SequenceWithAllHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_sequenceTopology_logsWarningWhenHookBeansHaveWrongType() {
+        Instance<Object> lookup = prepareLookupsWithSubAgents("stepA", "stepB");
+        String wrongBean = "not-a-function";
+        Instance<Object> wrongInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("wrongTypeBean"))).thenReturn(wrongInstance);
+        when(wrongInstance.isResolvable()).thenReturn(true);
+        when(wrongInstance.get()).thenReturn(wrongBean);
+
+        Logger logger = Logger.getLogger(CommonAgentCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            SequenceWithWrongTypeHooks agent = CommonAgentCreator.create(lookup, SequenceWithWrongTypeHooks.class);
+
+            assertNotNull(agent);
+            assertEquals(3, records.size());
+            assertTrue(records.stream().allMatch(r -> r.getLevel() == Level.WARNING));
+            assertTrue(records.stream()
+                    .allMatch(r -> r.getParameters() != null && "wrongTypeBean".equals(r.getParameters()[1])));
+            assertTrue(records.stream().anyMatch(r -> "errorHandlerName".equals(r.getParameters()[0])));
+            assertTrue(records.stream().anyMatch(r -> "outputProviderName".equals(r.getParameters()[0])));
+            assertTrue(records.stream().anyMatch(r -> "beforeCallName".equals(r.getParameters()[0])));
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    @Test
+    void create_sequenceTopology_resolvesExpressionInHookNames() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("stepA", "stepB");
+        SequenceWithExpressionHooks agent = CommonAgentCreator.create(lookup, SequenceWithExpressionHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @Test
+    void create_sequenceTopology_noOpWhenHookNamesEmpty() {
+        Instance<Object> lookup = prepareLookupsWithSubAgents("stepA", "stepB");
+        SequenceOrchestrator agent = CommonAgentCreator.create(lookup, SequenceOrchestrator.class);
+
+        assertNotNull(agent);
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    @Test
+    void create_supervisorTopology_wiresErrorHandlerAndOutputProvider() {
+        Instance<Object> lookup = prepareLookupsWithHookBeans("workerAgent");
+        SupervisorWithHooks agent = CommonAgentCreator.create(lookup, SupervisorWithHooks.class);
+
+        assertNotNull(agent);
+        verify(lookup).select(Object.class, NamedLiteral.of("myErrorHandler"));
+        verify(lookup).select(Object.class, NamedLiteral.of("myOutputProvider"));
+        verify(lookup, never()).select(Object.class, NamedLiteral.of("myBeforeCall"));
+    }
+
+    // =========================================================================
+    // Proxy factory methods (cdiAgentInstanceFactory / createAgentProxy)
+    // =========================================================================
+
+    private static final InvocationHandler NO_OP_HANDLER = (proxy, method, args) -> {
+        if ("toString".equals(method.getName())) return "test-proxy";
+        return null;
+    };
+
+    private static InternalAgent createStubInternalAgent() {
+        return (InternalAgent) java.lang.reflect.Proxy.newProxyInstance(
+                CommonAgentCreatorTest.class.getClassLoader(),
+                new Class<?>[] {InternalAgent.class, InvocationHandler.class},
+                NO_OP_HANDLER);
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_includesAllFrameworkInterfaces() {
+        Function<InternalAgent, Object> factory = CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+
+        Set<Class<?>> frameworkInterfaces = Set.of(AgentBuilder.interfacesToImplement(SimpleAgent.class));
+        for (Class<?> iface : frameworkInterfaces) {
+            assertTrue(iface.isInstance(proxy), "Proxy should implement " + iface.getName());
+        }
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_includesExtraInterfaces() {
+        Function<InternalAgent, Object> factory =
+                CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class, HumanInTheLoopHolder.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+
+        assertTrue(proxy instanceof HumanInTheLoopHolder, "Proxy should implement extra interface");
+        Set<Class<?>> frameworkInterfaces = Set.of(AgentBuilder.interfacesToImplement(SimpleAgent.class));
+        for (Class<?> iface : frameworkInterfaces) {
+            assertTrue(iface.isInstance(proxy), "Proxy should still implement " + iface.getName());
+        }
+    }
+
+    @Test
+    void cdiAgentInstanceFactory_deduplicatesInterfaces() {
+        Function<InternalAgent, Object> factory =
+                CommonAgentCreator.cdiAgentInstanceFactory(SimpleAgent.class, InternalAgent.class);
+
+        Object proxy = factory.apply(createStubInternalAgent());
+        assertNotNull(proxy);
+        long count = Arrays.stream(proxy.getClass().getInterfaces())
+                .filter(i -> i == InternalAgent.class)
+                .count();
+        assertEquals(1, count, "InternalAgent should appear only once even when passed as extra");
+    }
+
+    @Test
+    void createAgentProxy_includesFixedInterfaceSet() {
+        SimpleAgent proxy = CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER);
+
+        assertTrue(proxy instanceof SimpleAgent);
+        assertTrue(proxy instanceof InternalAgent);
+        assertTrue(proxy instanceof AgenticScopeOwner);
+        assertTrue(proxy instanceof AgenticScopeAccess);
+    }
+
+    @Test
+    void createAgentProxy_includesExtraInterfaces() {
+        SimpleAgent proxy =
+                CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER, HumanInTheLoopHolder.class);
+
+        assertTrue(proxy instanceof HumanInTheLoopHolder);
+        assertTrue(proxy instanceof InternalAgent);
+        assertTrue(proxy instanceof AgenticScopeOwner);
+        assertTrue(proxy instanceof AgenticScopeAccess);
+    }
+
+    @Test
+    void createAgentProxy_deduplicatesInterfaces() {
+        SimpleAgent proxy = CommonAgentCreator.createAgentProxy(SimpleAgent.class, NO_OP_HANDLER, InternalAgent.class);
+
+        assertNotNull(proxy);
+        long count = Arrays.stream(proxy.getClass().getInterfaces())
+                .filter(i -> i == InternalAgent.class)
+                .count();
+        assertEquals(1, count, "InternalAgent should appear only once even when passed as extra");
     }
 
     // =========================================================================

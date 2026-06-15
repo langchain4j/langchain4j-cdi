@@ -1,6 +1,7 @@
 #!/bin/bash
 # Made using Junie
 # Common script for Ollama setup (local/docker/podman)
+MODEL=${OLLAMA_MODEL:-"llama3.1:latest"}
 
 # Function to check if a command exists
 command_exists() {
@@ -29,10 +30,10 @@ setup_ollama() {
             sleep 2
         fi
         
-        # Pull llama3.1 model if not already present
-        if ! ollama list | grep -q "llama3.1"; then
-            echo "Pulling llama3.1 model..."
-            ollama pull llama3.1:latest
+        # Pull $MODEL model if not already present
+        if ! ollama list | grep -q "${MODEL}"; then
+            echo "Pulling ${MODEL} model..."
+            ollama pull ${MODEL}
         fi
     else
         echo "Ollama is not installed locally. Checking for container engines..."
@@ -62,8 +63,8 @@ setup_ollama() {
         sleep 2
         
         # Pull llama3.1 model if needed
-        echo "Ensuring llama3.1 model is available..."
-        $CONTAINER_ENGINE exec ollama ollama pull llama3.1:latest
+        echo "Ensuring ${MODEL} model is available..."
+        $CONTAINER_ENGINE exec ollama ollama pull "${MODEL}"
     fi
 
     # Export variables to be used by the calling script

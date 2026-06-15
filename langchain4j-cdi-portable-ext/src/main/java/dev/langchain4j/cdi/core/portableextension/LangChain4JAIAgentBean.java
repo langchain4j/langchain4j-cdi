@@ -1,9 +1,12 @@
 package dev.langchain4j.cdi.core.portableextension;
 
+import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
+import dev.langchain4j.agentic.scope.AgenticScopeAccess;
 import dev.langchain4j.cdi.agent.AgentAnnotationMeta;
 import dev.langchain4j.cdi.agent.CommonAgentCreator;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
+import dev.langchain4j.cdi.spi.RegisterHumanInTheLoopAgent;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Any;
 import jakarta.enterprise.inject.Default;
@@ -71,6 +74,11 @@ public class LangChain4JAIAgentBean<T> implements Bean<T>, PassivationCapable {
         Set<Type> types = new HashSet<>();
         types.add(agentInterfaceClass);
         types.add(InternalAgent.class);
+        types.add(AgenticScopeOwner.class);
+        types.add(AgenticScopeAccess.class);
+        if (stereotypeAnnotationClass == RegisterHumanInTheLoopAgent.class) {
+            types.add(CommonAgentCreator.HumanInTheLoopHolder.class);
+        }
         types.add(Object.class);
         return Collections.unmodifiableSet(types);
     }
@@ -80,9 +88,7 @@ public class LangChain4JAIAgentBean<T> implements Bean<T>, PassivationCapable {
         Set<Annotation> annotations = new HashSet<>();
         annotations.add(new AnnotationLiteral<Default>() {});
         annotations.add(new AnnotationLiteral<Any>() {});
-        if (agentName != null) {
-            annotations.add(NamedLiteral.of(agentName));
-        }
+        annotations.add(NamedLiteral.of(getName()));
         return Collections.unmodifiableSet(annotations);
     }
 

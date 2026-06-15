@@ -15,6 +15,7 @@ public class DefaultA2AAgentBuilder implements A2AAgentBuilder {
             String url,
             String outputKey,
             boolean async,
+            boolean optional,
             String agentListenerName,
             Instance<Object> lookup) {
         // Defensive: createForA2A already validates the URL before calling this builder,
