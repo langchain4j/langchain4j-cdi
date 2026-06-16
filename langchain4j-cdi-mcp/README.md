@@ -265,6 +265,34 @@ All types are from the `org.mcp_java.server` package.
 | **GlassFish** | `langchain4j-cdi-mcp-portable-ext` | Same portable extension |
 | **Liberty** | `langchain4j-cdi-mcp-portable-ext` | Same portable extension |
 
+### Open Liberty / WebSphere Liberty
+
+The MCP endpoint is a **JAX-RS resource** (`@Path("/mcp")`), not a servlet. On Liberty two extra steps are required beyond adding the dependencies — without them the `initialize` request returns **`404 - SRVE0190E: File not found: /mcp`**.
+
+> ⚠️ **Do not confuse this with Liberty's built-in `mcpServer-1.0` feature.** That feature is Liberty's own, unrelated MCP implementation. This module brings its own MCP server over JAX-RS, so `mcpServer-1.0` must **not** be enabled — it is neither used nor required here.
+
+**1. Enable the required features** in `server.xml` (`servlet` is pulled in transitively by `restfulWS`):
+
+```xml
+<featureManager>
+    <feature>restfulWS-3.1</feature> <!-- exposes the /mcp JAX-RS endpoint -->
+    <feature>jsonb-3.0</feature>     <!-- used to serialize MCP responses -->
+    <feature>cdi-4.0</feature>       <!-- bean discovery for the portable extension -->
+</featureManager>
+```
+
+**2. Provide a JAX-RS `Application`** in your application. Liberty does **not** scan `@Path` resources packaged inside `WEB-INF/lib` JARs (where `langchain4j-cdi-mcp-server` lives) unless the application declares an `Application` class, so you must add one:
+
+```java
+import jakarta.ws.rs.ApplicationPath;
+import jakarta.ws.rs.core.Application;
+
+@ApplicationPath("/")
+public class RestApplication extends Application {}
+```
+
+With the context root set to `/`, the endpoint is then reachable at `http://<host>:<port>/mcp`. Use a different `@ApplicationPath` (or context root) to relocate it.
+
 ---
 
 ## Module Structure
@@ -278,7 +306,8 @@ langchain4j-cdi-mcp/
     ├── ...-common/                           # Shared test beans and helpers
     ├── ...-quarkus/                          # Quarkus tests
     ├── ...-helidon/                          # Helidon tests
-    └── ...-wildfly/                          # WildFly Arquillian tests
+    ├── ...-wildfly/                          # WildFly Arquillian tests
+    └── ...-openliberty/                      # Open Liberty Arquillian tests
 ```
 
 ### Key Components
