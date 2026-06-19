@@ -11,9 +11,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-@Retention(RUNTIME)
-@Target(ElementType.TYPE)
-@Stereotype
 /**
  * Stereotype to register an interface as a LangChain4j AI Service.
  *
@@ -21,6 +18,9 @@ import java.lang.annotation.Target;
  * reference named CDI beans to wire the service: models, retrievers, tools, memories, etc. If a property name is blank,
  * the dependency is ignored. For chatModelName, "#default" means select the default bean.
  */
+@Retention(RUNTIME)
+@Target(ElementType.TYPE)
+@Stereotype
 public @interface RegisterAIService {
 
     Class<? extends Annotation> scope() default RequestScoped.class;

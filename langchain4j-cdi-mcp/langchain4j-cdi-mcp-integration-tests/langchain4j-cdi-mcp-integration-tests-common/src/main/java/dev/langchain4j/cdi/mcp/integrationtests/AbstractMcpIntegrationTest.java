@@ -103,7 +103,11 @@ public abstract class AbstractMcpIntegrationTest {
             List<ToolSpecification> tools1 = client.listTools();
             List<ToolSpecification> tools2 = client.listTools();
             assertThat(tools1).hasSizeGreaterThanOrEqualTo(2);
-            assertThat(tools2).hasSizeGreaterThanOrEqualTo(2);
+            assertThat(tools2)
+                    .hasSizeGreaterThanOrEqualTo(2)
+                    .extracting(ToolSpecification::name)
+                    .containsExactlyInAnyOrderElementsOf(
+                            tools1.stream().map(ToolSpecification::name).toList());
         }
     }
 

@@ -66,11 +66,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2026-05-19T12:22:35Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-06-15T14:39:30Z</project.build.outputTimestamp>
 
-        <dev.langchain4j.version>1.15.0</dev.langchain4j.version>
-        <dev.langchain4j.agentic.version>1.15.0-beta25</dev.langchain4j.agentic.version>
-        <dev.langchain4j.community.version>1.15.0-beta25</dev.langchain4j.community.version>
+        <dev.langchain4j.version>1.16.3</dev.langchain4j.version>
+        <dev.langchain4j.agentic.version>1.16.3-beta26</dev.langchain4j.agentic.version>
+        <dev.langchain4j.community.version>1.16.3-beta26</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
         <org.mcp-java.version>1.0.0-Beta1</org.mcp-java.version>
@@ -86,7 +86,7 @@
         <maven.compiler.testTarget>${maven.compiler.target}</maven.compiler.testTarget>
         <maven.compiler.testSource>${maven.compiler.source}</maven.compiler.testSource>
         <maven.compiler.release>17</maven.compiler.release>
-        <surefire-plugin.version>3.5.5</surefire-plugin.version>
+        <surefire-plugin.version>3.5.6</surefire-plugin.version>
         <compiler-plugin.version>3.14.0</compiler-plugin.version>
     </properties>
 
@@ -354,7 +354,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-report-plugin</artifactId>
-                    <version>3.5.5</version>
+                    <version>${surefire-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-deploy-plugin</artifactId>
@@ -382,7 +382,7 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.14</version>
+                    <version>0.8.15</version>
                     <configuration>
                         <propertyName>jacocoArgLine</propertyName>
                         <append>true</append>
@@ -413,7 +413,7 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.7.0</version>
+                <version>0.10.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
@@ -423,11 +423,11 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.6.0</version>
                 <configuration>
                     <java>
                         <palantirJavaFormat>
-                            <version>2.81.0</version>
+                            <version>2.93.0</version>
                             <style>PALANTIR</style>
                             <formatJavadoc>true</formatJavadoc>
                         </palantirJavaFormat>

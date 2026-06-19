@@ -2,6 +2,8 @@ package dev.langchain4j.cdi.spi;
 
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.agentic.declarative.TypedKey;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Stereotype;
 import java.lang.annotation.Annotation;
@@ -26,10 +28,27 @@ public @interface RegisterHumanInTheLoopAgent {
 
     String outputKey() default "";
 
+    Class<? extends TypedKey<?>> typedOutputKey() default Agent.NoTypedKey.class;
+
     boolean async() default false;
+
+    /**
+     * If true, the agent's execution will be silently skipped when any of its arguments is missing in the agentic
+     * scope, instead of making the agentic system's execution fail.
+     */
+    boolean optional() default false;
+
+    /** Names of other agents whose conversation context should be summarized and injected into this agent's prompt. */
+    String[] summarizedContext() default {};
 
     String agentListenerName() default "";
 
-    /** CDI bean name of a {@code Supplier<?>} or {@code Function<AgenticScope, ?>} that provides the human response. */
-    String responseProviderName() default "";
+    // TODO: add errorHandlerName when HumanInTheLoop exposes errorHandler()
+
+    /**
+     * Name of a static method on the annotated interface that provides the human response. The method must accept a
+     * single {@code AgenticScope} parameter and return {@code String}. When empty, the framework selects the only
+     * matching static method automatically.
+     */
+    String askUser() default "";
 }

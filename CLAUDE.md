@@ -83,6 +83,20 @@ mvn spotless:apply -pl '!examples/payara-car-booking'
 - Wires `a2aServerUrl`, `outputKey`, `async`, and `agentListenerName` for A2A agents
 - Requires `langchain4j-agentic-a2a` on the classpath for the A2A protocol implementation
 
+### MCP Server Module (langchain4j-cdi-mcp)
+
+A self-contained sub-tree that turns CDI beans into a **Model Context Protocol (MCP) server** (the inverse direction from `@RegisterMcpClientAgent`, which consumes external MCP servers). It exposes annotated bean methods as MCP **tools**, **prompts**, and **resources** over JSON-RPC 2.0 / Streamable HTTP at the `/mcp` endpoint. Built on the [MCP Java](https://github.com/mcp-java) project (`java-mcp-annotations`).
+
+**Versioning note:** This module tree uses a **separate groupId (`dev.langchain4j.cdi.mcp`) and version (independent of the main project version)** — do not assume it tracks the root POM version.
+
+- **langchain4j-cdi-mcp-server**: Core runtime — `McpEndpoint` (JAX-RS `/mcp` resource), tool/prompt/resource registries, `JsonSchemaGenerator` (Java signatures → JSON Schema), `McpSessionManager` (sessions, 30-min default expiry), `McpNotificationBroadcaster` (SSE notifications). The `transport` package implements MCP capabilities: progress, cancellation, roots, sampling, elicitation, resource subscriptions.
+- **langchain4j-cdi-mcp-portable-ext**: Discovers `@Tool`/`@Prompt`/`@Resource` beans at deployment time (WildFly, Payara, GlassFish, Liberty)
+- **langchain4j-cdi-mcp-build-compatible-ext**: Discovers them at build time (Quarkus, Helidon)
+- **langchain4j-cdi-mcp-integration-tests**: `...-common` (shared test beans/helpers), plus Quarkus, Helidon, WildFly, and OpenLiberty (Arquillian) suites
+- **langchain4j-cdi-mcp-example-helidon**: Standalone usage example
+
+Annotation API is from `org.mcp_java.annotations.*` (`@Tool`, `@ToolArg`, `@Prompt`, `@PromptArg`, `@Resource`). Methods may also take framework types from `org.mcp_java.server.*` (`McpLog`, `Progress`, `Cancellation`, `McpConnection`, `Roots`, `Sampling`, `Elicitation`) as parameters — these are injected at invocation time and excluded from the generated JSON Schema. See `langchain4j-cdi-mcp/README.md` for the full usage guide.
+
 ### MicroProfile Integration Modules (langchain4j-cdi-mp)
 
 **langchain4j-cdi-config**: MicroProfile Config integration
@@ -128,6 +142,58 @@ Resolution is performed by the `ExpressionResolver` SPI (`dev.langchain4j.cdi.sp
 **Component Priority:**
 - `RetrievalAugmentor` takes precedence over `ContentRetriever`
 - `ToolProvider` is preferred over the `tools` array
+
+### Registering Agents
+
+Agents are declared using one of 11 per-topology stereotype annotations. Each annotation shares a common set of attributes and may include topology-specific and hook attributes.
+
+**Common attributes (all 11 topologies):**
+
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `scope` | `Class<? extends Annotation>` | `ApplicationScoped.class` | CDI scope |
+| `name` | `String` | `""` | Agent name |
+| `description` | `String` | `""` | Agent description |
+| `outputKey` | `String` | `""` | Key for storing output in `AgenticScope` |
+| `typedOutputKey` | `Class<? extends TypedKey<?>>` | `Agent.NoTypedKey.class` | Type-safe output key (takes precedence over `outputKey`) |
+| `optional` | `boolean` | `false` | Skip silently when arguments are missing |
+| `summarizedContext` | `String[]` | `{}` | Agent names whose context to summarize and inject |
+| `agentListenerName` | `String` | `""` | CDI bean name of an `AgentListener` |
+
+Note: `async` is available on Simple, A2A, MCP, and HITL topologies only.
+
+**Hook/callback attributes and topology availability:**
+
+| Attribute | Bean type | Topologies |
+|-----------|-----------|------------|
+| `errorHandlerName` | `Function<ErrorContext, ErrorRecoveryResult>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner, Supervisor |
+| `outputProviderName` | `Function<AgenticScope, Object>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner, Supervisor |
+| `beforeCallName` | `Consumer<AgenticScope>` | Sequence, Loop, Parallel, ParallelMapper, Conditional, Planner |
+
+These hooks resolve CDI beans by name. Due to Java type erasure on generics, beans are resolved as `Object` and cast — the bean must implement the correct functional interface. A warning is logged if the resolved bean has the wrong type.
+
+Topologies missing an attribute lack `output()` or `beforeCall()` on their framework builder (`AgentBuilder`, `A2AAgentBuilder`, `McpService`, `HumanInTheLoop`, `SupervisorAgentService`). TODO comments in `CommonAgentCreator` track these gaps for future framework releases.
+
+**Example — sequence agent with error handler and pre-execution hook:**
+
+```java
+@RegisterSequenceAgent(
+    name = "pipeline",
+    subAgentNames = {"step1", "step2", "step3"},
+    errorHandlerName = "pipelineErrorHandler",
+    beforeCallName = "pipelineSetup",
+    outputProviderName = "pipelineOutput"
+)
+public interface PipelineAgent {}
+```
+
+**Agent proxy creation:**
+
+`CommonAgentCreator` uses two proxy creation mechanisms:
+- **`cdiAgentInstanceFactory`**: For `@Agent`-annotated simple agents — passed as the 3rd argument to `AgentConfigurator`, delegates to `AgentBuilder.interfacesToImplement()` to include all framework-required interfaces
+- **`createAgentProxy`**: For non-`@Agent` simple agents and HITL — creates JDK proxies with `[userInterface, InternalAgent, AgenticScopeOwner, AgenticScopeAccess]` plus any extra interfaces
+
+Both mechanisms ensure all agent proxies implement `AgenticScopeAccess` (added in the 1.16.2 upgrade).
 
 ### Configuration-Based Plugin Creation
 
@@ -187,7 +253,9 @@ All examples demonstrate a car booking application with chat, fraud detection, a
 **Other Examples:**
 - `examples/helidon-car-booking` and `examples/helidon-car-booking-portable-ext`
 - `examples/glassfish-car-booking`
-- `examples/liberty-car-booking`
+- `examples/wildfly-car-booking`
+- `examples/liberty-car-booking` and `examples/liberty-car-booking-mcp`
+- `examples/car-booking-mcp` (MCP server demo)
 - `examples/payara-car-booking` (currently broken - always exclude)
 
 ### Running Examples

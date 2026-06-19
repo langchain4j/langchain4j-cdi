@@ -1,0 +1,67 @@
+
+= wildfly-car-booking
+
+The `wildfly-car-booking` project is a Jakarta EE application demonstrating AI-powered car rental booking support
+using https://github.com/langchain4j/langchain4j-cdi[LangChain4j CDI] running on WildFly server.
+
+The chatbot acts as a customer support agent for "Miles of Smiles" car rental company, using:
+
+* *qwen3.5:4b model* for natural language processing served by Ollama
+* *RAG (Retrieval-Augmented Generation)* with in-memory embeddings for company documentation
+* *Tool calling* for booking management (lookup, cancellation, fraud detection)
+* *LangChain4j CDI* for declarative AI service declaration and integration with Jakarta EE
+* *Microprofile Config* for general AI, Memory, RAG and application configuration
+
+== Prerequisites
+
+* Java 21+
+* Maven 3.9+
+* https://ollama.ai[Ollama]
+
+== Run the demo
+
+[source,shell]
+----
+./runexample-wildfly.sh
+----
+
+The script starts Ollama, pulls the required model, builds the application and starts the WildFly server with the application deployed.
+
+Once WildFly is running, the application is available at http://localhost:8080/
+
+
+== Chat with the assistant
+
+The chatbot is available at http://localhost:8080/car-booking/chat and accepts questions related to car rental bookings, company policies and more.
+
+Try asking:
+
+- "Hello, how can you help me?"
+- "What is your cancellation policy?"
+- "What is your list of cars?"
+- "My name is James Bond, please list my bookings"
+- "Is my booking 123-456 cancelable?"
+
+[source,shell]
+----
+curl "http://localhost:8080/car-booking/chat?question=Hello,+how+can+you+help+me?"
+curl "http://localhost:8080/car-booking/chat?question=What+is+your+cancellation+policy?"
+curl "http://localhost:8080/car-booking/chat?question=What+is+your+list+of+cars?"
+curl "http://localhost:8080/car-booking/chat?question=My+name+is+James+Bond,+please+list+my+bookings"
+curl "http://localhost:8080/car-booking/chat?question=Is+my+booking+123-456+cancelable?"
+----
+
+== Fraud detection
+
+The application includes a simple fraud detection tool that flags bookings as potentially fraudulent based on the customer's name and surname. You can test it by sending a request with the name "Emilio Largo", which is hardcoded to be flagged as fraudulent.
+
+[source,shell]
+----
+curl "http://localhost:8080/car-booking/fraud?name=Emilio&surname=Largo"
+curl "http://localhost:8080/car-booking/fraud?name=James&surname=Bond"
+----
+
+== Resources
+
+* https://wildfly.org[WildFly]
+* https://github.com/langchain4j/langchain4j-cdi[LangChain4j CDI]

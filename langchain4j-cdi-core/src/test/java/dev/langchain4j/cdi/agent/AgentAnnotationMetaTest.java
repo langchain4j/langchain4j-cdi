@@ -2,6 +2,8 @@ package dev.langchain4j.cdi.agent;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.agentic.declarative.TypedKey;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
 import dev.langchain4j.cdi.spi.RegisterHumanInTheLoopAgent;
@@ -68,6 +70,32 @@ class AgentAnnotationMetaTest {
 
     @RegisterHumanInTheLoopAgent(name = "hitl", description = "hitl desc", outputKey = "hitlOut", async = true)
     interface HumanInTheLoopInterface {}
+
+    @RegisterSimpleAgent(
+            name = "optSimple",
+            description = "optional simple",
+            optional = true,
+            summarizedContext = {"agentA", "agentB"})
+    interface OptionalSimpleInterface {}
+
+    @RegisterSequenceAgent(
+            name = "optSeq",
+            optional = true,
+            summarizedContext = {"writer"})
+    interface OptionalSequenceInterface {}
+
+    static class ResultKey implements TypedKey<String> {
+        @Override
+        public String name() {
+            return "typedResult";
+        }
+    }
+
+    @RegisterSimpleAgent(name = "typedSimple", description = "typed simple", typedOutputKey = ResultKey.class)
+    interface TypedSimpleInterface {}
+
+    @RegisterSequenceAgent(name = "typedSeq", typedOutputKey = ResultKey.class)
+    interface TypedSequenceInterface {}
 
     interface PlainInterface {}
 
@@ -230,6 +258,63 @@ class AgentAnnotationMetaTest {
     }
 
     // =========================================================================
+    // typedOutputKey
+    // =========================================================================
+
+    @Test
+    void detect_typedOutputKey_extractsClass() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(TypedSimpleInterface.class);
+
+        assertNotNull(meta);
+        assertEquals(ResultKey.class, meta.rawTypedOutputKey());
+        assertTrue(meta.hasTypedOutputKey());
+    }
+
+    @Test
+    void detect_typedOutputKey_composedAgent() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(TypedSequenceInterface.class);
+
+        assertNotNull(meta);
+        assertEquals(ResultKey.class, meta.rawTypedOutputKey());
+        assertTrue(meta.hasTypedOutputKey());
+    }
+
+    @Test
+    void detect_defaultTypedOutputKey_isNoTypedKey() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(SimpleInterface.class);
+
+        assertNotNull(meta);
+        assertEquals(Agent.NoTypedKey.class, meta.rawTypedOutputKey());
+        assertFalse(meta.hasTypedOutputKey());
+    }
+
+    @Test
+    void detect_allDefaultAnnotations_haveNoTypedOutputKey() {
+        assertAll(
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(SimpleInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(SequenceInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(LoopInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(ParallelInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(AgentAnnotationMeta.detect(ParallelMapperInterface.class)
+                        .hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(ConditionalInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(SupervisorInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(PlannerInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(AgentAnnotationMeta.detect(A2AInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(McpClientInterface.class).hasTypedOutputKey()),
+                () -> assertFalse(AgentAnnotationMeta.detect(HumanInTheLoopInterface.class)
+                        .hasTypedOutputKey()));
+    }
+
+    // =========================================================================
     // isAgentInterface()
     // =========================================================================
 
@@ -257,5 +342,72 @@ class AgentAnnotationMetaTest {
     @Test
     void isAgentInterface_annotatedClass_returnsFalse() {
         assertFalse(AgentAnnotationMeta.isAgentInterface(Object.class));
+    }
+
+    // =========================================================================
+    // optional() and summarizedContext()
+    // =========================================================================
+
+    @Test
+    void detect_simpleAgent_defaultOptionalIsFalse() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(SimpleInterface.class);
+
+        assertNotNull(meta);
+        assertFalse(meta.optional());
+        assertArrayEquals(new String[0], meta.summarizedContext());
+    }
+
+    @Test
+    void detect_optionalSimple_setsOptionalAndSummarizedContext() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(OptionalSimpleInterface.class);
+
+        assertNotNull(meta);
+        assertTrue(meta.optional());
+        assertArrayEquals(new String[] {"agentA", "agentB"}, meta.rawSummarizedContext());
+        assertArrayEquals(new String[] {"agentA", "agentB"}, meta.summarizedContext());
+    }
+
+    @Test
+    void detect_optionalSequence_setsOptionalAndSummarizedContext() {
+        AgentAnnotationMeta meta = AgentAnnotationMeta.detect(OptionalSequenceInterface.class);
+
+        assertNotNull(meta);
+        assertTrue(meta.optional());
+        assertArrayEquals(new String[] {"writer"}, meta.summarizedContext());
+    }
+
+    @Test
+    void detect_composedAgentDefault_optionalIsFalse() {
+        assertAll(
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(SequenceInterface.class).optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(LoopInterface.class).optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(ParallelInterface.class).optional()),
+                () -> assertFalse(AgentAnnotationMeta.detect(ParallelMapperInterface.class)
+                        .optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(ConditionalInterface.class).optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(SupervisorInterface.class).optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(PlannerInterface.class).optional()),
+                () -> assertFalse(AgentAnnotationMeta.detect(A2AInterface.class).optional()),
+                () -> assertFalse(
+                        AgentAnnotationMeta.detect(McpClientInterface.class).optional()),
+                () -> assertFalse(AgentAnnotationMeta.detect(HumanInTheLoopInterface.class)
+                        .optional()));
+    }
+
+    @Test
+    void detect_composedAgentDefault_summarizedContextIsEmpty() {
+        assertAll(
+                () -> assertEquals(
+                        0, AgentAnnotationMeta.detect(SequenceInterface.class).summarizedContext().length),
+                () -> assertEquals(
+                        0, AgentAnnotationMeta.detect(LoopInterface.class).summarizedContext().length),
+                () -> assertEquals(
+                        0, AgentAnnotationMeta.detect(A2AInterface.class).summarizedContext().length));
     }
 }

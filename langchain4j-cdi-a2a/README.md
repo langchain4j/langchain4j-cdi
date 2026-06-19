@@ -94,7 +94,7 @@ Bean name resolution follows the same conventions as `@RegisterAIService`:
 
 When `name` is set, the agent bean is automatically registered with that `@Named` qualifier, making it injectable by name without a separate `@Named` annotation on the interface.
 
-String attributes that support expression resolution: `name`, `description`, `outputKey`, `chatModelName`, `streamingChatModelName`, `toolProviderName`, `chatMemoryName`, `chatMemoryProviderName`, `contentRetrieverName`, `retrievalAugmentorName`, `exitConditionName`, `exitConditionDescription`, `plannerName`, `supervisorContext`, `agentListenerName`, `a2aServerUrl`, `mcpClientName`, `mcpToolName`, `responseProviderName`, and each element of `subAgentNames`.
+String attributes that support expression resolution: `name`, `description`, `outputKey`, `chatModelName`, `streamingChatModelName`, `toolProviderName`, `chatMemoryName`, `chatMemoryProviderName`, `contentRetrieverName`, `retrievalAugmentorName`, `exitConditionName`, `exitConditionDescription`, `plannerName`, `supervisorContext`, `agentListenerName`, `a2aServerUrl`, `mcpClientName`, `mcpToolName`, `askUser`, and each element of `subAgentNames`.
 
 ## Topologies
 
@@ -392,21 +392,47 @@ public interface WebSearcher {
 
 ### HUMAN_IN_THE_LOOP — `@RegisterHumanInTheLoopAgent`
 
-Pauses an agentic workflow to collect human input. A response provider bean supplies the human response.
+Pauses an agentic workflow to collect human input. The interface declares a static method that accepts a single `AgenticScope` parameter and returns a `String`. This method is called to obtain the human response.
 
 **Unique attributes:**
 
 | Attribute | Default | Description |
 |---|---|---|
-| `responseProviderName` | `""` | CDI bean name of a `Supplier<?>` or `Function<AgenticScope, ?>` that provides the human response |
+| `askUser` | `""` | Name of the static method that provides the human response. When empty, the framework selects the only matching static `String(AgenticScope)` method automatically |
 
 ```java
 @RegisterHumanInTheLoopAgent(
     name = "approval-gate",
-    responseProviderName = "humanApprovalProvider",
     outputKey = "approval")
 public interface ApprovalGate {
-    @Agent String requestApproval(@V("proposal") String proposal);
+
+    static String askUser(AgenticScope scope) {
+        // prompt the user and return their response
+        return "approved";
+    }
+
+    String requestApproval(@V("proposal") String proposal);
+}
+```
+
+When the interface declares multiple matching static methods, use `askUser` to select the right one:
+
+```java
+@RegisterHumanInTheLoopAgent(
+    name = "approval-gate",
+    askUser = "promptHuman",
+    outputKey = "approval")
+public interface ApprovalGate {
+
+    static String promptHuman(AgenticScope scope) {
+        return "approved";
+    }
+
+    static String formatMessage(AgenticScope scope) {
+        return scope.get("message").toString();
+    }
+
+    String requestApproval(@V("proposal") String proposal);
 }
 ```
 
