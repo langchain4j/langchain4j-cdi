@@ -1,4 +1,4 @@
-package dev.langchain4j.cdi.mcp.integrationtests;
+package dev.langchain4j.cdi.mcp.integrationtests.openliberty;
 
 import static dev.langchain4j.cdi.mcp.integrationtests.McpTestConstants.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -6,27 +6,104 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.cdi.mcp.integrationtests.ArquillianDeploymentHelper;
+import dev.langchain4j.cdi.mcp.integrationtests.ConfigResource;
+import dev.langchain4j.cdi.mcp.integrationtests.GreetingTool;
+import dev.langchain4j.cdi.mcp.integrationtests.JaxRsApplication;
+import dev.langchain4j.cdi.mcp.integrationtests.JdkHttpClientTransport;
+import dev.langchain4j.cdi.mcp.integrationtests.JsonRpcAssertions;
+import dev.langchain4j.cdi.mcp.integrationtests.McpHttpResponse;
+import dev.langchain4j.cdi.mcp.integrationtests.McpHttpTransport;
+import dev.langchain4j.cdi.mcp.integrationtests.McpTestConstants;
+import dev.langchain4j.cdi.mcp.integrationtests.McpTestRequests;
+import dev.langchain4j.cdi.mcp.integrationtests.SummarizePrompt;
+import dev.langchain4j.cdi.mcp.integrationtests.WeatherTool;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.service.tool.ToolExecutionResult;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonObject;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.junit5.ArquillianExtension;
+import org.jboss.arquillian.test.api.ArquillianResource;
+import org.jboss.shrinkwrap.api.ShrinkWrap;
+import org.jboss.shrinkwrap.api.asset.EmptyAsset;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
-@SuppressWarnings("java:S112")
-public abstract class AbstractMcpIntegrationTest {
+/**
+ * OpenLiberty Arquillian integration tests. Arquillian requires public test methods and does not support test method
+ * inheritance, so this class uses the shared helpers directly instead of extending {@code AbstractMcpIntegrationTest}.
+ */
+@SuppressWarnings({"resource", "java:S5786"})
+@ExtendWith(ArquillianExtension.class)
+public class McpOpenLibertyArquillianTest {
 
-    public static final String CONTENT = "content";
+    @SuppressWarnings("unused")
+    @Deployment
+    public static WebArchive createDeployment() throws IOException {
+        File mcpServerFile = ArquillianDeploymentHelper.findBuildFile(
+                "../../langchain4j-cdi-mcp-server/target", "langchain4j-cdi-mcp-server-");
+        File mcpPortableExtFile = ArquillianDeploymentHelper.findBuildFile(
+                "../../langchain4j-cdi-mcp-portable-ext/target", "langchain4j-cdi-mcp-portable-ext-");
 
-    protected abstract McpHttpTransport transport();
+        File[] deps = Maven.resolver()
+                .loadPomFromFile("pom.xml")
+                .importRuntimeDependencies()
+                .resolve(
+                        "dev.langchain4j.cdi.mcp:langchain4j-cdi-mcp-portable-ext",
+                        "dev.langchain4j:langchain4j-mcp",
+                        "org.assertj:assertj-core",
+                        "org.mcp-java:mcp-server-api")
+                .withTransitivity()
+                .asFile();
+
+        File[] fixedDeps = Stream.concat(
+                        Stream.of(mcpServerFile, mcpPortableExtFile),
+                        Stream.of(deps).filter(f -> !f.getName().startsWith("langchain4j-cdi-mcp-")))
+                .toArray(File[]::new);
+
+        return ShrinkWrap.create(WebArchive.class, "mcp-test.war")
+                .addClasses(
+                        McpOpenLibertyArquillianTest.class,
+                        WeatherTool.class,
+                        GreetingTool.class,
+                        ConfigResource.class,
+                        SummarizePrompt.class,
+                        JaxRsApplication.class,
+                        JdkHttpClientTransport.class,
+                        McpHttpTransport.class,
+                        McpHttpResponse.class,
+                        McpTestRequests.class,
+                        McpTestConstants.class,
+                        JsonRpcAssertions.class)
+                .addAsLibraries(fixedDeps)
+                .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
+                .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
+                .addAsResource("META-INF/services/jakarta.enterprise.inject.spi.Extension");
+    }
+
+    @SuppressWarnings("unused")
+    @ArquillianResource
+    private URL baseURL;
+
+    private McpHttpTransport transport() {
+        return new JdkHttpClientTransport(baseURL.toString());
+    }
 
     // --- Tools via MCP Client ---
 
     @Test
-    void shouldListToolsViaMcpClient() throws Exception {
+    public void shouldListToolsViaMcpClient() throws Exception {
         try (McpClient client = buildClient()) {
             List<ToolSpecification> tools = client.listTools();
             assertThat(tools)
@@ -37,7 +114,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldCallToolViaMcpClient() throws Exception {
+    public void shouldCallToolViaMcpClient() throws Exception {
         try (McpClient client = buildClient()) {
             ToolExecutionRequest request = ToolExecutionRequest.builder()
                     .name(GET_WEATHER)
@@ -49,7 +126,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldCallToolWithOptionalParamOmitted() throws Exception {
+    public void shouldCallToolWithOptionalParamOmitted() throws Exception {
         try (McpClient client = buildClient()) {
             ToolExecutionRequest request = ToolExecutionRequest.builder()
                     .name(GREET)
@@ -61,7 +138,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldCallToolWithOptionalParamProvided() throws Exception {
+    public void shouldCallToolWithOptionalParamProvided() throws Exception {
         try (McpClient client = buildClient()) {
             ToolExecutionRequest request = ToolExecutionRequest.builder()
                     .name(GREET)
@@ -73,7 +150,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldHaveOptionalParameterInToolSchema() throws Exception {
+    public void shouldHaveOptionalParameterInToolSchema() throws Exception {
         try (McpClient client = buildClient()) {
             List<ToolSpecification> tools = client.listTools();
             ToolSpecification greet = tools.stream()
@@ -87,7 +164,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldCallToolWithUnknownNameViaMcpClient() throws Exception {
+    public void shouldCallToolWithUnknownNameViaMcpClient() throws Exception {
         try (McpClient client = buildClient()) {
             ToolExecutionRequest request = ToolExecutionRequest.builder()
                     .name("nonExistentTool")
@@ -98,7 +175,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldListToolsMultipleTimes() throws Exception {
+    public void shouldListToolsMultipleTimes() throws Exception {
         try (McpClient client = buildClient()) {
             List<ToolSpecification> tools1 = client.listTools();
             List<ToolSpecification> tools2 = client.listTools();
@@ -114,41 +191,41 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Session & HTTP ---
 
     @Test
-    void shouldInitializeSessionSuccessfully() {
+    public void shouldInitializeSessionSuccessfully() {
         String sessionId = initializeSession();
         assertThat(sessionId).isNotNull().isNotBlank();
     }
 
     @Test
-    void shouldSendInitializedNotification() {
+    public void shouldSendInitializedNotification() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.initializedNotification());
         JsonRpcAssertions.assertNotificationAccepted(response);
     }
 
     @Test
-    void shouldHandlePing() {
+    public void shouldHandlePing() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.pingRequest(99));
         JsonRpcAssertions.assertJsonRpcSuccess(response, 99);
     }
 
     @Test
-    void shouldDeleteSession() {
+    public void shouldDeleteSession() {
         String sessionId = initializeSession();
         McpHttpResponse response = transport().delete("/mcp", Map.of(MCP_SESSION_ID, sessionId));
         assertThat(response.statusCode()).isEqualTo(200);
     }
 
     @Test
-    void shouldReturnCleanJsonForToolCall() {
+    public void shouldReturnCleanJsonForToolCall() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(
                 sessionId,
                 McpTestRequests.toolsCallRequest(10, GET_WEATHER, "{\"city\":\"Paris\",\"unit\":\"celsius\"}"));
 
         JsonObject result = JsonRpcAssertions.assertJsonRpcSuccess(response, 10);
-        JsonArray content = result.getJsonArray(CONTENT);
+        JsonArray content = result.getJsonArray("content");
         assertThat(content).isNotNull().isNotEmpty();
 
         JsonObject firstContent = content.getJsonObject(0);
@@ -157,7 +234,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldReturnErrorForUnknownMethod() {
+    public void shouldReturnErrorForUnknownMethod() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.unknownMethodRequest("5", "unknown/method"));
         JsonRpcAssertions.assertJsonRpcError(response, "5", -32601, "Unknown method");
@@ -166,7 +243,7 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Resources ---
 
     @Test
-    void shouldListResources() {
+    public void shouldListResources() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.resourcesListRequest(20));
 
@@ -184,7 +261,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldReadResource() {
+    public void shouldReadResource() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.resourcesReadRequest(21, CONFIG_APP));
 
@@ -196,7 +273,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldReturnErrorForUnknownResource() {
+    public void shouldReturnErrorForUnknownResource() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.resourcesReadRequest(22, "unknown://x"));
         JsonRpcAssertions.assertJsonRpcError(response, 22, -32602, "Resource not found");
@@ -205,7 +282,7 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Prompts ---
 
     @Test
-    void shouldListPrompts() {
+    public void shouldListPrompts() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.promptsListRequest(30));
 
@@ -219,7 +296,7 @@ public abstract class AbstractMcpIntegrationTest {
     }
 
     @Test
-    void shouldGetPrompt() {
+    public void shouldGetPrompt() {
         String sessionId = initializeSession();
         McpHttpResponse response =
                 postMcp(sessionId, McpTestRequests.promptsGetRequest(31, SUMMARIZE, "{\"text\":\"Hello world\"}"));
@@ -229,12 +306,12 @@ public abstract class AbstractMcpIntegrationTest {
         assertThat(messages).isNotNull().isNotEmpty();
 
         JsonObject firstMessage = messages.getJsonObject(0);
-        assertThat(firstMessage).containsKey(CONTENT);
-        assertThat(firstMessage.getJsonObject(CONTENT).getString("text")).contains("Hello world");
+        assertThat(firstMessage).containsKey("content");
+        assertThat(firstMessage.getJsonObject("content").getString("text")).contains("Hello world");
     }
 
     @Test
-    void shouldReturnErrorForUnknownPrompt() {
+    public void shouldReturnErrorForUnknownPrompt() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.promptsGetRequest(32, "nonexistent"));
         JsonRpcAssertions.assertJsonRpcError(response, 32, -32602, "Prompt not found");
@@ -243,14 +320,14 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Logging ---
 
     @Test
-    void shouldSetLogLevel() {
+    public void shouldSetLogLevel() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.loggingSetLevelRequest(40, "warning"));
         JsonRpcAssertions.assertJsonRpcSuccess(response, 40);
     }
 
     @Test
-    void shouldReturnErrorForInvalidLogLevel() {
+    public void shouldReturnErrorForInvalidLogLevel() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.loggingSetLevelRequest(41, "banana"));
         JsonRpcAssertions.assertJsonRpcError(response, 41, -32602, "Invalid log level");
@@ -259,14 +336,14 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Resource Subscriptions ---
 
     @Test
-    void shouldSubscribeToResource() {
+    public void shouldSubscribeToResource() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.resourcesSubscribeRequest(60, CONFIG_APP));
         JsonRpcAssertions.assertJsonRpcSuccess(response, 60);
     }
 
     @Test
-    void shouldUnsubscribeFromResource() {
+    public void shouldUnsubscribeFromResource() {
         String sessionId = initializeSession();
         postMcp(sessionId, McpTestRequests.resourcesSubscribeRequest(61, CONFIG_APP));
 
@@ -277,7 +354,7 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Resource Templates ---
 
     @Test
-    void shouldListResourceTemplates() {
+    public void shouldListResourceTemplates() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.resourcesTemplatesListRequest(63));
 
@@ -288,7 +365,7 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Completion ---
 
     @Test
-    void shouldReturnEmptyCompletionForUnknownRef() {
+    public void shouldReturnEmptyCompletionForUnknownRef() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(
                 sessionId, McpTestRequests.completionCompleteRequest(64, "ref/prompt", "nonexistent", "text", ""));
@@ -301,14 +378,14 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Notifications ---
 
     @Test
-    void shouldAcknowledgeCancellation() {
+    public void shouldAcknowledgeCancellation() {
         String sessionId = initializeSession();
         McpHttpResponse response = postMcp(sessionId, McpTestRequests.cancelledNotification("abc", "timeout"));
         JsonRpcAssertions.assertNotificationAccepted(response);
     }
 
     @Test
-    void shouldAcceptClientJsonRpcResponse() {
+    public void shouldAcceptClientJsonRpcResponse() {
         String sessionId = initializeSession();
         McpHttpResponse response =
                 postMcp(sessionId, McpTestRequests.clientJsonRpcResponse("server-999", "{\"roots\":[]}"));
@@ -318,7 +395,7 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Capabilities ---
 
     @Test
-    void shouldDeclareAllCapabilities() {
+    public void shouldDeclareAllCapabilities() {
         McpHttpResponse response = transport().post("/mcp", McpTestRequests.initializeRequest(50), Map.of());
 
         JsonObject result = JsonRpcAssertions.assertJsonRpcSuccess(response, 50);
@@ -338,14 +415,14 @@ public abstract class AbstractMcpIntegrationTest {
     // --- Negative session tests ---
 
     @Test
-    void shouldRejectRequestWithInvalidSessionId() {
+    public void shouldRejectRequestWithInvalidSessionId() {
         McpHttpResponse response = postMcp("bogus-session-id-12345", McpTestRequests.toolsListRequest(70));
         JsonRpcAssertions.assertJsonRpcError(response, 70, -32001, "Invalid or missing Mcp-Session-Id");
     }
 
     // --- Helpers ---
 
-    protected String initializeSession() {
+    private String initializeSession() {
         McpHttpResponse response = transport().post("/mcp", McpTestRequests.initializeRequest(1), Map.of());
         JsonRpcAssertions.assertJsonRpcSuccess(response, 1);
         String sessionId = response.header(MCP_SESSION_ID);
@@ -353,11 +430,11 @@ public abstract class AbstractMcpIntegrationTest {
         return sessionId;
     }
 
-    protected McpHttpResponse postMcp(String sessionId, String body) {
+    private McpHttpResponse postMcp(String sessionId, String body) {
         return transport().post("/mcp", body, Map.of(MCP_SESSION_ID, sessionId));
     }
 
-    protected McpClient buildClient() {
+    private McpClient buildClient() {
         return DefaultMcpClient.builder()
                 .transport(StreamableHttpMcpTransport.builder()
                         .url(transport().baseUrl() + "/mcp")

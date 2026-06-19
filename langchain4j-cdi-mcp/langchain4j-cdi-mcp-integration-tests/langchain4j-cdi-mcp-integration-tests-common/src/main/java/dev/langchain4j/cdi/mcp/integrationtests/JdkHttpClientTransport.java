@@ -1,7 +1,5 @@
-package dev.langchain4j.cdi.mcp.integrationtests.wildfly;
+package dev.langchain4j.cdi.mcp.integrationtests;
 
-import dev.langchain4j.cdi.mcp.integrationtests.McpHttpResponse;
-import dev.langchain4j.cdi.mcp.integrationtests.McpHttpTransport;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -11,11 +9,11 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
-class JdkHttpClientTransport implements McpHttpTransport {
+public class JdkHttpClientTransport implements McpHttpTransport {
 
     private final String baseUrl;
 
-    JdkHttpClientTransport(String baseUrl) {
+    public JdkHttpClientTransport(String baseUrl) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
     }
 
