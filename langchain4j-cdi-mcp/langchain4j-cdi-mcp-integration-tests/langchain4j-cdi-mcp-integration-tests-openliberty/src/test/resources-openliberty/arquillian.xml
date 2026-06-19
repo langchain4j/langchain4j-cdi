@@ -3,6 +3,13 @@
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
 
+    <!--
+        Ports 9080 (HTTP) and 9443 (HTTPS) must be free when these tests run.
+        The Liberty Arquillian managed adapter does not support dynamic port allocation;
+        the values here must match the httpPort/httpsPort in server.xml.
+        If tests fail with "Address already in use", check that no other Liberty instance
+        or service is occupying these ports.
+    -->
     <container qualifier="openliberty" default="true">
         <configuration>
             <property name="wlpHome">${liberty.home}</property>

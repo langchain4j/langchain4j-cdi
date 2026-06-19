@@ -6,8 +6,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.cdi.mcp.integrationtests.ArquillianDeploymentHelper;
 import dev.langchain4j.cdi.mcp.integrationtests.ConfigResource;
 import dev.langchain4j.cdi.mcp.integrationtests.GreetingTool;
+import dev.langchain4j.cdi.mcp.integrationtests.JaxRsApplication;
+import dev.langchain4j.cdi.mcp.integrationtests.JdkHttpClientTransport;
 import dev.langchain4j.cdi.mcp.integrationtests.JsonRpcAssertions;
 import dev.langchain4j.cdi.mcp.integrationtests.McpHttpResponse;
 import dev.langchain4j.cdi.mcp.integrationtests.McpHttpTransport;
@@ -24,14 +27,8 @@ import jakarta.json.JsonObject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.function.BiPredicate;
 import java.util.stream.Stream;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit5.ArquillianExtension;
@@ -47,22 +44,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
  * OpenLiberty Arquillian integration tests. Arquillian requires public test methods and does not support test method
  * inheritance, so this class uses the shared helpers directly instead of extending {@code AbstractMcpIntegrationTest}.
  */
-@SuppressWarnings({"OptionalGetWithoutIsPresent", "resource", "java:S5786"})
+@SuppressWarnings({"resource", "java:S5786"})
 @ExtendWith(ArquillianExtension.class)
 public class McpOpenLibertyArquillianTest {
 
     @SuppressWarnings("unused")
     @Deployment
     public static WebArchive createDeployment() throws IOException {
-        File mcpServerFile = findBuildFiles(
-                        new File("../../langchain4j-cdi-mcp-server/target").toPath(), "langchain4j-cdi-mcp-server-")
-                .get()
-                .toFile();
-        File mcpPortableExtFile = findBuildFiles(
-                        new File("../../langchain4j-cdi-mcp-portable-ext/target").toPath(),
-                        "langchain4j-cdi-mcp-portable-ext-")
-                .get()
-                .toFile();
+        File mcpServerFile = ArquillianDeploymentHelper.findBuildFile(
+                "../../langchain4j-cdi-mcp-server/target", "langchain4j-cdi-mcp-server-");
+        File mcpPortableExtFile = ArquillianDeploymentHelper.findBuildFile(
+                "../../langchain4j-cdi-mcp-portable-ext/target", "langchain4j-cdi-mcp-portable-ext-");
 
         File[] deps = Maven.resolver()
                 .loadPomFromFile("pom.xml")
@@ -98,18 +90,6 @@ public class McpOpenLibertyArquillianTest {
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
                 .addAsResource("META-INF/services/jakarta.enterprise.inject.spi.Extension");
-    }
-
-    private static Optional<Path> findBuildFiles(Path folder, String prefix) throws IOException {
-        return Files.find(
-                        folder,
-                        1,
-                        (BiPredicate<Path, BasicFileAttributes>) (t, u) -> {
-                            String fileName = t.getFileName().toString();
-                            return fileName.startsWith(prefix) && fileName.endsWith(".jar");
-                        },
-                        FileVisitOption.FOLLOW_LINKS)
-                .findFirst();
     }
 
     @SuppressWarnings("unused")
@@ -200,7 +180,11 @@ public class McpOpenLibertyArquillianTest {
             List<ToolSpecification> tools1 = client.listTools();
             List<ToolSpecification> tools2 = client.listTools();
             assertThat(tools1).hasSizeGreaterThanOrEqualTo(2);
-            assertThat(tools2).hasSizeGreaterThanOrEqualTo(2);
+            assertThat(tools2)
+                    .hasSizeGreaterThanOrEqualTo(2)
+                    .extracting(ToolSpecification::name)
+                    .containsExactlyInAnyOrderElementsOf(
+                            tools1.stream().map(ToolSpecification::name).toList());
         }
     }
 
@@ -453,7 +437,7 @@ public class McpOpenLibertyArquillianTest {
     private McpClient buildClient() {
         return DefaultMcpClient.builder()
                 .transport(StreamableHttpMcpTransport.builder()
-                        .url(baseURL + "mcp")
+                        .url(transport().baseUrl() + "/mcp")
                         .build())
                 .build();
     }

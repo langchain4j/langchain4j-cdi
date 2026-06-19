@@ -271,13 +271,12 @@ The MCP endpoint is a **JAX-RS resource** (`@Path("/mcp")`), not a servlet. On L
 
 > ⚠️ **Do not confuse this with Liberty's built-in `mcpServer-1.0` feature.** That feature is Liberty's own, unrelated MCP implementation. This module brings its own MCP server over JAX-RS, so `mcpServer-1.0` must **not** be enabled — it is neither used nor required here.
 
-**1. Enable the required features** in `server.xml` (`servlet` is pulled in transitively by `restfulWS`):
+**1. Enable the required features** in `server.xml`:
 
 ```xml
 <featureManager>
-    <feature>restfulWS-3.1</feature> <!-- exposes the /mcp JAX-RS endpoint -->
-    <feature>jsonb-3.0</feature>     <!-- used to serialize MCP responses -->
-    <feature>cdi-4.0</feature>       <!-- bean discovery for the portable extension -->
+    <feature>restfulWS-3.1</feature> <!-- exposes the /mcp JAX-RS endpoint; pulls in servlet and cdi transitively -->
+    <feature>jsonb-3.0</feature>         <!-- used to serialize MCP responses -->
 </featureManager>
 ```
 
