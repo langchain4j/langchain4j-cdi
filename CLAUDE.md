@@ -83,6 +83,20 @@ mvn spotless:apply -pl '!examples/payara-car-booking'
 - Wires `a2aServerUrl`, `outputKey`, `async`, and `agentListenerName` for A2A agents
 - Requires `langchain4j-agentic-a2a` on the classpath for the A2A protocol implementation
 
+### MCP Server Module (langchain4j-cdi-mcp)
+
+A self-contained sub-tree that turns CDI beans into a **Model Context Protocol (MCP) server** (the inverse direction from `@RegisterMcpClientAgent`, which consumes external MCP servers). It exposes annotated bean methods as MCP **tools**, **prompts**, and **resources** over JSON-RPC 2.0 / Streamable HTTP at the `/mcp` endpoint. Built on the [MCP Java](https://github.com/mcp-java) project (`java-mcp-annotations`).
+
+**Versioning note:** This module tree uses a **separate groupId (`dev.langchain4j.cdi.mcp`) and version (`1.0.0-Beta1`)**, independent of the main project version — do not assume it tracks the root POM version.
+
+- **langchain4j-cdi-mcp-server**: Core runtime — `McpEndpoint` (JAX-RS `/mcp` resource), tool/prompt/resource registries, `JsonSchemaGenerator` (Java signatures → JSON Schema), `McpSessionManager` (sessions, 30-min default expiry), `McpNotificationBroadcaster` (SSE notifications). The `transport` package implements MCP capabilities: progress, cancellation, roots, sampling, elicitation, resource subscriptions.
+- **langchain4j-cdi-mcp-portable-ext**: Discovers `@Tool`/`@Prompt`/`@Resource` beans at deployment time (WildFly, Payara, GlassFish, Liberty)
+- **langchain4j-cdi-mcp-build-compatible-ext**: Discovers them at build time (Quarkus, Helidon)
+- **langchain4j-cdi-mcp-integration-tests**: `...-common` (shared test beans/helpers), plus Quarkus, Helidon, and WildFly (Arquillian) suites
+- **langchain4j-cdi-mcp-example-helidon**: Standalone usage example
+
+Annotation API is from `org.mcp_java.annotations.*` (`@Tool`, `@ToolArg`, `@Prompt`, `@PromptArg`, `@Resource`). Methods may also take framework types from `org.mcp_java.server.*` (`McpLog`, `Progress`, `Cancellation`, `McpConnection`, `Roots`, `Sampling`, `Elicitation`) as parameters — these are injected at invocation time and excluded from the generated JSON Schema. See `langchain4j-cdi-mcp/README.md` for the full usage guide.
+
 ### MicroProfile Integration Modules (langchain4j-cdi-mp)
 
 **langchain4j-cdi-config**: MicroProfile Config integration
@@ -239,7 +253,9 @@ All examples demonstrate a car booking application with chat, fraud detection, a
 **Other Examples:**
 - `examples/helidon-car-booking` and `examples/helidon-car-booking-portable-ext`
 - `examples/glassfish-car-booking`
-- `examples/liberty-car-booking`
+- `examples/wildfly-car-booking`
+- `examples/liberty-car-booking` and `examples/liberty-car-booking-mcp`
+- `examples/car-booking-mcp` (MCP server demo)
 - `examples/payara-car-booking` (currently broken - always exclude)
 
 ### Running Examples

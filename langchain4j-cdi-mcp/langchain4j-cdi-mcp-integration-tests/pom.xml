@@ -17,6 +17,7 @@
         <module>langchain4j-cdi-mcp-integration-tests-quarkus</module>
         <module>langchain4j-cdi-mcp-integration-tests-helidon</module>
         <module>langchain4j-cdi-mcp-integration-tests-wildfly</module>
+        <module>langchain4j-cdi-mcp-integration-tests-openliberty</module>
     </modules>
 
     <properties>
