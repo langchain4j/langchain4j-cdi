@@ -114,31 +114,27 @@ public abstract class GenAITracingTelemetry {
 
         try {
             final Method seedMethod = parameters.getClass().getMethod("seed");
-            if (seedMethod != null) {
-                Object seed = seedMethod.invoke(parameters, (Object[]) null);
-                if (seed != null) span.setAttribute("gen_ai.request.seed", (Integer) seed);
-            }
+            Object seed = seedMethod.invoke(parameters);
+            if (seed instanceof Integer seedValue) span.setAttribute("gen_ai.request.seed", seedValue);
         } catch (NoSuchMethodException
                 | SecurityException
                 | IllegalAccessException
                 | IllegalArgumentException
                 | InvocationTargetException e) {
-            LOGGER.log(Level.WARNING, "The seed() method could not be found.", e);
+            LOGGER.log(Level.FINE, "Failed to invoke optional method seed().", e);
         }
 
         try {
             final Method reasoningEffortMethod = parameters.getClass().getMethod("reasoningEffort");
-            if (reasoningEffortMethod != null) {
-                Object reasoningEffort = reasoningEffortMethod.invoke(parameters, (Object[]) null);
-                if (reasoningEffort != null)
-                    span.setAttribute("gen_ai.request.reasoning.level", (String) reasoningEffort);
-            }
+            Object reasoningEffort = reasoningEffortMethod.invoke(parameters);
+            if (reasoningEffort != null)
+                span.setAttribute("gen_ai.request.reasoning.level", reasoningEffort.toString());
         } catch (NoSuchMethodException
                 | SecurityException
                 | IllegalAccessException
                 | IllegalArgumentException
                 | InvocationTargetException e) {
-            LOGGER.log(Level.WARNING, "The reasoningEffort() method could not be found.", e);
+            LOGGER.log(Level.FINE, "Failed to invoke optional method reasoningEffort().", e);
         }
     }
 
