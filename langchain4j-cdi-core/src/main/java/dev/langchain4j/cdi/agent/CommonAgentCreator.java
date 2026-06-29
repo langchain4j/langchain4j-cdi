@@ -100,6 +100,7 @@ public class CommonAgentCreator {
             for (Class<?> iface : AgentBuilder.interfacesToImplement(interfaceClass)) {
                 interfaces.add(iface);
             }
+            interfaces.add(AgenticScopeAccess.class);
             for (Class<?> extra : extraInterfaces) {
                 interfaces.add(extra);
             }
@@ -107,6 +108,15 @@ public class CommonAgentCreator {
         };
     }
 
+    /**
+     * Creates a JDK proxy that implements the agent's user interface plus the standard framework interfaces and any
+     * extra interfaces. Used only for HITL agents, which need the additional {@link HumanInTheLoopHolder} marker
+     * interface so that {@link #toAgentExecutor} can retrieve the underlying {@link HumanInTheLoop} spec.
+     * {@link AgentUtil#buildAgent} cannot be used here because it accepts no extra interfaces.
+     *
+     * <p>All other proxy creation paths delegate to {@link AgentUtil#buildAgent} (simple-agent proxies) or to
+     * {@link #cdiAgentInstanceFactory} (CDI-managed {@code @Agent} proxies).
+     */
     @SuppressWarnings("unchecked")
     static <X> X createAgentProxy(Class<X> interfaceClass, InvocationHandler handler, Class<?>... extraInterfaces) {
         Set<Class<?>> interfaces = new LinkedHashSet<>();
@@ -244,7 +254,7 @@ public class CommonAgentCreator {
             }
             return method.invoke(aiService, args);
         };
-        return createAgentProxy(interfaceClass, handler);
+        return AgentUtil.buildAgent(interfaceClass, handler);
     }
 
     private static <X> X buildAiServiceForSimple(

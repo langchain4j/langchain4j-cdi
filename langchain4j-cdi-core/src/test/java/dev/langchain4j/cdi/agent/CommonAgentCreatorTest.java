@@ -1800,6 +1800,7 @@ class CommonAgentCreatorTest {
         for (Class<?> iface : frameworkInterfaces) {
             assertTrue(iface.isInstance(proxy), "Proxy should implement " + iface.getName());
         }
+        assertTrue(proxy instanceof AgenticScopeAccess, "Proxy should implement AgenticScopeAccess");
     }
 
     @Test

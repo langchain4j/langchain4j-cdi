@@ -189,11 +189,12 @@ public interface PipelineAgent {}
 
 **Agent proxy creation:**
 
-`CommonAgentCreator` uses two proxy creation mechanisms:
-- **`cdiAgentInstanceFactory`**: For `@Agent`-annotated simple agents — passed as the 3rd argument to `AgentConfigurator`, delegates to `AgentBuilder.interfacesToImplement()` to include all framework-required interfaces
-- **`createAgentProxy`**: For non-`@Agent` simple agents and HITL — creates JDK proxies with `[userInterface, InternalAgent, AgenticScopeOwner, AgenticScopeAccess]` plus any extra interfaces
+`CommonAgentCreator` uses three proxy creation mechanisms:
+- **`cdiAgentInstanceFactory`**: For `@Agent`-annotated simple agents — passed as the 3rd argument to `AgentConfigurator`, delegates to `AgentBuilder.interfacesToImplement()` to include all framework-required interfaces, plus `AgenticScopeAccess`
+- **`AgentUtil.buildAgent`**: For non-`@Agent` simple agents and `wrapWithAgenticScope` — delegates proxy creation to the LangChain4j framework (since 1.17), which handles the standard interface set internally
+- **`createAgentProxy`**: Used only for HITL agents — creates JDK proxies with `[userInterface, InternalAgent, AgenticScopeOwner, AgenticScopeAccess, HumanInTheLoopHolder]`. This remains a local method because `AgentUtil.buildAgent` does not accept extra interfaces, and HITL agents need the `HumanInTheLoopHolder` marker so that `toAgentExecutor` can retrieve the underlying `HumanInTheLoop` spec
 
-Both mechanisms ensure all agent proxies implement `AgenticScopeAccess` (added in the 1.16.2 upgrade).
+All mechanisms ensure agent proxies implement `AgenticScopeAccess`.
 
 ### Configuration-Based Plugin Creation
 
