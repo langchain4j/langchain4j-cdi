@@ -28,6 +28,9 @@ public class JakartaELExpressionResolver implements ExpressionResolver {
     private static final Logger LOGGER = Logger.getLogger(JakartaELExpressionResolver.class.getName());
     private static final Pattern EL_PATTERN = Pattern.compile("^#\\{(.+)\\}$");
 
+    /** Creates a new {@code JakartaELExpressionResolver}. */
+    public JakartaELExpressionResolver() {}
+
     @Override
     public String resolve(String value) {
         Matcher matcher = EL_PATTERN.matcher(value);

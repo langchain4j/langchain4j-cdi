@@ -10,14 +10,32 @@ import jakarta.enterprise.inject.build.compatible.spi.SyntheticComponents;
 import jakarta.enterprise.inject.literal.NamedLiteral;
 import java.util.logging.Logger;
 
+/** Build-compatible CDI extension that registers LangChain4j plugin beans as synthetic beans at build time. */
 public class LangChain4JPluginsBuildCompatibleExtension implements BuildCompatibleExtension {
+
+    /** Logger for this extension. */
     public static final Logger LOGGER = Logger.getLogger(LangChain4JPluginsBuildCompatibleExtension.class.getName());
+
+    /** Synthetic bean parameter key for the bean name. */
     public static final String PARAM_BEANNAME = "beanName";
+
+    /** Synthetic bean parameter key for the target class. */
     public static final String PARAM_TARGET_CLASS = "targetClass";
+
+    /** Synthetic bean parameter key for the builder class. */
     public static final String PARAM_BUILDER_CLASS = "builderClass";
 
     private LLMConfig llmConfig;
 
+    /** Creates a new LangChain4JPluginsBuildCompatibleExtension. */
+    public LangChain4JPluginsBuildCompatibleExtension() {}
+
+    /**
+     * Synthesis callback that creates synthetic CDI beans for all configured LLM plugins.
+     *
+     * @param syntheticComponents the synthetic components registry
+     * @throws ClassNotFoundException if a configured plugin class cannot be found
+     */
     @SuppressWarnings({"unused", "unchecked"})
     @Synthesis
     public void createSynthetics(SyntheticComponents syntheticComponents) throws ClassNotFoundException {

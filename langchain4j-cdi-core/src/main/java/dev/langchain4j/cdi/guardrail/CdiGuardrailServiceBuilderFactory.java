@@ -16,6 +16,9 @@ import dev.langchain4j.service.guardrail.spi.GuardrailServiceBuilderFactory;
  */
 public class CdiGuardrailServiceBuilderFactory implements GuardrailServiceBuilderFactory {
 
+    /** Creates a new factory instance. */
+    public CdiGuardrailServiceBuilderFactory() {}
+
     @Override
     public GuardrailService.Builder getBuilder(Class<?> aiServiceClass) {
         return new CdiGuardrailServiceBuilder(aiServiceClass);

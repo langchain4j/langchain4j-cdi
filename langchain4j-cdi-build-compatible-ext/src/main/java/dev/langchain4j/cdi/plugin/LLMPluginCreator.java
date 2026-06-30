@@ -5,7 +5,12 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.build.compatible.spi.Parameters;
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanCreator;
 
+/** Synthetic bean creator that instantiates LLM plugin beans from their configuration parameters. */
 public class LLMPluginCreator implements SyntheticBeanCreator<Object> {
+
+    /** Creates a new LLMPluginCreator. */
+    public LLMPluginCreator() {}
+
     @Override
     public Object create(Instance<Object> lookup, Parameters params) {
         return CommonLLMPluginCreator.create(

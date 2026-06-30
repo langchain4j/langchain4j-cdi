@@ -22,10 +22,18 @@ import org.mcp_java.annotations.resources.Resource;
 import org.mcp_java.annotations.resources.ResourceTemplate;
 import org.mcp_java.annotations.tools.Tool;
 
+/**
+ * CDI portable extension that discovers beans annotated with MCP annotations ({@code @Tool}, {@code @Resource},
+ * {@code @ResourceTemplate}, {@code @Prompt}) and registers them with the corresponding MCP registries after deployment
+ * validation.
+ */
 public class McpServerPortableExtension implements Extension {
 
     private static final Logger LOGGER = Logger.getLogger(McpServerPortableExtension.class.getName());
     private final List<McpToolCandidate> candidates = new ArrayList<>();
+
+    /** Creates a new {@code McpServerPortableExtension}. */
+    public McpServerPortableExtension() {}
 
     <T> void onProcessManagedBean(@Observes ProcessManagedBean<T> pmb) {
         Class<?> beanClass = pmb.getAnnotatedBeanClass().getJavaClass();

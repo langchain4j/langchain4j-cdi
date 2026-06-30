@@ -17,6 +17,7 @@ import org.mcp_java.annotations.resources.Resource;
 import org.mcp_java.annotations.resources.ResourceTemplate;
 import org.mcp_java.annotations.tools.Tool;
 
+/** CDI bean that discovers {@code @Tool}, {@code @Resource}, and {@code @Prompt} annotated methods at startup. */
 @ApplicationScoped
 public class McpToolDiscovery {
 
@@ -27,6 +28,14 @@ public class McpToolDiscovery {
     private final McpPromptRegistry promptRegistry;
     private final BeanManager beanManager;
 
+    /**
+     * Creates the discovery bean with its required registries.
+     *
+     * @param toolRegistry the tool registry to populate
+     * @param resourceRegistry the resource registry to populate
+     * @param promptRegistry the prompt registry to populate
+     * @param beanManager the CDI bean manager used for bean scanning
+     */
     @Inject
     public McpToolDiscovery(
             McpToolRegistry toolRegistry,

@@ -14,6 +14,7 @@ import org.wildfly.mcp.api.TextContent;
 import org.wildfly.mcp.api.Tool;
 import org.wildfly.mcp.api.ToolArg;
 
+/** MCP tool and prompt provider for car booking operations. */
 public class BookingService {
 
     private static final Logger log = Logger.getLogger(BookingService.class.getName());
@@ -70,6 +71,9 @@ public class BookingService {
                         "BMW")); // Cancelable
     }
 
+    /** Creates a new BookingService. */
+    public BookingService() {}
+
     // Simulate database accesses
     private Booking checkBookingExists(String bookingNumber, String name, String surname) {
         Booking booking = BOOKINGS.get(bookingNumber);
@@ -81,6 +85,14 @@ public class BookingService {
         return booking;
     }
 
+    /**
+     * Gets booking details given a booking id and customer name and surname.
+     *
+     * @param bookingNumber the booking id
+     * @param name the name of the customer
+     * @param surname the surname of the customer
+     * @return the booking details
+     */
     @Tool(description = "Get booking details given a booking id and customer name and surname")
     public Booking getBookingDetails(
             @ToolArg(description = "The booking id composed of three digits followed by a minus then three digits")
@@ -91,12 +103,24 @@ public class BookingService {
         return checkBookingExists(bookingNumber, name, surname);
     }
 
+    /**
+     * Gets all bookings.
+     *
+     * @return all booking details
+     */
     @Tool(description = "Get All bookings")
     public Collection<Booking> getAllBookingDetails() {
         log.info("DEMO: Calling Tool-getAllBookingDetails");
         return BOOKINGS.values();
     }
 
+    /**
+     * Gets all booking ids for a customer given their name and surname.
+     *
+     * @param name the name of the customer
+     * @param surname the surname of the customer
+     * @return the list of booking ids for the customer
+     */
     @Tool(description = "Get all booking ids for a customer given his name and surname")
     public List<String> getBookingsForCustomer(
             @ToolArg(description = "The name of the customer") String name,
@@ -109,6 +133,11 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Checks whether a booking can be canceled according to the cancellation policy.
+     *
+     * @param booking the booking to check
+     */
     public void checkCancelPolicy(Booking booking) {
         // Reservations can be cancelled up to 7 days prior to the start of the booking
         // period
@@ -121,6 +150,14 @@ public class BookingService {
         }
     }
 
+    /**
+     * Cancels a booking given its booking number and customer name and surname.
+     *
+     * @param bookingNumber the booking id
+     * @param name the name of the customer
+     * @param surname the surname of the customer
+     * @return the canceled booking
+     */
     @Tool(description = "Cancel a booking given its booking number and customer name and surname")
     public Booking cancelBooking(
             @ToolArg(description = "The booking id composed of three digits followed by a minus then three digits")
@@ -137,6 +174,13 @@ public class BookingService {
         return booking;
     }
 
+    /**
+     * Detects fraud for a customer by analyzing booking overlaps.
+     *
+     * @param name the customer's first name
+     * @param surname the customer's surname
+     * @return a prompt message with fraud detection instructions
+     */
     @Prompt(name = "detect-fraud-for-customer", description = "Detect fraud for customer.")
     public PromptMessage detectFraudForCustomer(
             @PromptArg(name = "name", description = "User name.", required = true) String name,

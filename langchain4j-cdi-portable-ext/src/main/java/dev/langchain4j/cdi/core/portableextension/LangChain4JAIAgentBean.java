@@ -24,6 +24,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * CDI {@link Bean} implementation that creates agent proxies for interfaces annotated with one of the agent topology
+ * stereotypes (e.g. {@code @RegisterSimpleAgent}, {@code @RegisterSequenceAgent}).
+ *
+ * @param <T> the agent interface type
+ */
 public class LangChain4JAIAgentBean<T> implements Bean<T>, InterceptorBeanAttributes<T>, PassivationCapable {
 
     private final Class<T> agentInterfaceClass;
@@ -33,6 +39,12 @@ public class LangChain4JAIAgentBean<T> implements Bean<T>, InterceptorBeanAttrib
     private final Class<? extends Annotation> stereotypeAnnotationClass;
     private Set<Annotation> interceptorBindings;
 
+    /**
+     * Creates a new bean definition for the given agent interface.
+     *
+     * @param agentInterfaceClass the interface annotated with an agent topology stereotype
+     * @param beanManager the CDI bean manager used for interception support
+     */
     public LangChain4JAIAgentBean(Class<T> agentInterfaceClass, BeanManager beanManager) {
         super();
         this.agentInterfaceClass = agentInterfaceClass;

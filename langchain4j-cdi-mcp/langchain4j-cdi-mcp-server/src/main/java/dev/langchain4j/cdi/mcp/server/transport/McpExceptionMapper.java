@@ -11,9 +11,19 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
+/** JAX-RS exception mapper that converts {@link McpException} instances into JSON-RPC error responses. */
 @Provider
 public class McpExceptionMapper implements ExceptionMapper<McpException> {
 
+    /** Creates a new exception mapper. */
+    public McpExceptionMapper() {}
+
+    /**
+     * Converts an {@link McpException} into a JAX-RS {@link Response} containing a JSON-RPC error object.
+     *
+     * @param e the MCP exception to convert
+     * @return a JSON response with the corresponding JSON-RPC error
+     */
     @Override
     public Response toResponse(McpException e) {
         JsonRpcResponse errorResponse = JsonRpcResponse.error(

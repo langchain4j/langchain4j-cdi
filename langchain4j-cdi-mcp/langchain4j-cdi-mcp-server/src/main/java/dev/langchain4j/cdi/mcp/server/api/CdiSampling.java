@@ -12,6 +12,13 @@ public class CdiSampling implements Sampling {
     private final McpSamplingManager samplingManager;
     private final String sessionId;
 
+    /**
+     * Creates a new sampling wrapper.
+     *
+     * @param session the MCP session
+     * @param samplingManager the sampling manager
+     * @param sessionId the session identifier
+     */
     public CdiSampling(McpSession session, McpSamplingManager samplingManager, String sessionId) {
         this.session = session;
         this.samplingManager = samplingManager;

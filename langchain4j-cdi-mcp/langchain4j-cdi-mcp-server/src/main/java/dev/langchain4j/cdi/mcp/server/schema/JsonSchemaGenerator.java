@@ -11,12 +11,20 @@ import java.util.List;
 import java.util.Set;
 import org.mcp_java.annotations.tools.ToolArg;
 
+/** Generates JSON Schema objects from Java method signatures for MCP tool descriptions. */
 public class JsonSchemaGenerator {
 
     private static final String DEFAULT_NAME = "<<element name>>";
 
+    /** Utility class; not instantiable. */
     private JsonSchemaGenerator() {}
 
+    /**
+     * Builds a JSON Schema describing the parameters of the given method.
+     *
+     * @param method the method whose parameters to describe
+     * @return a JSON Schema object with {@code properties} and {@code required} entries
+     */
     public static JsonObject fromMethod(Method method) {
         JsonObjectBuilder schema = Json.createObjectBuilder().add("type", "object");
         JsonObjectBuilder properties = Json.createObjectBuilder();

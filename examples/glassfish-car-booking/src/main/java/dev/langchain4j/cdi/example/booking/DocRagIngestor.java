@@ -18,6 +18,7 @@ import java.io.File;
 import java.util.List;
 import java.util.logging.Logger;
 
+/** Document RAG ingestor for loading car rental terms into the embedding store. */
 @ApplicationScoped
 public class DocRagIngestor {
 
@@ -33,10 +34,18 @@ public class DocRagIngestor {
 
     private File docs = new File(System.getProperty("docragdir"));
 
+    /** Creates a new document RAG ingestor. */
+    public DocRagIngestor() {}
+
     private List<Document> loadDocs() {
         return loadDocuments(docs.getPath(), new TextDocumentParser());
     }
 
+    /**
+     * Ingests car rental terms document into the embedding store.
+     *
+     * @param pointless the CDI event object (unused)
+     */
     public void ingest(@Observes @Initialized(ApplicationScoped.class) Object pointless) {
 
         long start = System.currentTimeMillis();
@@ -54,6 +63,11 @@ public class DocRagIngestor {
                 "DEMO %d documents ingested in %d msec", docs.size(), System.currentTimeMillis() - start));
     }
 
+    /**
+     * Runs the document ingestion as a standalone process.
+     *
+     * @param args the command-line arguments
+     */
     public static void main(String[] args) {
 
         System.out.println(InMemoryEmbeddingStore.class.getInterfaces()[0]);

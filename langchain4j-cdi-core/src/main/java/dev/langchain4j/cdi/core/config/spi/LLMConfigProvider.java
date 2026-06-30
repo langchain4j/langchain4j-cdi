@@ -12,6 +12,9 @@ import java.util.logging.Logger;
  */
 public class LLMConfigProvider {
 
+    /** Creates a new provider instance. */
+    public LLMConfigProvider() {}
+
     private static LLMConfig llmConfig;
     private static volatile boolean initialized = false;
     private static final Logger LOGGER = Logger.getLogger(LLMConfigProvider.class.getName());
@@ -33,6 +36,11 @@ public class LLMConfigProvider {
         LOGGER.fine("Found LLMConfig interface: " + llmConfig.getClass().getName());
     }
 
+    /**
+     * Return the lazily initialized {@link LLMConfig} instance discovered via {@link java.util.ServiceLoader}.
+     *
+     * @return the shared configuration instance
+     */
     public static LLMConfig getLlmConfig() {
         if (!initialized) {
             initialized = true;

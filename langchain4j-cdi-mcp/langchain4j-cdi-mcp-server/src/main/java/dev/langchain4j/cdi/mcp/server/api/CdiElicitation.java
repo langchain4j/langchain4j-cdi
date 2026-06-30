@@ -12,6 +12,13 @@ public class CdiElicitation implements Elicitation {
     private final McpElicitationManager elicitationManager;
     private final String sessionId;
 
+    /**
+     * Creates a new elicitation wrapper.
+     *
+     * @param session the MCP session
+     * @param elicitationManager the elicitation manager
+     * @param sessionId the session identifier
+     */
     public CdiElicitation(McpSession session, McpElicitationManager elicitationManager, String sessionId) {
         this.session = session;
         this.elicitationManager = elicitationManager;

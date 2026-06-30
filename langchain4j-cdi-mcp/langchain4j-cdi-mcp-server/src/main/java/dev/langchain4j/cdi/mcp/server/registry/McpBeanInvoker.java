@@ -24,6 +24,9 @@ import org.mcp_java.annotations.tools.ToolArg;
 @ApplicationScoped
 public class McpBeanInvoker {
 
+    /** CDI-required default constructor. */
+    public McpBeanInvoker() {}
+
     private static final String DEFAULT_NAME = "<<element name>>";
 
     @Inject
@@ -32,12 +35,30 @@ public class McpBeanInvoker {
     @Inject
     McpApiFactory apiFactory;
 
-    /** Invokes a method without MCP framework context (backward compatible). */
+    /**
+     * Invokes a method without MCP framework context (backward compatible).
+     *
+     * @param requestId the JSON-RPC request ID for error reporting
+     * @param beanType the CDI bean class to look up and invoke
+     * @param method the method to invoke on the resolved bean
+     * @param arguments the JSON object containing method arguments
+     * @return the method invocation result
+     */
     public Object invoke(Object requestId, Class<?> beanType, Method method, JsonObject arguments) {
         return invoke(requestId, beanType, method, arguments, null, null);
     }
 
-    /** Invokes a method with MCP framework context, enabling framework type injection. */
+    /**
+     * Invokes a method with MCP framework context, enabling framework type injection.
+     *
+     * @param requestId the JSON-RPC request ID for error reporting
+     * @param beanType the CDI bean class to look up and invoke
+     * @param method the method to invoke on the resolved bean
+     * @param arguments the JSON object containing method arguments
+     * @param ctx the MCP request context, or {@code null} if unavailable
+     * @param session the MCP session, or {@code null} if unavailable
+     * @return the method invocation result
+     */
     public Object invoke(
             Object requestId,
             Class<?> beanType,

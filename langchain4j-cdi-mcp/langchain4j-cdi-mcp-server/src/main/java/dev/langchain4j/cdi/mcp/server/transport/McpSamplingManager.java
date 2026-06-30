@@ -20,6 +20,9 @@ public class McpSamplingManager {
     @Inject
     McpServerRequestManager requestManager;
 
+    /** CDI-required default constructor. */
+    public McpSamplingManager() {}
+
     /**
      * Requests the client to create a message using its LLM.
      *

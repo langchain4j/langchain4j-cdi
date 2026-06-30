@@ -19,6 +19,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
+ * CDI {@link Bean} implementation that creates AI service proxies for interfaces annotated with
+ * {@link RegisterAIService}.
+ *
+ * @param <T> the AI service interface type
  * @author Buhake Sindi
  * @since 21 November 2024
  */
@@ -33,8 +37,10 @@ public class LangChain4JAIServiceBean<T> implements Bean<T>, InterceptorBeanAttr
     private Set<Annotation> interceptorBindings;
 
     /**
-     * @param aiServiceInterfaceClass
-     * @param beanManager
+     * Creates a new bean definition for the given AI service interface.
+     *
+     * @param aiServiceInterfaceClass the interface annotated with {@link RegisterAIService}
+     * @param beanManager the CDI bean manager used for interception support
      */
     public LangChain4JAIServiceBean(Class<T> aiServiceInterfaceClass, BeanManager beanManager) {
         super();

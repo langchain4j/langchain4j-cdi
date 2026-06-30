@@ -37,22 +37,49 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * Build-compatible CDI extension that discovers {@code @RegisterAIService} and agent-annotated interfaces at build time
+ * and registers synthetic beans for them.
+ */
 public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompatibleExtension {
     private static final Logger LOGGER = Logger.getLogger(Langchain4JAIServiceBuildCompatibleExtension.class.getName());
     private static final Set<Class<?>> detectedAIServicesDeclaredInterfaces = new HashSet<>();
     private static final Set<Class<?>> detectedAgentDeclaredInterfaces = new HashSet<>();
     private static final Set<String> detectedTools = new HashSet<>();
+
+    /** Synthetic bean parameter key for the AI service interface class. */
     public static final String PARAM_INTERFACE_CLASS = "interfaceClass";
+
+    /** Synthetic bean parameter key for the agent interface class. */
     public static final String PARAM_AGENT_INTERFACE_CLASS = "agentInterfaceClass";
 
+    /** Creates a new {@code Langchain4JAIServiceBuildCompatibleExtension}. */
+    public Langchain4JAIServiceBuildCompatibleExtension() {}
+
+    /**
+     * Returns the set of detected AI service interface classes.
+     *
+     * @return the detected AI service interfaces
+     */
     public static Set<Class<?>> getDetectedAIServicesDeclaredInterfaces() {
         return detectedAIServicesDeclaredInterfaces;
     }
 
+    /**
+     * Returns the set of detected agent interface classes.
+     *
+     * @return the detected agent interfaces
+     */
     public static Set<Class<?>> getDetectedAgentDeclaredInterfaces() {
         return detectedAgentDeclaredInterfaces;
     }
 
+    /**
+     * Adds a {@link Named} qualifier to detected tool classes so they are not removed by Quarkus bean pruning.
+     *
+     * @param classConfig the class configuration to enhance
+     * @throws ClassNotFoundException if the tool class cannot be loaded
+     */
     @SuppressWarnings("unused")
     @Enhancement(types = Object.class, withSubtypes = true)
     @Priority(20)
@@ -67,6 +94,12 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
         }
     }
 
+    /**
+     * Detects classes annotated with {@link RegisterAIService} and registers them for synthesis.
+     *
+     * @param classConfig the class configuration to inspect
+     * @throws ClassNotFoundException if the class cannot be loaded
+     */
     @SuppressWarnings("unused")
     @Enhancement(types = Object.class, withAnnotations = RegisterAIService.class, withSubtypes = true)
     @Priority(10)
@@ -75,6 +108,13 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
         registerAIService(classInfo);
     }
 
+    /**
+     * Detects fields whose type is annotated with {@link RegisterAIService} or an agent annotation and registers the
+     * corresponding interface for synthesis.
+     *
+     * @param config the field configuration to inspect
+     * @throws ClassNotFoundException if the field type class cannot be loaded
+     */
     @Enhancement(types = Object.class, withSubtypes = true)
     @Priority(30)
     public void detectRegisterAIService(FieldConfig config) throws ClassNotFoundException {
@@ -96,6 +136,12 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
         }
     }
 
+    /**
+     * Detects classes annotated with any of the 11 agent topology annotations and registers them for synthesis.
+     *
+     * @param classConfig the class configuration to inspect
+     * @throws ClassNotFoundException if the class cannot be loaded
+     */
     @SuppressWarnings("unused")
     @Enhancement(
             types = Object.class,
@@ -171,6 +217,12 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
         return Thread.currentThread().getContextClassLoader().loadClass(className);
     }
 
+    /**
+     * Synthesizes CDI beans for all detected AI service and agent interfaces.
+     *
+     * @param syntheticComponents the synthetic components builder provided by the CDI container
+     * @throws ClassNotFoundException if a required class cannot be loaded
+     */
     @SuppressWarnings({"unused", "unchecked"})
     @Synthesis
     public void synthesisAllRegisterAIServices(SyntheticComponents syntheticComponents) throws ClassNotFoundException {
