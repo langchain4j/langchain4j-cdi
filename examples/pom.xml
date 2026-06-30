@@ -4,7 +4,7 @@
     <parent>
         <groupId>dev.langchain4j.cdi</groupId>
         <artifactId>langchain4j-cdi-parent</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>1.3.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>dev.langchain4j.cdi.examples</groupId>
