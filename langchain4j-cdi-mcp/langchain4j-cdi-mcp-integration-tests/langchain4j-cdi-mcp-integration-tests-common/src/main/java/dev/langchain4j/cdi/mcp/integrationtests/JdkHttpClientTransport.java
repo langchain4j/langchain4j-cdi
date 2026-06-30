@@ -9,10 +9,17 @@ import java.net.http.HttpResponse;
 import java.util.HashMap;
 import java.util.Map;
 
+/** {@link McpHttpTransport} backed by the JDK {@link java.net.http.HttpClient}. */
 public class JdkHttpClientTransport implements McpHttpTransport {
 
+    /** The normalized base URL (no trailing slash). */
     private final String baseUrl;
 
+    /**
+     * Creates a new transport for the given base URL.
+     *
+     * @param baseUrl the base URL of the MCP endpoint
+     */
     public JdkHttpClientTransport(String baseUrl) {
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
     }

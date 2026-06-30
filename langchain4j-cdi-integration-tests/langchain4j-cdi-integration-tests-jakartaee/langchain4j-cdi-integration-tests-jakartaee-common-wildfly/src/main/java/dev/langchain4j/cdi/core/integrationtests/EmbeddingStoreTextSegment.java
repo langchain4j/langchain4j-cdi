@@ -8,8 +8,13 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
+/** No-op {@link EmbeddingStore} of {@link TextSegment} for integration testing. */
 @ApplicationScoped
 public class EmbeddingStoreTextSegment implements EmbeddingStore<TextSegment> {
+
+    /** Creates a new instance. */
+    public EmbeddingStoreTextSegment() {}
+
     @Override
     public String add(Embedding embedding) {
         return "";

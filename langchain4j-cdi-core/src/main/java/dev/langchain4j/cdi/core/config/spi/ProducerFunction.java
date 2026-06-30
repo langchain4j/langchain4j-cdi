@@ -12,9 +12,10 @@ public interface ProducerFunction<R> {
     /**
      * Produces a bean using its name and a lookup context.
      *
-     * @param lookup: lookup context.
-     * @param beanName: the name of the bean.
-     * @return the created bean.
+     * @param lookup the CDI lookup context
+     * @param beanName the name of the bean
+     * @param llmConfig the LLM configuration source
+     * @return the created bean
      */
     R produce(Instance<R> lookup, String beanName, LLMConfig llmConfig);
 }

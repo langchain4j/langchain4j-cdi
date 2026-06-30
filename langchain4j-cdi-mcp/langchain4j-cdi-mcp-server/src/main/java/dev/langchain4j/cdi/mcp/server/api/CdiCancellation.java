@@ -9,6 +9,11 @@ public class CdiCancellation implements Cancellation {
 
     private final AtomicBoolean cancelledFlag;
 
+    /**
+     * Creates a new cancellation check backed by the given flag.
+     *
+     * @param cancelledFlag the flag indicating whether the request has been cancelled
+     */
     public CdiCancellation(AtomicBoolean cancelledFlag) {
         this.cancelledFlag = cancelledFlag;
     }

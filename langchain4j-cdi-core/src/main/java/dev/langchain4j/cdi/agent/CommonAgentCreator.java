@@ -85,6 +85,9 @@ import java.util.stream.Collectors;
  */
 public class CommonAgentCreator {
 
+    /** Utility class — not instantiable. */
+    private CommonAgentCreator() {}
+
     private static final Logger LOGGER = Logger.getLogger(CommonAgentCreator.class.getName());
 
     /** CDI bean name prefix for agents that have no explicit name set in their annotation. */
@@ -130,6 +133,14 @@ public class CommonAgentCreator {
         return (X) Proxy.newProxyInstance(interfaceClass.getClassLoader(), interfaces.toArray(Class[]::new), handler);
     }
 
+    /**
+     * Creates an agent proxy for the given interface by inspecting its topology annotation.
+     *
+     * @param <X> the agent interface type
+     * @param lookup CDI lookup instance for resolving dependencies
+     * @param interfaceClass the annotated agent interface
+     * @return a proxy implementing the agent interface and standard framework interfaces
+     */
     public static <X> X create(Instance<Object> lookup, Class<X> interfaceClass) {
         RegisterSimpleAgent simple = interfaceClass.getAnnotation(RegisterSimpleAgent.class);
         if (simple != null) return createForSimple(lookup, interfaceClass, simple);
@@ -1000,6 +1011,11 @@ public class CommonAgentCreator {
 
     /** Marker interface allowing {@link #toAgentExecutor} to retrieve the underlying {@link HumanInTheLoop} spec. */
     public interface HumanInTheLoopHolder {
+        /**
+         * Returns the {@link HumanInTheLoop} spec associated with this agent.
+         *
+         * @return the human-in-the-loop specification
+         */
         HumanInTheLoop getHumanInTheLoop();
     }
 
@@ -1020,6 +1036,9 @@ public class CommonAgentCreator {
      *     .subAgents(CommonAgentCreator.toAgentExecutor(scorer), editor)
      *     .build();
      * }</pre>
+     *
+     * @param bean the CDI-managed agent bean to wrap
+     * @return an {@link AgentExecutor} wrapping the given bean
      */
     public static Object toAgentExecutor(Object bean) {
         return toAgentExecutor(bean, null);

@@ -8,13 +8,23 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import java.io.StringReader;
 
+/** Assertion helpers for JSON-RPC responses in MCP integration tests. */
 public final class JsonRpcAssertions {
 
+    /** JSON field name for the error object. */
     static final String FIELD_ERROR = "error";
+
+    /** JSON field name for the result object. */
     static final String FIELD_RESULT = "result";
 
     private JsonRpcAssertions() {}
 
+    /**
+     * Parses the response body as a {@link JsonObject}, asserting a 200 status.
+     *
+     * @param response the HTTP response
+     * @return the parsed JSON object
+     */
     public static JsonObject parseJson(McpHttpResponse response) {
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).isNotNull().isNotBlank();
@@ -23,6 +33,13 @@ public final class JsonRpcAssertions {
         }
     }
 
+    /**
+     * Asserts a successful JSON-RPC response and returns its {@code result} object.
+     *
+     * @param response the HTTP response
+     * @param expectedId the expected JSON-RPC id
+     * @return the {@code result} JSON object
+     */
     public static JsonObject assertJsonRpcSuccess(McpHttpResponse response, Object expectedId) {
         JsonObject json = parseJson(response);
         assertThat(json.getString("jsonrpc")).isEqualTo("2.0");
@@ -36,6 +53,15 @@ public final class JsonRpcAssertions {
         return json.getJsonObject(FIELD_RESULT);
     }
 
+    /**
+     * Asserts a JSON-RPC error response and returns its {@code error} object.
+     *
+     * @param response the HTTP response
+     * @param expectedId the expected JSON-RPC id
+     * @param expectedErrorCode the expected error code
+     * @param expectedMessageSubstring substring expected in the error message
+     * @return the {@code error} JSON object
+     */
     public static JsonObject assertJsonRpcError(
             McpHttpResponse response, Object expectedId, int expectedErrorCode, String expectedMessageSubstring) {
         JsonObject json = parseJson(response);
@@ -56,6 +82,11 @@ public final class JsonRpcAssertions {
         return error;
     }
 
+    /**
+     * Asserts that a notification was accepted (HTTP 200).
+     *
+     * @param response the HTTP response
+     */
     public static void assertNotificationAccepted(McpHttpResponse response) {
         assertThat(response.statusCode()).isEqualTo(200);
     }

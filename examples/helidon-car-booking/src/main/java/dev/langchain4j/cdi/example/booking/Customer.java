@@ -2,18 +2,21 @@ package dev.langchain4j.cdi.example.booking;
 
 import java.util.Objects;
 
+/** Customer information. */
 public class Customer {
     private String name;
     private String surname;
 
-    /** */
+    /** Creates a new customer. */
     public Customer() {
         super();
     }
 
     /**
-     * @param name
-     * @param surname
+     * Creates a new customer with the given name and surname.
+     *
+     * @param name the customer's first name
+     * @param surname the customer's surname
      */
     public Customer(String name, String surname) {
         super();
@@ -21,22 +24,38 @@ public class Customer {
         this.surname = surname;
     }
 
-    /** @return the name */
+    /**
+     * Returns the name.
+     *
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * Sets the name.
+     *
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the surname */
+    /**
+     * Returns the surname.
+     *
+     * @return the surname
+     */
     public String getSurname() {
         return surname;
     }
 
-    /** @param surname the surname to set */
+    /**
+     * Sets the surname.
+     *
+     * @param surname the surname to set
+     */
     public void setSurname(String surname) {
         this.surname = surname;
     }

@@ -12,6 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Broadcasts MCP notifications to connected SSE streams. Maintains a registry of active output streams keyed by session
+ * ID and delivers JSON-RPC notifications to one or all connected clients.
+ */
 @ApplicationScoped
 public class McpNotificationBroadcaster {
 
@@ -19,14 +23,33 @@ public class McpNotificationBroadcaster {
 
     private final Map<String, OutputStream> sseStreams = new ConcurrentHashMap<>();
 
+    /** CDI-required default constructor. */
+    public McpNotificationBroadcaster() {}
+
+    /**
+     * Registers an SSE output stream for a session.
+     *
+     * @param sessionId the session identifier
+     * @param out the output stream to send notifications to
+     */
     public void registerStream(String sessionId, OutputStream out) {
         sseStreams.put(sessionId, out);
     }
 
+    /**
+     * Removes the SSE output stream for a session.
+     *
+     * @param sessionId the session identifier
+     */
     public void unregisterStream(String sessionId) {
         sseStreams.remove(sessionId);
     }
 
+    /**
+     * Sends a notification to all connected SSE streams. Disconnected streams are automatically removed.
+     *
+     * @param notification the notification object to serialize and broadcast
+     */
     public void broadcast(Object notification) {
         String json = serializeToJson(notification);
         String payload = "event: message\ndata: " + json + "\n\n";
@@ -44,6 +67,12 @@ public class McpNotificationBroadcaster {
         });
     }
 
+    /**
+     * Sends a notification to a specific session's SSE stream.
+     *
+     * @param sessionId the target session identifier
+     * @param notification the notification object to serialize and send
+     */
     public void sendToSession(String sessionId, Object notification) {
         OutputStream out = sseStreams.get(sessionId);
         if (out == null) {
@@ -60,6 +89,11 @@ public class McpNotificationBroadcaster {
         }
     }
 
+    /**
+     * Returns the number of currently connected SSE streams.
+     *
+     * @return the count of active SSE streams
+     */
     public int connectedStreamCount() {
         return sseStreams.size();
     }

@@ -16,11 +16,21 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
+/** Base class for MCP server integration tests. */
 @SuppressWarnings("java:S112")
 public abstract class AbstractMcpIntegrationTest {
 
+    /** JSON key for the {@code content} array in MCP responses. */
     public static final String CONTENT = "content";
 
+    /** Creates a new instance. */
+    public AbstractMcpIntegrationTest() {}
+
+    /**
+     * Returns the HTTP transport used to communicate with the MCP endpoint.
+     *
+     * @return the transport
+     */
     protected abstract McpHttpTransport transport();
 
     // --- Tools via MCP Client ---
@@ -345,6 +355,11 @@ public abstract class AbstractMcpIntegrationTest {
 
     // --- Helpers ---
 
+    /**
+     * Sends an {@code initialize} request and returns the session id.
+     *
+     * @return the MCP session id
+     */
     protected String initializeSession() {
         McpHttpResponse response = transport().post("/mcp", McpTestRequests.initializeRequest(1), Map.of());
         JsonRpcAssertions.assertJsonRpcSuccess(response, 1);
@@ -353,10 +368,22 @@ public abstract class AbstractMcpIntegrationTest {
         return sessionId;
     }
 
+    /**
+     * Posts a JSON-RPC body to the MCP endpoint using the given session.
+     *
+     * @param sessionId the MCP session id
+     * @param body the JSON-RPC request body
+     * @return the HTTP response
+     */
     protected McpHttpResponse postMcp(String sessionId, String body) {
         return transport().post("/mcp", body, Map.of(MCP_SESSION_ID, sessionId));
     }
 
+    /**
+     * Builds a new {@link McpClient} connected to the test MCP endpoint.
+     *
+     * @return a new MCP client
+     */
     protected McpClient buildClient() {
         return DefaultMcpClient.builder()
                 .transport(StreamableHttpMcpTransport.builder()

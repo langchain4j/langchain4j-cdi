@@ -30,8 +30,19 @@ import java.util.stream.Stream;
  */
 public class CommonLLMPluginCreator {
 
+    /** Utility class — not instantiable. */
+    private CommonLLMPluginCreator() {}
+
+    /** Logger for this class. */
     public static final Logger LOGGER = Logger.getLogger(CommonLLMPluginCreator.class.getName());
 
+    /**
+     * Scan the given configuration for LLM bean definitions and pass each to the consumer.
+     *
+     * @param llmConfig the configuration source describing beans to create
+     * @param beanBuilder consumer that registers each discovered bean
+     * @throws ClassNotFoundException if a configured class cannot be loaded
+     */
     @SuppressWarnings("unchecked")
     public static void prepareAllLLMBeans(LLMConfig llmConfig, Consumer<BeanData> beanBuilder)
             throws ClassNotFoundException {
@@ -84,6 +95,16 @@ public class CommonLLMPluginCreator {
         }
     }
 
+    /**
+     * Holds the metadata needed to register a single LLM bean.
+     *
+     * @param targetClass the bean class to instantiate
+     * @param builderClass the inner Builder class used to construct the target, or {@code null} when a custom producer
+     *     is supplied
+     * @param scopeClass the CDI scope annotation for the bean
+     * @param beanName the logical bean name from configuration
+     * @param callback function that creates the bean instance given a CDI lookup context
+     */
     public record BeanData(
             Class<?> targetClass,
             Class<?> builderClass,
@@ -91,6 +112,16 @@ public class CommonLLMPluginCreator {
             String beanName,
             Function<Instance<Object>, Object> callback) {}
 
+    /**
+     * Create a single LLM bean instance via its builder, populated from configuration.
+     *
+     * @param lookup CDI Instance for resolving dependent beans
+     * @param llmConfig configuration source
+     * @param beanName logical name of the bean
+     * @param targetClass the class to instantiate
+     * @param builderClass the inner Builder class used to construct the target
+     * @return a fully configured instance of the target class
+     */
     public static Object create(
             Instance<Object> lookup,
             LLMConfig llmConfig,
@@ -238,6 +269,13 @@ public class CommonLLMPluginCreator {
         return currentClassFields;
     }
 
+    /**
+     * Load a class by name, trying the thread context classloader first.
+     *
+     * @param className fully qualified class name
+     * @return the loaded class
+     * @throws ClassNotFoundException if the class cannot be found
+     */
     public static Class<?> loadClass(String className) throws ClassNotFoundException {
         try {
             return Thread.currentThread().getContextClassLoader().loadClass(className);

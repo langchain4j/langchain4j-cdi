@@ -23,6 +23,9 @@ import jakarta.inject.Inject;
 @Dependent
 public class SpanChatModelListener extends GenAITracingTelemetry implements ChatModelListener {
 
+    /** Creates a new SpanChatModelListener. */
+    public SpanChatModelListener() {}
+
     private static final String OTEL_SCOPE_KEY_NAME = "OTelScope";
     private static final String OTEL_SPAN_KEY_NAME = "OTelSpan";
     private static final GenAIOperations GEN_AI_OPERATION = GenAIOperations.CHAT;

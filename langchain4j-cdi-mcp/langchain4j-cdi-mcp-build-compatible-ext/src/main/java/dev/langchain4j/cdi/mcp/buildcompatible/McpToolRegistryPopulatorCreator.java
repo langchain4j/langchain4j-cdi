@@ -16,12 +16,27 @@ import org.mcp_java.annotations.resources.Resource;
 import org.mcp_java.annotations.resources.ResourceTemplate;
 import org.mcp_java.annotations.tools.Tool;
 
+/**
+ * Synthetic bean creator that instantiates a {@link McpToolRegistryPopulator} and registers all detected MCP tool,
+ * resource, resource template, and prompt descriptors into their respective registries.
+ */
 public class McpToolRegistryPopulatorCreator implements SyntheticBeanCreator<McpToolRegistryPopulator> {
 
+    /** Creates a new instance. */
+    public McpToolRegistryPopulatorCreator() {}
+
     private static final Logger LOGGER = Logger.getLogger(McpToolRegistryPopulatorCreator.class.getName());
+
+    /** Synthetic bean parameter name for the array of tool bean class names. */
     public static final String PARAM_TOOL_BEAN_CLASSES = "toolBeanClasses";
+
+    /** Synthetic bean parameter name for the array of resource bean class names. */
     public static final String PARAM_RESOURCE_BEAN_CLASSES = "resourceBeanClasses";
+
+    /** Synthetic bean parameter name for the array of resource template bean class names. */
     public static final String PARAM_RESOURCE_TEMPLATE_BEAN_CLASSES = "resourceTemplateBeanClasses";
+
+    /** Synthetic bean parameter name for the array of prompt bean class names. */
     public static final String PARAM_PROMPT_BEAN_CLASSES = "promptBeanClasses";
 
     @Override

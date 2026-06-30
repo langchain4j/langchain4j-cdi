@@ -10,7 +10,16 @@ import java.util.stream.StreamSupport;
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
 
+/**
+ * {@link LLMConfig} implementation backed by MicroProfile Config.
+ *
+ * <p>Reads LangChain4j plugin configuration properties from the MicroProfile Config subsystem, filtering on the
+ * standard {@value LLMConfig#PREFIX} prefix.
+ */
 public class LLMConfigMPConfig extends LLMConfig {
+
+    /** Creates a new {@code LLMConfigMPConfig}. */
+    public LLMConfigMPConfig() {}
 
     private Config config;
 

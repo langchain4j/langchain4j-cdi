@@ -33,10 +33,15 @@ import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 
 /**
+ * CDI portable extension that applies MicroProfile Fault Tolerance interceptor bindings to AI service synthetic beans.
+ *
  * @author Buhake Sindi
  * @since 29 November 2024
  */
 public class Langchain4JFaultToleranceExtension implements Extension {
+
+    /** Creates a new {@code Langchain4JFaultToleranceExtension}. */
+    public Langchain4JFaultToleranceExtension() {}
 
     private static final Logger LOGGER = Logger.getLogger(Langchain4JFaultToleranceExtension.class.getName());
 

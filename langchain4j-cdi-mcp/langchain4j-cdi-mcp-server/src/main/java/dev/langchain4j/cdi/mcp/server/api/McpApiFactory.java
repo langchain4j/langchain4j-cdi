@@ -23,6 +23,9 @@ import org.mcp_java.server.Sampling;
 @ApplicationScoped
 public class McpApiFactory {
 
+    /** CDI-required default constructor. */
+    public McpApiFactory() {}
+
     @Inject
     McpLogger mcpLogger;
 

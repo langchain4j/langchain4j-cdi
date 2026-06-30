@@ -14,6 +14,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
+/**
+ * Manages the lifecycle of MCP sessions including creation, validation, termination, and automatic expiry of idle
+ * sessions.
+ */
 @ApplicationScoped
 public class McpSessionManager {
 
@@ -31,10 +35,16 @@ public class McpSessionManager {
     @Inject
     McpRootsManager rootsManager;
 
+    /** CDI-required default constructor. Uses the default 30-minute session timeout. */
     public McpSessionManager() {
         this(DEFAULT_SESSION_TIMEOUT);
     }
 
+    /**
+     * Creates a session manager with a custom session timeout.
+     *
+     * @param sessionTimeout the duration after which idle sessions are expired
+     */
     public McpSessionManager(Duration sessionTimeout) {
         this.sessionTimeout = sessionTimeout;
         this.cleanupExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -51,12 +61,26 @@ public class McpSessionManager {
         cleanupExecutor.shutdownNow();
     }
 
+    /**
+     * Creates a new session with a random UUID and stores it.
+     *
+     * @param initParams the client capabilities from the initialization request
+     * @return the new session identifier
+     */
     public String createSession(JsonObject initParams) {
         String id = UUID.randomUUID().toString();
         sessions.put(id, new McpSession(id, initParams));
         return id;
     }
 
+    /**
+     * Retrieves and touches the session, or throws if the session is invalid or missing.
+     *
+     * @param requestId the JSON-RPC request id (used in the exception if thrown)
+     * @param sessionId the session identifier from the {@code Mcp-Session-Id} header
+     * @return the validated session
+     * @throws McpSessionException if the session does not exist
+     */
     public McpSession requireSession(Object requestId, String sessionId) {
         if (sessionId == null || !sessions.containsKey(sessionId)) {
             throw new McpSessionException(requestId, "Invalid or missing Mcp-Session-Id");
@@ -66,6 +90,11 @@ public class McpSessionManager {
         return session;
     }
 
+    /**
+     * Terminates and removes a session, cleaning up associated subscriptions and roots.
+     *
+     * @param sessionId the session identifier to terminate
+     */
     public void terminateSession(String sessionId) {
         McpSession removed = sessions.remove(sessionId);
         if (removed != null) {
@@ -75,6 +104,11 @@ public class McpSessionManager {
         }
     }
 
+    /**
+     * Returns the number of currently active sessions.
+     *
+     * @return the active session count
+     */
     public int activeSessionCount() {
         return sessions.size();
     }

@@ -30,15 +30,32 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
 
+/**
+ * CDI portable extension that discovers interfaces annotated with {@link RegisterAIService} and agent topology
+ * stereotypes, then registers synthetic beans for each at deployment time.
+ */
 public class LangChain4JAIServicePortableExtension implements Extension {
     private static final Logger LOGGER = Logger.getLogger(LangChain4JAIServicePortableExtension.class.getName());
     private static final Set<Class<?>> detectedAIServicesDeclaredInterfaces = new HashSet<>();
     private static final Set<Class<?>> detectedAgentDeclaredInterfaces = new HashSet<>();
 
+    /** Creates a new instance of this portable extension. */
+    public LangChain4JAIServicePortableExtension() {}
+
+    /**
+     * Returns the set of AI service interfaces detected during bean discovery.
+     *
+     * @return the detected AI service interfaces
+     */
     public static Set<Class<?>> getDetectedAIServicesDeclaredInterfaces() {
         return detectedAIServicesDeclaredInterfaces;
     }
 
+    /**
+     * Returns the set of agent interfaces detected during bean discovery.
+     *
+     * @return the detected agent interfaces
+     */
     public static Set<Class<?>> getDetectedAgentDeclaredInterfaces() {
         return detectedAgentDeclaredInterfaces;
     }

@@ -10,7 +10,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ServiceLoader;
 
+/**
+ * Resolves the {@link SyntheticBeanCreator} class to use for LLM plugin beans by loading
+ * {@link AISyntheticBeanCreatorClassFactory} implementations via {@link ServiceLoader} and selecting the
+ * highest-priority one.
+ */
 public class AISyntheticBeanCreatorClassProvider {
+
+    /** Creates a new {@code AISyntheticBeanCreatorClassProvider}. */
+    public AISyntheticBeanCreatorClassProvider() {}
 
     private static final AISyntheticBeanCreatorClassFactory factory;
 
@@ -43,6 +51,11 @@ public class AISyntheticBeanCreatorClassProvider {
         }
     }
 
+    /**
+     * Returns the {@link SyntheticBeanCreator} class from the highest-priority factory.
+     *
+     * @return the synthetic bean creator class
+     */
     public static Class<? extends SyntheticBeanCreator<Object>> getSyntheticBeanCreatorClass() {
         return factory.getSyntheticBeanCreatorClass();
     }

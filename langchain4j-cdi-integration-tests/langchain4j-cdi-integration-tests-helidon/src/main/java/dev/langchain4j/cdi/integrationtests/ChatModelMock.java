@@ -7,11 +7,20 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
 import jakarta.enterprise.context.ApplicationScoped;
 
+/** Mock {@link ChatModel} for Helidon integration testing. */
 @ApplicationScoped
 public class ChatModelMock implements ChatModel {
 
+    /** Creates a new instance. */
+    public ChatModelMock() {}
+
     private ChatResponse fixedChatResponse;
 
+    /**
+     * Sets a fixed response to return for all chat requests.
+     *
+     * @param fixedChatResponse the response to return
+     */
     public void setFixedChatResponse(ChatResponse fixedChatResponse) {
         this.fixedChatResponse = fixedChatResponse;
     }
@@ -27,12 +36,26 @@ public class ChatModelMock implements ChatModel {
                 .build();
     }
 
+    /**
+     * Creates a new builder.
+     *
+     * @return a new builder instance
+     */
     public static ChatModelMockBuilder builder() {
         return new ChatModelMockBuilder();
     }
 
+    /** Builder for {@link ChatModelMock}. */
     public static class ChatModelMockBuilder {
 
+        /** Creates a new instance. */
+        public ChatModelMockBuilder() {}
+
+        /**
+         * Builds the mock.
+         *
+         * @return a new {@link ChatModelMock}
+         */
         public ChatModelMock build() {
             return new ChatModelMock();
         }

@@ -11,6 +11,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Application-scoped registry of MCP resource and resource-template descriptors. Manages registration, lookup, and
+ * broadcasts list-changed and resource-updated notifications to connected clients.
+ */
 @ApplicationScoped
 public class McpResourceRegistry {
 
@@ -23,6 +27,14 @@ public class McpResourceRegistry {
     @Inject
     McpResourceSubscriptionManager subscriptionManager;
 
+    /** CDI-required default constructor. */
+    public McpResourceRegistry() {}
+
+    /**
+     * Registers a resource descriptor. Broadcasts a list-changed notification if this is a new resource.
+     *
+     * @param descriptor the resource descriptor to register
+     */
     public void register(McpResourceDescriptor descriptor) {
         McpResourceDescriptor previous = resources.put(descriptor.getUri(), descriptor);
         if (previous == null) {
@@ -30,6 +42,12 @@ public class McpResourceRegistry {
         }
     }
 
+    /**
+     * Removes a resource by URI. Broadcasts a list-changed notification if the resource existed.
+     *
+     * @param uri the resource URI
+     * @return {@code true} if a resource was removed
+     */
     public boolean unregister(String uri) {
         McpResourceDescriptor removed = resources.remove(uri);
         if (removed != null) {
@@ -38,6 +56,11 @@ public class McpResourceRegistry {
         return removed != null;
     }
 
+    /**
+     * Registers a resource template descriptor. Broadcasts a list-changed notification if this is a new template.
+     *
+     * @param descriptor the resource template descriptor to register
+     */
     public void registerTemplate(McpResourceTemplateDescriptor descriptor) {
         McpResourceTemplateDescriptor previous = templates.put(descriptor.getUriTemplate(), descriptor);
         if (previous == null) {
@@ -45,6 +68,11 @@ public class McpResourceRegistry {
         }
     }
 
+    /**
+     * Sends a resource-updated notification to all sessions subscribed to the given URI.
+     *
+     * @param uri the URI of the updated resource
+     */
     public void notifyResourceUpdated(String uri) {
         if (broadcaster == null || subscriptionManager == null) {
             return;
@@ -61,26 +89,58 @@ public class McpResourceRegistry {
         }
     }
 
+    /**
+     * Returns an unmodifiable view of all registered resource descriptors.
+     *
+     * @return the registered resources
+     */
     public Collection<McpResourceDescriptor> listResources() {
         return Collections.unmodifiableCollection(resources.values());
     }
 
+    /**
+     * Returns an unmodifiable view of all registered resource template descriptors.
+     *
+     * @return the registered resource templates
+     */
     public Collection<McpResourceTemplateDescriptor> listTemplates() {
         return Collections.unmodifiableCollection(templates.values());
     }
 
+    /**
+     * Finds a resource descriptor by URI.
+     *
+     * @param uri the resource URI
+     * @return an {@link Optional} containing the descriptor, or empty if not found
+     */
     public Optional<McpResourceDescriptor> findResource(String uri) {
         return Optional.ofNullable(resources.get(uri));
     }
 
+    /**
+     * Finds a resource template descriptor by URI template.
+     *
+     * @param uriTemplate the URI template string
+     * @return an {@link Optional} containing the descriptor, or empty if not found
+     */
     public Optional<McpResourceTemplateDescriptor> findTemplate(String uriTemplate) {
         return Optional.ofNullable(templates.get(uriTemplate));
     }
 
+    /**
+     * Returns the number of registered resources.
+     *
+     * @return the resource count
+     */
     public int size() {
         return resources.size();
     }
 
+    /**
+     * Returns the number of registered resource templates.
+     *
+     * @return the template count
+     */
     public int templateSize() {
         return templates.size();
     }
