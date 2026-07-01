@@ -69,7 +69,7 @@
         <project.build.outputTimestamp>2026-06-30T10:56:39Z</project.build.outputTimestamp>
 
         <dev.langchain4j.version>1.17.0</dev.langchain4j.version>
-        <dev.langchain4j.agentic.version>1.17.0-beta27</dev.langchain4j.agentic.version>
+        <dev.langchain4j.agentic.version>1.17.1-beta27</dev.langchain4j.agentic.version>
         <dev.langchain4j.community.version>1.17.0-beta27</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
