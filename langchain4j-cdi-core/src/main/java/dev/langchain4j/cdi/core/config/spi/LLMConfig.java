@@ -27,22 +27,43 @@ import java.util.stream.Stream;
  * MicroProfile/SmallRye Config, but kept minimal for portability.
  */
 public abstract class LLMConfig {
+
+    /** Creates a new configuration instance. */
+    protected LLMConfig() {}
+
+    /** Prefix used to identify CDI bean lookup values in configuration. */
     public static final String LOOKUP_PREFIX = "lookup:";
+
     Map<String, ProducerFunction<?>> producers = new ConcurrentHashMap<>();
 
     /** Prefix for all LLM beans properties. */
     public static final String PREFIX = "dev.langchain4j.cdi.plugin";
 
-    /** Called by @see LLMConfigProvider. */
+    /** Property key for a custom {@link ProducerFunction} bean producer. */
     public static final String PRODUCER = "defined_bean_producer";
 
+    /** Property key for the fully qualified class name of the bean. */
     public static final String CLASS = "class";
+
+    /** Property key for the CDI scope annotation of the bean. */
     public static final String SCOPE = "scope";
 
+    /** Initialize this configuration source. */
     public abstract void init();
 
+    /**
+     * Return all known property keys.
+     *
+     * @return set of property keys
+     */
     public abstract Set<String> getPropertyKeys();
 
+    /**
+     * Return the raw string value for the given key.
+     *
+     * @param key the property key
+     * @return the value, or {@code null} if absent
+     */
     public abstract String getValue(String key);
 
     /**
@@ -59,15 +80,36 @@ public abstract class LLMConfig {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * Return the raw configuration value for a bean property.
+     *
+     * @param beanName the logical bean name
+     * @param propertyName the property suffix (e.g. "class", "scope", or "config.xxx")
+     * @return the string value, or {@code null} if absent
+     */
     public String getBeanPropertyValue(String beanName, String propertyName) {
         String key = PREFIX + "." + beanName + "." + propertyName;
         return getValue(key);
     }
 
+    /**
+     * Register a custom bean producer function under the given name.
+     *
+     * @param producersName the logical name used to reference this producer in configuration
+     * @param producer the producer function to register
+     */
     public void registerProducer(String producersName, ProducerFunction<?> producer) {
         producers.putIfAbsent(producersName, producer);
     }
 
+    /**
+     * Return the bean property value converted to the requested type.
+     *
+     * @param beanName the logical bean name
+     * @param propertyName the property suffix
+     * @param type the target type for conversion
+     * @return the converted value, or {@code null} if absent
+     */
     public Object getBeanPropertyValue(String beanName, String propertyName, Type type) {
         ParameterizedType parameterizedType = null;
         Class<?> clazz;
@@ -123,6 +165,15 @@ public abstract class LLMConfig {
         return clazz.getConstructor(String.class).newInstance(stringValue);
     }
 
+    /**
+     * Return the bean property value, resolving CDI lookups when the value starts with {@link #LOOKUP_PREFIX}.
+     *
+     * @param lookup CDI Instance for resolving beans
+     * @param beanName the logical bean name
+     * @param propertyName the property suffix
+     * @param type the target type for conversion or lookup
+     * @return the resolved value, or {@code null} if absent
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Object getBeanPropertyValue(Instance<Object> lookup, String beanName, String propertyName, Type type) {
         String stringValue = getBeanPropertyValue(beanName, propertyName);
@@ -225,7 +276,11 @@ public abstract class LLMConfig {
     private static java.util.function.Supplier<BeanManager> beanManagerSupplier =
             () -> CDI.current().getBeanManager();
 
-    /** For tests only: override how BeanManager is obtained. */
+    /**
+     * For tests only: override how BeanManager is obtained.
+     *
+     * @param supplier the supplier to use, or {@code null} to reset to the default
+     */
     public static void setBeanManagerSupplier(java.util.function.Supplier<BeanManager> supplier) {
         beanManagerSupplier = (supplier == null) ? () -> CDI.current().getBeanManager() : supplier;
     }
@@ -260,6 +315,12 @@ public abstract class LLMConfig {
         return lookup.select(clazz, NamedLiteral.of(lookupName));
     }
 
+    /**
+     * Return the configuration property names (without the common prefix) for the given bean.
+     *
+     * @param beanName the logical bean name
+     * @return set of property name suffixes under {@code config.}
+     */
     public Set<String> getPropertyNamesForBean(String beanName) {
         String configPrefix = PREFIX + "." + beanName + ".config.";
         return getPropertyKeys().stream()

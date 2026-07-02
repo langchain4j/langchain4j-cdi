@@ -7,7 +7,14 @@ import dev.langchain4j.cdi.agent.spi.A2AAgentBuilder;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import jakarta.enterprise.inject.Instance;
 
+/**
+ * Default {@link A2AAgentBuilder} implementation that creates A2A agent proxies using the LangChain4j
+ * {@link AgenticServices#a2aBuilder(String, Class)} API. Discovered via {@link java.util.ServiceLoader}.
+ */
 public class DefaultA2AAgentBuilder implements A2AAgentBuilder {
+
+    /** Creates a new {@code DefaultA2AAgentBuilder}. */
+    public DefaultA2AAgentBuilder() {}
 
     @Override
     public <X> X build(

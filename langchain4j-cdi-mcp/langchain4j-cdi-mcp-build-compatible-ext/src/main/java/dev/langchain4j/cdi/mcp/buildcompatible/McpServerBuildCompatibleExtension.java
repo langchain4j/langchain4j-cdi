@@ -15,7 +15,15 @@ import org.mcp_java.annotations.resources.Resource;
 import org.mcp_java.annotations.resources.ResourceTemplate;
 import org.mcp_java.annotations.tools.Tool;
 
+/**
+ * Build-compatible CDI extension that detects beans annotated with MCP annotations ({@code @Tool}, {@code @Resource},
+ * {@code @ResourceTemplate}, {@code @Prompt}) and synthesizes a {@link McpToolRegistryPopulator} bean to register them
+ * at deployment time.
+ */
 public class McpServerBuildCompatibleExtension implements BuildCompatibleExtension {
+
+    /** Creates a new instance. */
+    public McpServerBuildCompatibleExtension() {}
 
     private static final Logger LOGGER = Logger.getLogger(McpServerBuildCompatibleExtension.class.getName());
     private static final Set<String> detectedToolBeanClassNames = new HashSet<>();
@@ -23,6 +31,12 @@ public class McpServerBuildCompatibleExtension implements BuildCompatibleExtensi
     private static final Set<String> detectedResourceTemplateBeanClassNames = new HashSet<>();
     private static final Set<String> detectedPromptBeanClassNames = new HashSet<>();
 
+    /**
+     * Scans all classes during the enhancement phase and collects those that contain methods annotated with MCP
+     * annotations.
+     *
+     * @param classConfig the class configuration being inspected
+     */
     @SuppressWarnings("unused")
     @Enhancement(types = Object.class, withSubtypes = true)
     public void detectMcpBeans(ClassConfig classConfig) {
@@ -52,6 +66,12 @@ public class McpServerBuildCompatibleExtension implements BuildCompatibleExtensi
         }
     }
 
+    /**
+     * Synthesizes a {@link McpToolRegistryPopulator} bean if any MCP-annotated beans were detected, passing the
+     * collected class names as synthetic bean parameters.
+     *
+     * @param syntheticComponents the synthetic component registrar
+     */
     @SuppressWarnings("unused")
     @Synthesis
     public void registerMcpBeans(SyntheticComponents syntheticComponents) {

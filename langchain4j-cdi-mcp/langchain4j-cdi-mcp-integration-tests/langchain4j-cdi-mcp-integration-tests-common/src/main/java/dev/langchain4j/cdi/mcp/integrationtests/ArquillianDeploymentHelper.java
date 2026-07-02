@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.BiPredicate;
 
+/** Utility for locating build artifacts used in Arquillian deployments. */
 public class ArquillianDeploymentHelper {
 
     private ArquillianDeploymentHelper() {}
@@ -15,6 +16,11 @@ public class ArquillianDeploymentHelper {
     /**
      * Finds the first JAR in {@code folder} whose name starts with {@code prefix}. Throws {@link IllegalStateException}
      * if no match is found — run {@code mvn install} on the parent modules first.
+     *
+     * @param folder the directory to search in
+     * @param prefix the JAR filename prefix to match
+     * @return the matching JAR file
+     * @throws IOException if the directory cannot be read
      */
     public static File findBuildFile(String folder, String prefix) throws IOException {
         return Files.find(

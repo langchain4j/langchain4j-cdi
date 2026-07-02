@@ -13,6 +13,13 @@ public class CdiRoots implements Roots {
     private final McpRootsManager rootsManager;
     private final String sessionId;
 
+    /**
+     * Creates a new roots wrapper.
+     *
+     * @param session the MCP session
+     * @param rootsManager the roots manager
+     * @param sessionId the session identifier
+     */
     public CdiRoots(McpSession session, McpRootsManager rootsManager, String sessionId) {
         this.session = session;
         this.rootsManager = rootsManager;

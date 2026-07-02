@@ -7,8 +7,13 @@ import dev.langchain4j.store.embedding.EmbeddingStore;
 import jakarta.enterprise.context.ApplicationScoped;
 import java.util.List;
 
+/** No-op {@link EmbeddingStore} of {@link String} for integration testing. */
 @ApplicationScoped
 public class EmbeddingStoreString implements EmbeddingStore<String> {
+
+    /** Creates a new instance. */
+    public EmbeddingStoreString() {}
+
     @Override
     public String add(Embedding embedding) {
         return "";

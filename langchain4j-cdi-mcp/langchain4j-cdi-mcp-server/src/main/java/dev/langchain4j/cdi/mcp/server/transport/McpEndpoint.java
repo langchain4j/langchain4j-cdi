@@ -62,6 +62,10 @@ import org.mcp_java.model.resource.ResourceContents;
 import org.mcp_java.model.tool.CallToolResult;
 import org.mcp_java.model.tool.ListToolsResult;
 
+/**
+ * JAX-RS resource that implements the MCP Streamable HTTP transport at the {@code /mcp} endpoint. Handles JSON-RPC
+ * requests over POST, SSE streaming over GET, and session termination over DELETE.
+ */
 @Path("/mcp")
 @ApplicationScoped
 @SuppressWarnings("java:S1192")
@@ -93,6 +97,23 @@ public class McpEndpoint {
     /** No-arg constructor required by CDI proxying and JAX-RS runtimes. */
     public McpEndpoint() {}
 
+    /**
+     * CDI injection constructor.
+     *
+     * @param toolRegistry registry of available MCP tools
+     * @param resourceRegistry registry of available MCP resources
+     * @param promptRegistry registry of available MCP prompts
+     * @param sessionManager manages MCP sessions
+     * @param toolInvoker invokes tool methods on CDI beans
+     * @param beanInvoker invokes prompt and resource methods on CDI beans
+     * @param broadcaster broadcasts SSE notifications to connected clients
+     * @param mcpLogger MCP logging facade
+     * @param subscriptionManager manages resource subscriptions
+     * @param serverRequestManager manages server-initiated requests
+     * @param rootsManager handles roots list changes
+     * @param cancellationManager tracks cancellation state per request
+     * @param configInstance optional server configuration bean
+     */
     @Inject
     public McpEndpoint(
             McpToolRegistry toolRegistry,
@@ -123,6 +144,14 @@ public class McpEndpoint {
         this.configInstance = configInstance;
     }
 
+    /**
+     * Handles incoming JSON-RPC requests and client responses over HTTP POST.
+     *
+     * @param body the JSON-RPC request or response body
+     * @param sessionId the MCP session identifier from the request header
+     * @param accept the Accept header value used to determine SSE vs JSON response format
+     * @return the JSON-RPC response, either as JSON or as an SSE event
+     */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces({MediaType.APPLICATION_JSON, MediaType.SERVER_SENT_EVENTS})
@@ -165,6 +194,12 @@ public class McpEndpoint {
         };
     }
 
+    /**
+     * Opens an SSE stream for server-initiated notifications on an existing session.
+     *
+     * @param sessionId the MCP session identifier from the request header
+     * @return an SSE streaming response, or 400 if no session ID is provided
+     */
     @GET
     @Produces(MediaType.SERVER_SENT_EVENTS)
     public Response handleGet(@HeaderParam("Mcp-Session-Id") String sessionId) {
@@ -190,6 +225,12 @@ public class McpEndpoint {
                 .build();
     }
 
+    /**
+     * Terminates an MCP session.
+     *
+     * @param sessionId the MCP session identifier from the request header
+     * @return an OK response after the session is terminated
+     */
     @DELETE
     public Response handleDelete(@HeaderParam("Mcp-Session-Id") String sessionId) {
         if (sessionId != null) {

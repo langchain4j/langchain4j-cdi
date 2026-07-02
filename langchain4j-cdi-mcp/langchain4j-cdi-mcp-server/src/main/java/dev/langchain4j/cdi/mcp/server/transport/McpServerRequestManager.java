@@ -28,6 +28,9 @@ public class McpServerRequestManager {
     @Inject
     McpNotificationBroadcaster broadcaster;
 
+    /** CDI-required default constructor. */
+    public McpServerRequestManager() {}
+
     /**
      * Sends a JSON-RPC request to a specific client session and waits for the response.
      *
@@ -88,7 +91,13 @@ public class McpServerRequestManager {
         return false;
     }
 
-    /** Called when a JSON-RPC error response is received from a client. */
+    /**
+     * Called when a JSON-RPC error response is received from a client.
+     *
+     * @param id the response id
+     * @param errorMessage the error message from the client
+     * @return true if the error was matched to a pending request
+     */
     public boolean handleErrorResponse(Object id, String errorMessage) {
         if (id == null) {
             return false;
@@ -102,6 +111,11 @@ public class McpServerRequestManager {
         return false;
     }
 
+    /**
+     * Returns the number of requests currently awaiting a response.
+     *
+     * @return the count of pending requests
+     */
     public int pendingRequestCount() {
         return pendingRequests.size();
     }

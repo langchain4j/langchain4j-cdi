@@ -5,8 +5,12 @@ import dev.langchain4j.guardrail.InputGuardrail;
 import dev.langchain4j.guardrail.InputGuardrailResult;
 import jakarta.enterprise.context.ApplicationScoped;
 
+/** Input guardrail that rejects empty or blank messages. */
 @ApplicationScoped
 public class NoEmptyMessageInputGuardrail implements InputGuardrail {
+
+    /** Creates a new instance. */
+    public NoEmptyMessageInputGuardrail() {}
 
     @Override
     public InputGuardrailResult validate(UserMessage userMessage) {

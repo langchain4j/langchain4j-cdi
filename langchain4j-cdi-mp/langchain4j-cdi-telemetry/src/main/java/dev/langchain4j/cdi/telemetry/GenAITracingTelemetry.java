@@ -25,10 +25,15 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /**
+ * Base class providing OpenTelemetry span attribute population for GenAI semantic conventions.
+ *
  * @author Buhake Sindi
  * @since 25 June 2026
  */
 public abstract class GenAITracingTelemetry {
+
+    /** Creates a new instance. */
+    protected GenAITracingTelemetry() {}
 
     private static final Map<ModelProvider, String> GEN_AI_PROVIDERS;
 
@@ -53,10 +58,22 @@ public abstract class GenAITracingTelemetry {
 
     private final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
+    /**
+     * Sets the {@code gen_ai.provider.name} span attribute from the given model provider.
+     *
+     * @param span the span to populate
+     * @param provider the model provider
+     */
     protected void traceModelProvider(final Span span, final ModelProvider provider) {
         span.setAttribute("gen_ai.provider.name", GEN_AI_PROVIDERS.get(provider));
     }
 
+    /**
+     * Populates the span with GenAI request attributes from the given chat request.
+     *
+     * @param span the span to populate
+     * @param request the chat request containing model parameters and messages
+     */
     protected void traceChatRequest(final Span span, final ChatRequest request) {
         final List<ChatMessage> inputMessages = new ArrayList<>();
         final List<ChatMessage> systemInstructions = new ArrayList<>();
@@ -138,6 +155,12 @@ public abstract class GenAITracingTelemetry {
         }
     }
 
+    /**
+     * Populates the span with GenAI response attributes from the given chat response.
+     *
+     * @param span the span to populate
+     * @param response the chat response containing metadata and token usage
+     */
     protected void traceChatResponse(final Span span, final ChatResponse response) {
         span.setAttribute("gen_ai.response.id", response.metadata().id())
                 .setAttribute("gen_ai.response.model", response.metadata().modelName());
@@ -158,6 +181,12 @@ public abstract class GenAITracingTelemetry {
         }
     }
 
+    /**
+     * Records the given exception on the span.
+     *
+     * @param span the span to record the exception on
+     * @param exception the exception to record
+     */
     protected void traceException(final Span span, final Throwable exception) {
         span.recordException(exception);
     }

@@ -3,6 +3,7 @@ package dev.langchain4j.cdi.example.booking;
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.service.SystemMessage;
 
+/** AI service for car booking customer support chat. */
 @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
 @RegisterAIService(
         tools = BookingService.class,
@@ -11,6 +12,12 @@ import dev.langchain4j.service.SystemMessage;
         chatModelName = "chat-model")
 public interface ChatAiService {
 
+    /**
+     * Sends a question to the assistant and returns the response.
+     *
+     * @param question the question to ask
+     * @return the assistant's response
+     */
     @SystemMessage("""
             You are a customer support agent of a car rental company named 'Miles of Smiles'.
             Before providing information about booking or canceling a booking, you MUST always check:
@@ -23,6 +30,12 @@ public interface ChatAiService {
     // String chat(@V("question") @UserMessage String question);
     String chat(String question);
 
+    /**
+     * Fallback response when the chat service is unavailable.
+     *
+     * @param question the question that was asked
+     * @return the fallback response
+     */
     default String chatFallback(String question) {
         return String.format(
                 "Sorry, I am not able to answer your request %s at the moment. Please try again later.", question);

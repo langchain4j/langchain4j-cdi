@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.logging.Logger;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
+/** Document RAG ingestor for loading car rental terms into the embedding store. */
 @ApplicationScoped
 public class DocRagIngestor {
 
@@ -38,10 +39,18 @@ public class DocRagIngestor {
     @ConfigProperty(name = "app.docs-for-rag.dir")
     private File docs;
 
+    /** Creates a new document RAG ingestor. */
+    public DocRagIngestor() {}
+
     private List<Document> loadDocs() {
         return loadDocuments(docs.getPath(), new TextDocumentParser());
     }
 
+    /**
+     * Ingests car rental terms document into the embedding store.
+     *
+     * @param pointless the CDI event object (unused)
+     */
     public void ingest(@Observes @Initialized(ApplicationScoped.class) Object pointless) {
 
         long start = System.currentTimeMillis();

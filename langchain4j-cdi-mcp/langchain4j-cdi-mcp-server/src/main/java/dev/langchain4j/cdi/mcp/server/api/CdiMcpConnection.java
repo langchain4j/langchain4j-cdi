@@ -13,6 +13,12 @@ public class CdiMcpConnection implements McpConnection {
     private final McpSession session;
     private final McpLogger mcpLogger;
 
+    /**
+     * Creates a new MCP connection wrapper.
+     *
+     * @param session the MCP session
+     * @param mcpLogger the MCP logger
+     */
     public CdiMcpConnection(McpSession session, McpLogger mcpLogger) {
         this.session = session;
         this.mcpLogger = mcpLogger;

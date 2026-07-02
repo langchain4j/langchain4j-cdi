@@ -11,6 +11,9 @@ import jakarta.inject.Inject;
 @ApplicationScoped
 public class McpProgressReporter {
 
+    /** CDI-required default constructor. */
+    public McpProgressReporter() {}
+
     @Inject
     McpNotificationBroadcaster broadcaster;
 

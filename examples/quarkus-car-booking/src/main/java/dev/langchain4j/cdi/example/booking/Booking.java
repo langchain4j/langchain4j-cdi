@@ -3,6 +3,7 @@ package dev.langchain4j.cdi.example.booking;
 import java.time.LocalDate;
 import java.util.Objects;
 
+/** Car booking details. */
 public class Booking {
 
     private String bookingNumber;
@@ -12,18 +13,20 @@ public class Booking {
     private boolean canceled = false;
     private String carModel;
 
-    /** */
+    /** Creates a new booking. */
     public Booking() {
         super();
     }
 
     /**
-     * @param bookingNumber
-     * @param start
-     * @param end
-     * @param customer
-     * @param canceled
-     * @param carModel
+     * Creates a new booking with the given details.
+     *
+     * @param bookingNumber the booking number
+     * @param start the start date
+     * @param end the end date
+     * @param customer the customer
+     * @param canceled whether the booking is canceled
+     * @param carModel the car model
      */
     public Booking(
             String bookingNumber,
@@ -41,62 +44,110 @@ public class Booking {
         this.carModel = carModel;
     }
 
-    /** @return the bookingNumber */
+    /**
+     * Returns the booking number.
+     *
+     * @return the booking number
+     */
     public String getBookingNumber() {
         return bookingNumber;
     }
 
-    /** @param bookingNumber the bookingNumber to set */
+    /**
+     * Sets the booking number.
+     *
+     * @param bookingNumber the booking number to set
+     */
     public void setBookingNumber(String bookingNumber) {
         this.bookingNumber = bookingNumber;
     }
 
-    /** @return the start */
+    /**
+     * Returns the start date.
+     *
+     * @return the start date
+     */
     public LocalDate getStart() {
         return start;
     }
 
-    /** @param start the start to set */
+    /**
+     * Sets the start date.
+     *
+     * @param start the start date to set
+     */
     public void setStart(LocalDate start) {
         this.start = start;
     }
 
-    /** @return the end */
+    /**
+     * Returns the end date.
+     *
+     * @return the end date
+     */
     public LocalDate getEnd() {
         return end;
     }
 
-    /** @param end the end to set */
+    /**
+     * Sets the end date.
+     *
+     * @param end the end date to set
+     */
     public void setEnd(LocalDate end) {
         this.end = end;
     }
 
-    /** @return the customer */
+    /**
+     * Returns the customer.
+     *
+     * @return the customer
+     */
     public Customer getCustomer() {
         return customer;
     }
 
-    /** @param customer the customer to set */
+    /**
+     * Sets the customer.
+     *
+     * @param customer the customer to set
+     */
     public void setCustomer(Customer customer) {
         this.customer = customer;
     }
 
-    /** @return the canceled */
+    /**
+     * Returns whether the booking is canceled.
+     *
+     * @return {@code true} if the booking is canceled
+     */
     public boolean isCanceled() {
         return canceled;
     }
 
-    /** @param canceled the canceled to set */
+    /**
+     * Sets whether the booking is canceled.
+     *
+     * @param canceled {@code true} if the booking is canceled
+     */
     public void setCanceled(boolean canceled) {
         this.canceled = canceled;
     }
 
-    /** @return the carModel */
+    /**
+     * Returns the car model.
+     *
+     * @return the car model
+     */
     public String getCarModel() {
         return carModel;
     }
 
-    /** @param carModel the carModel to set */
+    /**
+     * Sets the car model.
+     *
+     * @param carModel the car model to set
+     */
     public void setCarModel(String carModel) {
         this.carModel = carModel;
     }

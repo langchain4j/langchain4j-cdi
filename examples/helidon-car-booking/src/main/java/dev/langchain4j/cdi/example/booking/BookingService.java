@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/** Car booking management service with tool methods for AI integration. */
 @ApplicationScoped
 public class BookingService {
 
@@ -16,6 +17,9 @@ public class BookingService {
 
     // Pseudo database
     private static final Map<String, Booking> BOOKINGS = new HashMap<>();
+
+    /** Creates a new booking service. */
+    public BookingService() {}
 
     static {
         // James Bond: hero customer!
@@ -78,6 +82,14 @@ public class BookingService {
         return booking;
     }
 
+    /**
+     * Retrieves booking details.
+     *
+     * @param bookingNumber the booking number
+     * @param name the customer name
+     * @param surname the customer surname
+     * @return the booking details
+     */
     @Tool("Get booking details given a booking number and customer name and surname")
     public Booking getBookingDetails(String bookingNumber, String name, String surname) {
         LOGGER.info(
@@ -85,6 +97,13 @@ public class BookingService {
         return checkBookingExists(bookingNumber, name, surname);
     }
 
+    /**
+     * Lists booking IDs for a customer.
+     *
+     * @param name the customer name
+     * @param surname the customer surname
+     * @return the list of booking IDs
+     */
     @Tool("Get all booking ids for a customer given his name and surname")
     public List<String> getBookingsForCustomer(String name, String surname) {
         LOGGER.info("DEMO: Calling Tool-getBookingsForCustomer: " + name + " " + surname);
@@ -95,6 +114,11 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Checks if a booking can be canceled per policy.
+     *
+     * @param booking the booking to check
+     */
     public void checkCancelPolicy(Booking booking) {
 
         // Reservations can be cancelled up to 7 days prior to the start of the booking
@@ -109,6 +133,14 @@ public class BookingService {
         }
     }
 
+    /**
+     * Cancels a booking.
+     *
+     * @param bookingNumber the booking number
+     * @param name the customer name
+     * @param surname the customer surname
+     * @return the canceled booking
+     */
     @Tool("Cancel a booking given its booking number and customer name and surname")
     public Booking cancelBooking(String bookingNumber, String name, String surname) {
         LOGGER.info("DEMO: Calling Tool-cancelBooking " + bookingNumber + " for customer: " + name + " " + surname);

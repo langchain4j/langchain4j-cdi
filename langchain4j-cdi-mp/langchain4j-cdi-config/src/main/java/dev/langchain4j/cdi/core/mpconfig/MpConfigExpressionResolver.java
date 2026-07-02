@@ -28,6 +28,9 @@ import org.eclipse.microprofile.config.ConfigProvider;
  */
 public class MpConfigExpressionResolver implements ExpressionResolver {
 
+    /** Creates a new {@code MpConfigExpressionResolver}. */
+    public MpConfigExpressionResolver() {}
+
     private static final Logger LOGGER = Logger.getLogger(MpConfigExpressionResolver.class.getName());
     private static final Pattern MP_CONFIG_PATTERN = Pattern.compile("^\\$\\{(.+)\\}$");
 

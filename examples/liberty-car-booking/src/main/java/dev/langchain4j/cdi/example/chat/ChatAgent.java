@@ -9,8 +9,12 @@ import jakarta.enterprise.inject.literal.NamedLiteral;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.inject.Inject;
 
+/** CDI bean managing the chat agent and its memory provider. */
 @ApplicationScoped
 public class ChatAgent {
+
+    /** Creates a new ChatAgent. */
+    public ChatAgent() {}
 
     private static final String CHAT_MEMORY_CDI_NAME = "chat-ai-service-memory";
 
@@ -27,6 +31,11 @@ public class ChatAgent {
     @Inject
     private Assistant assistant = null;
 
+    /**
+     * Returns the assistant instance.
+     *
+     * @return the assistant
+     */
     public Assistant getAssistant() {
         if (assistant == null) {
             assistant = CDI.current().select(Assistant.class).get();
@@ -34,6 +43,13 @@ public class ChatAgent {
         return assistant;
     }
 
+    /**
+     * Sends a message to the assistant within a session.
+     *
+     * @param sessionId the session identifier
+     * @param message the user message
+     * @return the assistant's response
+     */
     public String chat(String sessionId, String message) {
         String reply = getAssistant().chat(sessionId, message).trim();
         int i = reply.lastIndexOf(message);

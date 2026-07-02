@@ -29,11 +29,15 @@ import java.util.logging.Logger;
  */
 public class CommonAIServiceCreator {
 
+    /** Utility class — not instantiable. */
+    private CommonAIServiceCreator() {}
+
     private static final Logger LOGGER = Logger.getLogger(CommonAIServiceCreator.class.getName());
 
     /**
      * Create a LangChain4j AI service proxy for the given annotated interface.
      *
+     * @param <X> the AI service interface type
      * @param lookup CDI Instance used to resolve named beans (models, tools, memories, etc.).
      * @param interfaceClass the AI service interface annotated with {@link dev.langchain4j.cdi.spi.RegisterAIService}.
      * @return a runtime proxy implementing the given interface.

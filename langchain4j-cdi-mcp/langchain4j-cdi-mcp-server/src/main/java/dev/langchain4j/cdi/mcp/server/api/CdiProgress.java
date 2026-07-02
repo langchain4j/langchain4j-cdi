@@ -13,6 +13,12 @@ public class CdiProgress implements Progress {
     private final Object rawToken;
     private final McpProgressReporter progressReporter;
 
+    /**
+     * Creates a new progress wrapper.
+     *
+     * @param rawToken the raw progress token, or {@code null} if no token was provided
+     * @param progressReporter the progress reporter
+     */
     public CdiProgress(Object rawToken, McpProgressReporter progressReporter) {
         this.rawToken = rawToken;
         this.progressReporter = progressReporter;

@@ -23,6 +23,9 @@ public class McpRootsManager {
     @Inject
     McpServerRequestManager requestManager;
 
+    /** CDI-required default constructor. */
+    public McpRootsManager() {}
+
     private final Map<String, List<Root>> rootsBySession = new ConcurrentHashMap<>();
 
     /**
@@ -44,16 +47,30 @@ public class McpRootsManager {
         return roots;
     }
 
-    /** Called when a client sends {@code notifications/roots/list_changed}. Re-requests the roots. */
+    /**
+     * Called when a client sends {@code notifications/roots/list_changed}. Re-requests the roots.
+     *
+     * @param sessionId the session whose roots changed
+     */
     public void onRootsChanged(String sessionId) {
         requestRoots(sessionId);
     }
 
-    /** Returns the cached roots for a session. */
+    /**
+     * Returns the cached roots for a session.
+     *
+     * @param sessionId the session identifier
+     * @return the list of roots, or empty list if none are cached
+     */
     public List<Root> getRoots(String sessionId) {
         return rootsBySession.getOrDefault(sessionId, Collections.emptyList());
     }
 
+    /**
+     * Removes cached roots for a session that has been terminated.
+     *
+     * @param sessionId the session identifier to remove
+     */
     public void removeSession(String sessionId) {
         rootsBySession.remove(sessionId);
     }

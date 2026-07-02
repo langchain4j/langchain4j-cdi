@@ -15,6 +15,7 @@ import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.parameters.Parameter;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
+/** REST resource for car booking AI services. */
 @ApplicationScoped
 @Path("/car-booking")
 public class CarBookingResource {
@@ -26,6 +27,15 @@ public class CarBookingResource {
     @Inject
     private FraudAiService fraudService;
 
+    /** Creates a new car booking resource. */
+    public CarBookingResource() {}
+
+    /**
+     * Chats with the car booking assistant.
+     *
+     * @param question the question to ask the assistant
+     * @return the assistant's response
+     */
     @GET
     @Produces(MediaType.TEXT_PLAIN)
     @Path("/chat")
@@ -55,6 +65,13 @@ public class CarBookingResource {
         }
     }
 
+    /**
+     * Detects fraud for a customer.
+     *
+     * @param name the customer's first name
+     * @param surname the customer's surname
+     * @return the fraud detection response
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fraud")

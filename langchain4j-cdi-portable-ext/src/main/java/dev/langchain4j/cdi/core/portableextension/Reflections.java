@@ -8,6 +8,8 @@ import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 
 /**
+ * Utility methods for extracting raw {@link Class} instances from generic {@link Type} objects.
+ *
  * @author Buhake Sindi
  * @since 03 December 2015
  */
@@ -17,6 +19,14 @@ public final class Reflections {
         throw new AssertionError("Private Constructor.");
     }
 
+    /**
+     * Returns the raw {@link Class} for the given {@link Type}, unwrapping parameterized types, type variables,
+     * wildcard types, and generic array types as necessary.
+     *
+     * @param <T> the expected raw type
+     * @param type the type to extract the raw class from
+     * @return the raw class, or {@code null} if the type cannot be resolved
+     */
     @SuppressWarnings("unchecked")
     public static <T> Class<T> getRawType(Type type) {
         if (type instanceof Class<?>) {

@@ -7,6 +7,7 @@ import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 
+/** AI service for car booking customer support chat. */
 @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
 @RegisterAIService(
         tools = BookingService.class,
@@ -14,6 +15,12 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
         chatMemoryName = "chat-ai-service-memory")
 public interface ChatAiService {
 
+    /**
+     * Sends a question to the assistant and returns the response.
+     *
+     * @param question the user's question
+     * @return the assistant's response
+     */
     @SystemMessage("""
             You are a customer support agent of a car rental company named 'Miles of Smiles'.
             Before providing information about booking or canceling a booking, you MUST always check:
@@ -40,6 +47,12 @@ public interface ChatAiService {
             })
     String chat(String question);
 
+    /**
+     * Fallback response when the chat service is unavailable.
+     *
+     * @param question the user's question
+     * @return an error message asking the user to try again later
+     */
     default String chatFallback(String question) {
         return String.format(
                 "Sorry, I am not able to answer your request %s at the moment. Please try again later.", question);

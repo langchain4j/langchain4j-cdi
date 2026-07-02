@@ -6,8 +6,17 @@ package dev.langchain4j.cdi.spi;
 
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanCreator;
 
+/**
+ * SPI for providing a custom {@link SyntheticBeanCreator} class used to instantiate LLM plugin beans. Implementations
+ * are discovered via {@link java.util.ServiceLoader} and the highest-priority factory is selected.
+ */
 public interface AISyntheticBeanCreatorClassFactory extends Comparable<AISyntheticBeanCreatorClassFactory> {
 
+    /**
+     * Returns the {@link SyntheticBeanCreator} class to use for creating LLM plugin beans.
+     *
+     * @return the synthetic bean creator class
+     */
     Class<? extends SyntheticBeanCreator<Object>> getSyntheticBeanCreatorClass();
 
     /**

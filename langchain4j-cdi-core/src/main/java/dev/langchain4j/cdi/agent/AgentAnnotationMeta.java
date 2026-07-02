@@ -68,6 +68,9 @@ public record AgentAnnotationMeta(
      *   <li>{@code hasAnyAgentAnnotation} in the build-compatible extension
      *   <li>the {@code @Enhancement}/{@code @WithAnnotations} arrays in the build-compatible extension
      * </ol>
+     *
+     * @param interfaceClass the interface to inspect
+     * @return the detected meta, or {@code null} if no recognized annotation is found
      */
     public static AgentAnnotationMeta detect(Class<?> interfaceClass) {
         if (!interfaceClass.isInterface()) return null;
@@ -217,29 +220,48 @@ public record AgentAnnotationMeta(
         return null;
     }
 
-    /** Returns {@code true} when any recognized agent annotation is present on {@code interfaceClass}. */
+    /**
+     * Returns {@code true} when any recognized agent annotation is present on {@code interfaceClass}.
+     *
+     * @param interfaceClass the interface to inspect
+     * @return {@code true} if an agent annotation is present
+     */
     public static boolean isAgentInterface(Class<?> interfaceClass) {
         return detect(interfaceClass) != null;
     }
 
-    /** Expression-resolved name, equivalent to the annotation's {@code name()} after EL/Config expansion. */
+    /**
+     * Expression-resolved name, equivalent to the annotation's {@code name()} after EL/Config expansion.
+     *
+     * @return the resolved agent name
+     */
     public String name() {
         return CdiLookupHelper.resolveExpression(rawName);
     }
 
     /**
      * Expression-resolved description, equivalent to the annotation's {@code description()} after EL/Config expansion.
+     *
+     * @return the resolved agent description
      */
     public String description() {
         return CdiLookupHelper.resolveExpression(rawDescription);
     }
 
-    /** Expression-resolved output key, equivalent to the annotation's {@code outputKey()} after EL/Config expansion. */
+    /**
+     * Expression-resolved output key, equivalent to the annotation's {@code outputKey()} after EL/Config expansion.
+     *
+     * @return the resolved output key
+     */
     public String outputKey() {
         return CdiLookupHelper.resolveExpression(rawOutputKey);
     }
 
-    /** Returns {@code true} when a typed output key class other than {@link Agent.NoTypedKey} is set. */
+    /**
+     * Returns {@code true} when a typed output key class other than {@link Agent.NoTypedKey} is set.
+     *
+     * @return {@code true} if a typed output key is configured
+     */
     public boolean hasTypedOutputKey() {
         return rawTypedOutputKey != null && rawTypedOutputKey != Agent.NoTypedKey.class;
     }
@@ -247,6 +269,8 @@ public record AgentAnnotationMeta(
     /**
      * Expression-resolved summarized context agent names, equivalent to the annotation's {@code summarizedContext()}
      * after EL/Config expansion on each element.
+     *
+     * @return the resolved array of agent names for context summarization
      */
     public String[] summarizedContext() {
         if (rawSummarizedContext == null || rawSummarizedContext.length == 0) {

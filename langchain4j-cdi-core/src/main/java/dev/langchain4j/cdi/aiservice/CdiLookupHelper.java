@@ -30,7 +30,12 @@ public final class CdiLookupHelper {
 
     private CdiLookupHelper() {}
 
-    /** Returns {@code true} when {@code s} is non-null and contains at least one non-whitespace character. */
+    /**
+     * Returns {@code true} when {@code s} is non-null and contains at least one non-whitespace character.
+     *
+     * @param s the string to test
+     * @return {@code true} if the string is non-null and non-blank
+     */
     public static boolean hasText(String s) {
         return s != null && !s.isBlank();
     }
@@ -39,6 +44,9 @@ public final class CdiLookupHelper {
      * Resolves any expression embedded in {@code value} by applying all {@link ExpressionResolver} implementations
      * discovered via {@link ServiceLoader}, in discovery order. Returns {@code value} unchanged when no resolvers are
      * registered or the value is blank/null.
+     *
+     * @param value the raw annotation attribute value, possibly containing expressions
+     * @return the resolved value, or the original value if no resolvers matched
      */
     public static String resolveExpression(String value) {
         if (!hasText(value)) {
@@ -55,6 +63,12 @@ public final class CdiLookupHelper {
      * Resolve a CDI Instance for the given type and name. If name is {@code "#default"}, select the default bean of the
      * given type. If name is blank or null, returns null (meaning: do not attempt to resolve). Expression patterns in
      * {@code name} are expanded via {@link #resolveExpression(String)} before lookup.
+     *
+     * @param <X> the bean type
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param type the expected bean class
+     * @param name the bean name, {@code "#default"}, or an expression to resolve
+     * @return the matching {@link Instance}, or {@code null} if {@code name} is blank
      */
     public static <X> Instance<X> getInstance(Instance<Object> lookup, Class<X> type, String name) {
         String resolved = resolveExpression(name);
@@ -72,6 +86,12 @@ public final class CdiLookupHelper {
     /**
      * Resolve a single bean instance by type and name, returning null if unresolvable. Convenience wrapper around
      * {@link #getInstance} that extracts the bean.
+     *
+     * @param <X> the bean type
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param type the expected bean class
+     * @param name the bean name or expression to resolve
+     * @return the resolved bean instance, or {@code null} if not resolvable
      */
     public static <X> X resolveSingle(Instance<Object> lookup, Class<X> type, String name) {
         Instance<X> instance = getInstance(lookup, type, name);
@@ -85,6 +105,11 @@ public final class CdiLookupHelper {
      * Resolve guardrail instances by class. For each class, first attempts CDI lookup; if the bean is not resolvable,
      * falls back to instantiation via the no-arg constructor. Classes that fail both resolution paths are skipped with
      * a WARNING log.
+     *
+     * @param <G> the guardrail type
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param guardrailClasses the guardrail classes to resolve
+     * @return list of resolved guardrail instances
      */
     public static <G> List<G> resolveGuardrailsByClass(Instance<Object> lookup, Class<? extends G>[] guardrailClasses) {
         List<G> guardrails = new ArrayList<>(guardrailClasses.length);
@@ -110,6 +135,12 @@ public final class CdiLookupHelper {
     /**
      * Resolve guardrail instances by named CDI bean lookup. Names that cannot be resolved are skipped with a WARNING
      * log.
+     *
+     * @param <G> the guardrail type
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param type the guardrail class to select
+     * @param names the CDI bean names to look up
+     * @return list of resolved guardrail instances
      */
     public static <G> List<G> resolveGuardrailsByName(Instance<Object> lookup, Class<G> type, String[] names) {
         List<G> guardrails = new ArrayList<>(names.length);
@@ -131,6 +162,10 @@ public final class CdiLookupHelper {
 
     /**
      * Resolve tool instances by named CDI bean lookup. Names that cannot be resolved are skipped with a WARNING log.
+     *
+     * @param toolNames the CDI bean names of the tools to resolve
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @return list of resolved tool instances
      */
     public static List<Object> resolveToolsByName(String[] toolNames, Instance<Object> lookup) {
         List<Object> tools = new ArrayList<>(toolNames.length);
@@ -153,6 +188,10 @@ public final class CdiLookupHelper {
      * Resolve tool instances from an array of tool classes. For each class, first attempts CDI lookup; if the bean is
      * not resolvable, falls back to instantiation via the no-arg constructor. Classes that fail both resolution paths
      * are skipped with a SEVERE log.
+     *
+     * @param toolClasses the tool classes to resolve or instantiate
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @return list of resolved tool instances
      */
     public static List<Object> resolveToolInstances(Class<?>[] toolClasses, Instance<Object> lookup) {
         List<Object> tools = new ArrayList<>(toolClasses.length);
@@ -175,6 +214,12 @@ public final class CdiLookupHelper {
      * Resolve input guardrails using class-vs-name precedence. When both {@code guardrailClasses} and
      * {@code guardrailNames} are non-empty, classes take precedence and a WARNING is logged including
      * {@code interfaceName} so operators can identify the offending service.
+     *
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param guardrailClasses the input guardrail classes (takes precedence over names)
+     * @param guardrailNames the CDI bean names of input guardrails
+     * @param interfaceName the AI service interface name, used in warning messages
+     * @return list of resolved input guardrail instances
      */
     public static List<InputGuardrail> resolveInputGuardrails(
             Instance<Object> lookup,
@@ -199,6 +244,12 @@ public final class CdiLookupHelper {
      * Resolve output guardrails using class-vs-name precedence. When both {@code guardrailClasses} and
      * {@code guardrailNames} are non-empty, classes take precedence and a WARNING is logged including
      * {@code interfaceName} so operators can identify the offending service.
+     *
+     * @param lookup the CDI {@link Instance} used for bean resolution
+     * @param guardrailClasses the output guardrail classes (takes precedence over names)
+     * @param guardrailNames the CDI bean names of output guardrails
+     * @param interfaceName the AI service interface name, used in warning messages
+     * @return list of resolved output guardrail instances
      */
     public static List<OutputGuardrail> resolveOutputGuardrails(
             Instance<Object> lookup,

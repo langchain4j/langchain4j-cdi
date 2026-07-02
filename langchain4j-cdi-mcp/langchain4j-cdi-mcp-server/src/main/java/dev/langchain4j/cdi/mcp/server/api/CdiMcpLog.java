@@ -10,6 +10,12 @@ public class CdiMcpLog implements McpLog {
     private final McpLogger mcpLogger;
     private final String loggerName;
 
+    /**
+     * Creates a new MCP log wrapper.
+     *
+     * @param mcpLogger the internal MCP logger
+     * @param loggerName the logger name used for log entries
+     */
     public CdiMcpLog(McpLogger mcpLogger, String loggerName) {
         this.mcpLogger = mcpLogger;
         this.loggerName = loggerName;

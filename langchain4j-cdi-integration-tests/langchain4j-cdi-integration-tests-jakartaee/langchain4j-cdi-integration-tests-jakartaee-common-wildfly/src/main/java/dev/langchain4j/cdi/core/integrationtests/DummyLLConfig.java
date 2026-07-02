@@ -9,7 +9,12 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/** Dummy {@link LLMConfig} that reads configuration from a properties file. */
 public class DummyLLConfig extends LLMConfig {
+
+    /** Creates a new instance. */
+    public DummyLLConfig() {}
+
     Properties properties = new Properties();
     private static final Logger LOGGER = Logger.getLogger(DummyLLConfig.class.getName());
 

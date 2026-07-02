@@ -27,6 +27,12 @@ public final class McpFrameworkTypes {
 
     private McpFrameworkTypes() {}
 
+    /**
+     * Returns {@code true} if the given type is a recognized MCP framework type.
+     *
+     * @param type the class to check
+     * @return {@code true} if the type is an MCP framework type
+     */
     public static boolean isFrameworkType(Class<?> type) {
         return FRAMEWORK_TYPES.contains(type);
     }

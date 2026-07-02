@@ -27,6 +27,9 @@ import java.util.concurrent.TimeUnit;
 @Dependent
 public class MetricsChatModelListener implements ChatModelListener {
 
+    /** Creates a new instance. */
+    public MetricsChatModelListener() {}
+
     private static final String MP_AI_METRIC_START_TIME_NAME = "MP_AI_METRIC_START_TIME";
 
     private static final String METRIC_CLIENT_TOKEN_USAGE_NAME = "gen_ai.client.token.usage";

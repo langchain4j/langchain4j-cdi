@@ -12,8 +12,16 @@ import java.util.Arrays;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+/**
+ * CDI portable extension that creates beans from LLM configuration properties discovered via the
+ * {@link LLMConfigProvider} SPI.
+ */
 public class LangChain4JPluginsPortableExtension implements Extension {
     private static final Logger LOGGER = Logger.getLogger(LangChain4JPluginsPortableExtension.class.getName());
+
+    /** Creates a new instance of this portable extension. */
+    public LangChain4JPluginsPortableExtension() {}
+
     private LLMConfig llmConfig;
 
     void afterBeanDiscovery(@Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager)

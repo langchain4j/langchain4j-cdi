@@ -9,6 +9,7 @@ import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 
+/** AI service for booking fraud detection. */
 @RegisterAIService(
         contentRetrieverName = "docRagRetriever",
         chatMemoryName = "fraud-ai-service-memory",
@@ -16,6 +17,13 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
         tools = BookingService.class)
 public interface FraudAiService {
 
+    /**
+     * Detects fraud for a customer.
+     *
+     * @param name the customer name
+     * @param surname the customer surname
+     * @return the fraud detection response
+     */
     @SystemMessage("""
             You are a car booking fraud detection AI for Miles of Smiles.
             You have to detect customer fraud in bookings.
@@ -54,6 +62,13 @@ public interface FraudAiService {
     @Fallback(fallbackMethod = "fraudFallback")
     FraudResponse detectFraudForCustomer(@V("name") String name, @V("surname") String surname);
 
+    /**
+     * Fallback response when fraud detection is unavailable.
+     *
+     * @param name the customer name
+     * @param surname the customer surname
+     * @return the fallback response
+     */
     default FraudResponse fraudFallback(String name, String surname) {
         throw new RuntimeException("Sorry, I am not able to detect fraud for customer " + name + " " + surname
                 + " at the moment. Please try again later.");

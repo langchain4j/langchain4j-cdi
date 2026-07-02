@@ -16,6 +16,9 @@ public class McpElicitationManager {
 
     private static final Logger LOGGER = Logger.getLogger(McpElicitationManager.class.getName());
 
+    /** Creates a new elicitation manager. */
+    public McpElicitationManager() {}
+
     @Inject
     McpServerRequestManager requestManager;
 
