@@ -11,7 +11,11 @@ import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.output.TokenUsage;
 import io.opentelemetry.api.common.AttributeKey;
+import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.trace.Span;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -182,12 +186,21 @@ public abstract class GenAITracingTelemetry {
     }
 
     /**
-     * Records the given exception on the span.
+     * Records the given exception on the span. <br>
+     * For more information, see <a
+     * href="https://github.com/open-telemetry/semantic-conventions-genai/blob/main/docs/gen-ai/gen-ai-exceptions.md">Semantic
+     * conventions for Generative AI exceptions</a>.
      *
      * @param span the span to record the exception on
      * @param exception the exception to record
      */
     protected void traceException(final Span span, final Throwable exception) {
-        span.recordException(exception);
+        StringWriter stacktraceWriter = new StringWriter();
+        exception.printStackTrace(new PrintWriter(stacktraceWriter));
+        AttributesBuilder builder = Attributes.builder()
+                .put("exception.message", exception.getMessage())
+                .put("exception.type", exception.getClass().getName())
+                .put("exception.stacktrace", stacktraceWriter.toString());
+        span.addEvent("gen_ai.client.operation.exception", builder.build());
     }
 }
