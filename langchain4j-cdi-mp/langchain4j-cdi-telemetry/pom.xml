@@ -31,5 +31,17 @@
             <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-core</artifactId>
         </dependency>
+        <!-- Needed on the module path: jakarta.annotation is required by langchain4j-cdi-core and used directly
+             here; jakarta.interceptor is required transitive by jakarta.cdi. -->
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.interceptor</groupId>
+            <artifactId>jakarta.interceptor-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

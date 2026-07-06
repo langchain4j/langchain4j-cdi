@@ -42,4 +42,26 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!--
+                                This module cannot ship an explicit module-info.java: its transitive dependencies
+                                a2a-java-sdk-common and a2a-java-sdk-spec are automatic modules that both export the
+                                same package (org.a2aproject.sdk.util), which the module system forbids. Until those
+                                upstream jars are modularized (or patched, see the jlink-vidocq profile), the best we
+                                can offer is a stable automatic-module name.
+                            -->
+                            <Automatic-Module-Name>dev.langchain4j.cdi.a2a</Automatic-Module-Name>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

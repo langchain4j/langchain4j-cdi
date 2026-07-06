@@ -19,7 +19,8 @@
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
-            <scope>test</scope>
+            <!-- provided (not test): langchain4j-cdi-core requires jakarta.annotation on the module path -->
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -35,6 +36,18 @@
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-core</artifactId>
+        </dependency>
+        <!-- On the module path, langchain4j-cdi-core requires transitive jakarta.cdi; provided here so the
+             module graph resolves (cdi-api is provided/non-transitive in core). -->
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.interceptor</groupId>
+            <artifactId>jakarta.interceptor-api</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>

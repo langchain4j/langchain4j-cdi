@@ -31,6 +31,13 @@
             <artifactId>jakarta.enterprise.cdi-api</artifactId>
             <scope>provided</scope>
         </dependency>
+        <!-- Required on the module path: jakarta.cdi's module-info requires transitive jakarta.interceptor,
+             which the cdi-api POM does not pull in as a Maven dependency. -->
+        <dependency>
+            <groupId>jakarta.interceptor</groupId>
+            <artifactId>jakarta.interceptor-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- TEST -->
         <dependency>
             <groupId>dev.langchain4j.cdi.mp</groupId>

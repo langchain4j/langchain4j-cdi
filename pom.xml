@@ -343,6 +343,10 @@
                     <configuration>
                         <!-- Fix to be able to build on Java 25 -->
                         <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+                        <!-- Run tests on the classpath even though the main jars ship a module-info.
+                             Keeps ServiceLoader test providers (META-INF/services) discoverable and
+                             avoids module-system reflection restrictions in Weld-based tests. -->
+                        <useModulePath>false</useModulePath>
                     </configuration>
                 </plugin>
                 <plugin>
