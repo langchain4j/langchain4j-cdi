@@ -1,6 +1,6 @@
 package dev.langchain4j.cdi.core;
 
-import dev.langchain4j.cdi.aiservice.Langchain4JAIServiceBuildCompatibleExtension;
+import dev.langchain4j.cdi.core.buildcompatibleextension.Langchain4JAIServiceBuildCompatibleExtension;
 import dev.langchain4j.model.chat.ChatModel;
 import io.smallrye.config.inject.ConfigExtension;
 import jakarta.enterprise.context.ApplicationScoped;

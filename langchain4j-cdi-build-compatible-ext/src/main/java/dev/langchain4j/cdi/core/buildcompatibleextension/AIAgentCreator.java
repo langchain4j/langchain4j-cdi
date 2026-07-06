@@ -1,4 +1,4 @@
-package dev.langchain4j.cdi.aiservice;
+package dev.langchain4j.cdi.core.buildcompatibleextension;
 
 import dev.langchain4j.cdi.agent.CommonAgentCreator;
 import jakarta.enterprise.inject.Instance;

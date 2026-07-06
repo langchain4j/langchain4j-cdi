@@ -2,7 +2,7 @@
  *  Copyright The WildFly Authors
  *  SPDX-License-Identifier: Apache-2.0
  */
-package dev.langchain4j.cdi.spi;
+package dev.langchain4j.cdi.core.buildcompatibleextension;
 
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanCreator;
 

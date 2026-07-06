@@ -1,6 +1,7 @@
-package dev.langchain4j.cdi.plugin;
+package dev.langchain4j.cdi.core.buildcompatibleextension;
 
 import dev.langchain4j.cdi.core.config.spi.LLMConfigProvider;
+import dev.langchain4j.cdi.plugin.CommonLLMPluginCreator;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.build.compatible.spi.Parameters;
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanCreator;

@@ -1,10 +1,11 @@
-package dev.langchain4j.cdi.aiservice;
+package dev.langchain4j.cdi.core.buildcompatibleextension;
 
 import dev.langchain4j.agentic.internal.AgenticScopeOwner;
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.agentic.scope.AgenticScopeAccess;
 import dev.langchain4j.cdi.agent.AgentAnnotationMeta;
 import dev.langchain4j.cdi.agent.CommonAgentCreator;
+import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;

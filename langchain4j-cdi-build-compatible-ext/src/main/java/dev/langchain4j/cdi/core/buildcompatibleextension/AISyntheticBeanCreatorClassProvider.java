@@ -2,7 +2,7 @@
  *  Copyright The WildFly Authors
  *  SPDX-License-Identifier: Apache-2.0
  */
-package dev.langchain4j.cdi.spi;
+package dev.langchain4j.cdi.core.buildcompatibleextension;
 
 import jakarta.enterprise.inject.build.compatible.spi.SyntheticBeanCreator;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class AISyntheticBeanCreatorClassProvider {
                     try {
                         return (Class<? extends SyntheticBeanCreator<Object>>) Thread.currentThread()
                                 .getContextClassLoader()
-                                .loadClass("dev.langchain4j.cdi.plugin.LLMPluginCreator");
+                                .loadClass("dev.langchain4j.cdi.core.buildcompatibleextension.LLMPluginCreator");
                     } catch (ClassNotFoundException ex) {
                         throw new RuntimeException(ex);
                     }
