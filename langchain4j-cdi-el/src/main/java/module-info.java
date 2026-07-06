@@ -1,7 +1,8 @@
 /**
  * Jakarta EL {@code ExpressionResolver} implementation for LangChain4j CDI: evaluates {@code #{...}} expressions.
  *
- * <p>Registered via {@link java.util.ServiceLoader} as a provider of {@code dev.langchain4j.cdi.spi.ExpressionResolver}.
+ * <p>Registered via {@link java.util.ServiceLoader} as a provider of
+ * {@code dev.langchain4j.cdi.spi.ExpressionResolver}.
  */
 open module dev.langchain4j.cdi.el {
     requires dev.langchain4j.cdi.core;

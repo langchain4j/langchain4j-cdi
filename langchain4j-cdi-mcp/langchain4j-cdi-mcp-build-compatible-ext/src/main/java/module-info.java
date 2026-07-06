@@ -1,6 +1,6 @@
 /**
- * Build-compatible CDI extension that discovers MCP {@code @Tool}/{@code @Prompt}/{@code @Resource} beans at build
- * time for ahead-of-time frameworks (Quarkus, Helidon).
+ * Build-compatible CDI extension that discovers MCP {@code @Tool}/{@code @Prompt}/{@code @Resource} beans at build time
+ * for ahead-of-time frameworks (Quarkus, Helidon).
  */
 open module dev.langchain4j.cdi.mcp.buildcompatible {
     requires transitive jakarta.cdi;

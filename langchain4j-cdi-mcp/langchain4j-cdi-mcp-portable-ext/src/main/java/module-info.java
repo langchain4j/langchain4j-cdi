@@ -1,6 +1,6 @@
 /**
- * Portable CDI extension that discovers MCP {@code @Tool}/{@code @Prompt}/{@code @Resource} beans at deployment time
- * on traditional Jakarta EE servers (WildFly, Payara, GlassFish, Liberty).
+ * Portable CDI extension that discovers MCP {@code @Tool}/{@code @Prompt}/{@code @Resource} beans at deployment time on
+ * traditional Jakarta EE servers (WildFly, Payara, GlassFish, Liberty).
  */
 open module dev.langchain4j.cdi.mcp.portable {
     requires transitive jakarta.cdi;
