@@ -455,6 +455,21 @@
                 <module>langchain4j-cdi-integration-tests</module>
             </modules>
         </profile>
+        <!--
+            Opt-in tooling to build a fully-modular (JPMS) runtime image for downstream consumers such as vidocq.
+            NOT active by default and NEVER deployed to Maven Central. It:
+              1. Enforces a permissive-license allow-list on the whole dependency closure (transitive included) and
+                 fails the build if any non-modular jar we would patch/redistribute carries a non-permissive license.
+              2. Patches the remaining non-modular third-party jars with a generated module-info (ModiTect).
+              3. Produces a jlink runtime image from the now 100%-modular graph.
+            Usage:  mvn -Pjlink-vidocq verify   (add -pl langchain4j-cdi-jlink to run it alone)
+        -->
+        <profile>
+            <id>jlink-vidocq</id>
+            <modules>
+                <module>langchain4j-cdi-jlink</module>
+            </modules>
+        </profile>
         <profile>
             <id>sign</id>
             <activation>

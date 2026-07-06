@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>dev.langchain4j.cdi</groupId>
+        <artifactId>langchain4j-cdi-parent</artifactId>
+        <version>1.4.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>langchain4j-cdi-jlink</artifactId>
+    <name>Langchain4J CDI: JPMS runtime-image tooling (vidocq)</name>
+    <description>Opt-in tooling (profile jlink-vidocq) that produces a fully-modular (JPMS) runtime image for downstream
+        consumers such as vidocq. It (1) enforces a permissive-license allow-list on the whole dependency closure,
+        (2) patches the non-modular third-party jars with a generated module-info via ModiTect, and (3) can jlink a
+        runtime image from the resulting 100%-modular graph. This module is never deployed to Maven Central.</description>
+
+    <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.install.skip>true</maven.install.skip>
+        <gpg.skip>true</gpg.skip>
+        <moditect.version>1.2.2.Final</moditect.version>
+        <license-plugin.version>2.7.1</license-plugin.version>
+    </properties>
+
+    <!--
+        The module-path-friendly first-party set (traditional-server / jlink target). Excludes:
+          - langchain4j-cdi-a2a          : automatic module only (upstream a2a-sdk package split),
+          - langchain4j-cdi-buildcompatible : targets Quarkus/Helidon class-path builds, not the module path.
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>dev.langchain4j.cdi</groupId>
+            <artifactId>langchain4j-cdi-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi</groupId>
+            <artifactId>langchain4j-cdi-portable-ext</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi</groupId>
+            <artifactId>langchain4j-cdi-el</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mp</groupId>
+            <artifactId>langchain4j-cdi-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mp</groupId>
+            <artifactId>langchain4j-cdi-fault-tolerance</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mp</groupId>
+            <artifactId>langchain4j-cdi-telemetry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mcp</groupId>
+            <artifactId>langchain4j-cdi-mcp-server</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j.cdi.mcp</groupId>
+            <artifactId>langchain4j-cdi-mcp-portable-ext</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+                (1) LICENSE GATE. Resolves the license of every dependency (transitive included) and fails the build
+                if any of them is not on the permissive allow-list below. This guarantees we never patch and
+                redistribute a third-party jar whose license does not allow it. Tune includedLicenses/licenseMerges
+                against the generated target/generated-sources/license/THIRD-PARTY.txt on first run.
+            -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-permissive-licenses</id>
+                        <goals>
+                            <goal>add-third-party</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <failOnBlacklist>true</failOnBlacklist>
+                            <failOnMissing>true</failOnMissing>
+                            <includeTransitiveDependencies>true</includeTransitiveDependencies>
+                            <excludedScopes>test</excludedScopes>
+                            <!-- Permissive licenses we are allowed to patch & redistribute. -->
+                            <includedLicenses>
+                                <includedLicense>Apache License, Version 2.0</includedLicense>
+                                <includedLicense>Apache-2.0</includedLicense>
+                                <includedLicense>MIT License</includedLicense>
+                                <includedLicense>MIT-0</includedLicense>
+                                <includedLicense>BSD-2-Clause</includedLicense>
+                                <includedLicense>BSD-3-Clause</includedLicense>
+                                <includedLicense>Eclipse Public License - v 1.0</includedLicense>
+                                <includedLicense>Eclipse Public License - v 2.0</includedLicense>
+                                <includedLicense>EPL-1.0</includedLicense>
+                                <includedLicense>EPL-2.0</includedLicense>
+                                <includedLicense>EDL 1.0</includedLicense>
+                            </includedLicenses>
+                            <!-- Normalize the many spellings upstream projects use into the names above. -->
+                            <licenseMerges>
+                                <licenseMerge>Apache License, Version 2.0|The Apache Software License, Version 2.0|Apache 2.0|Apache 2|Apache License 2.0|Apache-2.0|The Apache License, Version 2.0</licenseMerge>
+                                <licenseMerge>MIT License|The MIT License|MIT</licenseMerge>
+                                <licenseMerge>Eclipse Public License - v 2.0|EPL 2.0|Eclipse Public License v2.0|EPL-2.0</licenseMerge>
+                                <licenseMerge>Eclipse Public License - v 1.0|EPL 1.0|EPL-1.0</licenseMerge>
+                                <licenseMerge>BSD-3-Clause|The BSD 3-Clause License|BSD 3-Clause</licenseMerge>
+                            </licenseMerges>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                (2) PATCH NON-MODULAR THIRD-PARTY JARS. ModiTect generates a module-info (requires/exports derived by
+                jdeps) for each jar below and writes the modularized copy to target/modules. These are the jars in the
+                module-path-friendly closure that ship neither a module-info nor an Automatic-Module-Name, so their
+                automatic-module name would otherwise be an unstable, file-name-derived one. The chosen names match the
+                'requires' already declared by the first-party module descriptors.
+
+                To extend to a full jlink image, add every remaining automatic-module jar of your closure here as well
+                (jlink cannot link automatic modules). List the closure with a jdeps 'list-deps' run over the
+                assembled module path (see JPMS.md for the exact command).
+            -->
+            <plugin>
+                <groupId>org.moditect</groupId>
+                <artifactId>moditect-maven-plugin</artifactId>
+                <version>${moditect.version}</version>
+                <executions>
+                    <execution>
+                        <id>patch-third-party</id>
+                        <goals>
+                            <goal>add-module-info</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <overwriteExistingFiles>true</overwriteExistingFiles>
+                            <outputDirectory>${project.build.directory}/modules</outputDirectory>
+                            <jdepsExtraArgs>
+                                <arg>--multi-release</arg>
+                                <arg>17</arg>
+                            </jdepsExtraArgs>
+                            <modules>
+                                <module>
+                                    <artifact>
+                                        <groupId>dev.langchain4j</groupId>
+                                        <artifactId>langchain4j</artifactId>
+                                        <version>${dev.langchain4j.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>langchain4j</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>dev.langchain4j</groupId>
+                                        <artifactId>langchain4j-core</artifactId>
+                                        <version>${dev.langchain4j.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>langchain4j.core</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>dev.langchain4j</groupId>
+                                        <artifactId>langchain4j-http-client</artifactId>
+                                        <version>${dev.langchain4j.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>langchain4j.http.client</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>dev.langchain4j</groupId>
+                                        <artifactId>langchain4j-agentic</artifactId>
+                                        <version>${dev.langchain4j.agentic.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>langchain4j.agentic</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.mcp-java</groupId>
+                                        <artifactId>mcp-annotations</artifactId>
+                                        <version>${org.mcp-java.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>mcp.annotations</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.mcp-java</groupId>
+                                        <artifactId>mcp-model</artifactId>
+                                        <version>${org.mcp-java.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>mcp.model</name>
+                                    </moduleInfo>
+                                </module>
+                                <module>
+                                    <artifact>
+                                        <groupId>org.mcp-java</groupId>
+                                        <artifactId>mcp-server-api</artifactId>
+                                        <version>${org.mcp-java.version}</version>
+                                    </artifact>
+                                    <moduleInfo>
+                                        <name>mcp.server.api</name>
+                                    </moduleInfo>
+                                </module>
+                            </modules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
