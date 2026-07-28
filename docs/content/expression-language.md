@@ -10,8 +10,8 @@ LangChain4j CDI supports dynamic resolution of annotation attribute values throu
 
 | Syntax | Module | Resolver |
 |--------|--------|----------|
-| `#{...}` | `langchain4j-cdi-el` | Jakarta Expression Language |
-| `${...}` | `langchain4j-cdi-config` | MicroProfile Config |
+| `#\{...}` | `langchain4j-cdi-el` | Jakarta Expression Language |
+| `$\{...}` | `langchain4j-cdi-config` | MicroProfile Config |
 
 Both can coexist -- their delimiters are distinct, so there is no conflict.
 
@@ -33,7 +33,7 @@ Add the `langchain4j-cdi-el` module:
 <dependency>
     <groupId>dev.langchain4j.cdi</groupId>
     <artifactId>langchain4j-cdi-el</artifactId>
-    <version>${langchain4j-cdi.version}</version>
+    <version>$\{langchain4j-cdi.version}</version>
 </dependency>
 ```
 
@@ -50,20 +50,20 @@ In managed environments (WildFly, GlassFish, Liberty, Payara, Quarkus) a Jakarta
 
 ### How It Works
 
-When `langchain4j-cdi-el` is on the classpath, the `JakartaELExpressionResolver` is discovered automatically via `java.util.ServiceLoader`. Any annotation attribute value matching `#{...}` (the expression must occupy the **entire** value) is evaluated as a Jakarta EL expression.
+When `langchain4j-cdi-el` is on the classpath, the `JakartaELExpressionResolver` is discovered automatically via `java.util.ServiceLoader`. Any annotation attribute value matching `#\{...}` (the expression must occupy the **entire** value) is evaluated as a Jakarta EL expression.
 
-**CDI integration:** When CDI is active, `@Named` beans are directly accessible. For example, `#{myConfig.modelName}` calls `getModelName()` on the `@Named("myConfig")` bean.
+**CDI integration:** When CDI is active, `@Named` beans are directly accessible. For example, `#\{myConfig.modelName}` calls `getModelName()` on the `@Named("myConfig")` bean.
 
 **Non-CDI fallback:** When CDI is not active (e.g. during unit tests), basic EL evaluation still works: arithmetic, string operations, conditionals, and standard implicit objects like `systemProperties`.
 
-**Failure handling:** If evaluation fails, the original `#{...}` value is returned unchanged and a `WARNING` is logged.
+**Failure handling:** If evaluation fails, the original `#\{...}` value is returned unchanged and a `WARNING` is logged.
 
 ### Examples
 
 **Conditional bean selection:**
 
 ```java
-@RegisterAIService(chatModelName = "#{config.useGpu ? 'gpu-model' : 'cpu-model'}")
+@RegisterAIService(chatModelName = "#\{config.useGpu ? 'gpu-model' : 'cpu-model'}")
 public interface SmartAssistant {
     String chat(String message);
 }
@@ -81,7 +81,7 @@ public class AgentConfig {
 }
 
 @RegisterSimpleAgent(
-    name = "#{agentConfig.reviewerName}",
+    name = "#\{agentConfig.reviewerName}",
     chatModelName = "#default"
 )
 public interface ReviewAgent {}
@@ -90,7 +90,7 @@ public interface ReviewAgent {}
 **System properties:**
 
 ```java
-@RegisterAIService(chatModelName = "#{systemProperties['chat.model.bean']}")
+@RegisterAIService(chatModelName = "#\{systemProperties['chat.model.bean']}")
 public interface EnvironmentAwareService {
     String chat(String message);
 }
@@ -100,7 +100,7 @@ public interface EnvironmentAwareService {
 
 ```java
 @RegisterSimpleAgent(
-    name = "#{'agent-' += systemProperties['app.env']}",
+    name = "#\{'agent-' += systemProperties['app.env']}",
     chatModelName = "#default"
 )
 public interface EnvAgent {}
@@ -116,13 +116,13 @@ Add the `langchain4j-cdi-config` module:
 <dependency>
     <groupId>dev.langchain4j.cdi.mp</groupId>
     <artifactId>langchain4j-cdi-config</artifactId>
-    <version>${langchain4j-cdi.version}</version>
+    <version>$\{langchain4j-cdi.version}</version>
 </dependency>
 ```
 
 ### How It Works
 
-The `MpConfigExpressionResolver` matches `${...}` values and resolves the enclosed key via `ConfigProvider.getConfig().getOptionalValue(key, String.class)`. If the key is not found, the original value is returned unchanged.
+The `MpConfigExpressionResolver` matches `$\{...}` values and resolves the enclosed key via `ConfigProvider.getConfig().getOptionalValue(key, String.class)`. If the key is not found, the original value is returned unchanged.
 
 ### Examples
 
@@ -134,7 +134,7 @@ ai.chat-model.name=my-openai-model
 ```
 
 ```java
-@RegisterAIService(chatModelName = "${ai.chat-model.name}")
+@RegisterAIService(chatModelName = "$\{ai.chat-model.name}")
 public interface ConfigDrivenService {
     String chat(String message);
 }
@@ -149,24 +149,24 @@ pipeline.step1=step1-agent
 ```java
 @RegisterSequenceAgent(
     name = "pipeline",
-    subAgentNames = {"${pipeline.step1}", "step2", "step3"}
+    subAgentNames = {"$\{pipeline.step1}", "step2", "step3"}
 )
 public interface PipelineAgent {}
 ```
 
 ## Combining Both Expression Types
 
-Both resolvers can coexist in the same application. All registered `ExpressionResolver` implementations are applied as a pipeline: the output of each feeds into the next. Since `${...}` and `#{...}` use distinct delimiters, they never interfere with each other.
+Both resolvers can coexist in the same application. All registered `ExpressionResolver` implementations are applied as a pipeline: the output of each feeds into the next. Since `$\{...}` and `#\{...}` use distinct delimiters, they never interfere with each other.
 
 ```java
 // Resolved via MicroProfile Config
-@RegisterAIService(chatModelName = "${my.chat.model.name}")
+@RegisterAIService(chatModelName = "$\{my.chat.model.name}")
 public interface ConfigService {
     String chat(String message);
 }
 
 // Resolved via Jakarta EL
-@RegisterAIService(chatModelName = "#{runtimeConfig.chatModelName}")
+@RegisterAIService(chatModelName = "#\{runtimeConfig.chatModelName}")
 public interface ElService {
     String chat(String message);
 }
@@ -225,6 +225,6 @@ All annotation attribute values go through this resolution chain before CDI bean
 | `"#default"` | Default CDI bean of the expected type |
 | `""` (empty) | Ignored -- dependency not wired |
 | `"myBean"` | CDI bean named `myBean` |
-| `"${property.key}"` | MicroProfile Config property lookup |
-| `"#{el.expression}"` | Jakarta EL evaluation |
+| `"$\{property.key}"` | MicroProfile Config property lookup |
+| `"#\{el.expression}"` | Jakarta EL evaluation |
 | `"vault:secret/path"` | Custom resolver (if registered) |
