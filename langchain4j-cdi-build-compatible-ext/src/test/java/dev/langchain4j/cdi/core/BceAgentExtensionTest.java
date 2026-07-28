@@ -2,7 +2,7 @@ package dev.langchain4j.cdi.core;
 
 import dev.langchain4j.agentic.internal.InternalAgent;
 import dev.langchain4j.cdi.agent.CommonAgentCreator;
-import dev.langchain4j.cdi.aiservice.Langchain4JAIServiceBuildCompatibleExtension;
+import dev.langchain4j.cdi.core.buildcompatibleextension.Langchain4JAIServiceBuildCompatibleExtension;
 import io.smallrye.config.inject.ConfigExtension;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.Bean;

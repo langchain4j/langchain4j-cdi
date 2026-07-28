@@ -1,2 +1,2 @@
-dev.langchain4j.cdi.aiservice.Langchain4JAIServiceBuildCompatibleExtension
-dev.langchain4j.cdi.plugin.LangChain4JPluginsBuildCompatibleExtension
+dev.langchain4j.cdi.core.buildcompatibleextension.Langchain4JAIServiceBuildCompatibleExtension
+dev.langchain4j.cdi.core.buildcompatibleextension.LangChain4JPluginsBuildCompatibleExtension

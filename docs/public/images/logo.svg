@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <circle cx="100" cy="100" r="90" fill="#009688"/>
+  <text x="100" y="85" font-family="Inter, sans-serif" font-size="36" font-weight="700" fill="white" text-anchor="middle">L4j</text>
+  <text x="100" y="125" font-family="Inter, sans-serif" font-size="28" font-weight="600" fill="white" text-anchor="middle">CDI</text>
+</svg>

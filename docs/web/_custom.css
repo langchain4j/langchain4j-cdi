@@ -1,0 +1,149 @@
+/* Theme customization: https://iamroq.dev/theme/default/#css-customization */
+/* Color palette: teal/cyan for LangChain4j CDI */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme inline {
+    /* Primary accent: Teal */
+    --color-accent-50: #e0f2f1;
+    --color-accent-100: #b2dfdb;
+    --color-accent-200: #80cbc4;
+    --color-accent-300: #4db6ac;
+    --color-accent-400: #26a69a;
+    --color-accent-500: #009688;
+    --color-accent-600: #00897b;
+    --color-accent-700: #00796b;
+    --color-accent-800: #00695c;
+    --color-accent-900: #004d40;
+    --color-accent-950: #002e27;
+
+    /* Pop color: Cyan for buttons, links, and interactive elements */
+    --color-pop-50: #e0f7fa;
+    --color-pop-100: #b2ebf2;
+    --color-pop-200: #80deea;
+    --color-pop-300: #4dd0e1;
+    --color-pop-400: #26c6da;
+    --color-pop-500: #00bcd4;
+    --color-pop-600: #00acc1;
+    --color-pop-700: #0097a7;
+    --color-pop-800: #00838f;
+    --color-pop-900: #006064;
+    --color-pop-950: #003a3d;
+
+    /* Typography */
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Sidebar: deep teal gradient */
+:root {
+    --sidebar-bg: linear-gradient(180deg, #00796b 0%, #004d40 100%);
+    --color-sidebar-muted: rgba(255, 255, 255, 0.75);
+}
+
+/* Hero logo sizing */
+.roq-hero-logo {
+    @apply w-[200px];
+}
+
+/* -- Sidebar menu groups -------------------------------------------------- */
+
+.menu-group-label a {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    cursor: pointer !important;
+}
+
+.menu-group-chevron {
+    font-size: 0.65rem;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.menu-group-children-li {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.menu-group-children-wrapper {
+    overflow: hidden;
+    max-height: 1000px;
+    transition: max-height 0.25s ease;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.menu-group-children-wrapper.menu-group-collapsed {
+    max-height: 0;
+}
+
+.menu-group-child a {
+    padding-left: 2rem !important;
+    font-size: 0.9em;
+    opacity: 0.9;
+}
+
+/* Search overlay z-index fix */
+@media (width >= 48rem) {
+    .sidebar.main:has(.search-overlay.active) {
+        z-index: 10000;
+    }
+}
+
+.hljs-copy-wrapper {
+    transform: none;
+}
+
+/* -- Content column width ------------------------------------------------- */
+
+.page-content .content-main {
+    max-width: var(--container-5xl);
+}
+
+/* -- Tables --------------------------------------------------------------- */
+
+.page-content table,
+.roq-section table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+}
+
+.page-content th,
+.page-content td,
+.roq-section th,
+.roq-section td {
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.page-content th,
+.roq-section th {
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.page-content tr:nth-child(even),
+.roq-section tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* -- Quick Install section ------------------------------------------------ */
+
+.roq-section pre {
+    text-align: left;
+}
+
+/* -- Syntax Highlighting (highlight.js) ----------------------------------- */
+
+.hljs,
+pre code.hljs {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}

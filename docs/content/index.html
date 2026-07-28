@@ -1,0 +1,106 @@
+---
+title: LangChain4j CDI Documentation
+description: A CDI extension that integrates the LangChain4j AI framework with Jakarta EE and Eclipse MicroProfile applications.
+name: LangChain4j CDI Documentation
+simple-name: LangChain4j CDI
+image: langchain4j-cdi-logo.png
+social-github: langchain4j/langchain4j-cdi
+layout: home
+---
+
+
+{#roq/hero logo=site.url("/images/langchain4j-cdi-logo.png")}
+  {#title}LangChain4j <span class="shimmer">CDI</span>{/title}
+  {#tagline}AI Services for Jakarta EE and MicroProfile{/tagline}
+  {#subtitle}A CDI extension that integrates LangChain4j with enterprise Java. Inject AI services, agents, and MCP servers into your CDI-managed beans with fault tolerance, telemetry, and external configuration.{/subtitle}
+  <a href="getting-started" class="btn btn-primary">Getting Started <i class="fa-solid fa-arrow-right"></i></a>
+  <a href="ai-services" class="btn btn-secondary">AI Services Guide <i class="fa-solid fa-arrow-right"></i></a>
+{/}
+
+<div class="roq-features">
+  {#roq/featureCard icon="fa-robot" title="AI Services"}
+    Declare AI service interfaces with <code>@RegisterAIService</code> and let CDI handle proxy creation, dependency injection, and lifecycle management.
+  {/}
+  {#roq/featureCard icon="fa-network-wired" title="Agent Orchestration"}
+    11 agent topologies — sequence, loop, parallel, conditional, supervisor, planner, A2A, MCP, and more — all wired via CDI annotations.
+  {/}
+  {#roq/featureCard icon="fa-server" title="MCP Server"}
+    Turn CDI beans into Model Context Protocol servers exposing tools, prompts, and resources over JSON-RPC 2.0 / Streamable HTTP.
+  {/}
+  {#roq/featureCard icon="fa-shield-halved" title="Enterprise Features"}
+    MicroProfile integration for external configuration, fault tolerance (retry, circuit breaker, fallback), and OpenTelemetry observability.
+  {/}
+</div>
+
+<section class="roq-section">
+  <h2>Quick Install</h2>
+  <p>Add the LangChain4j CDI extension to your Maven project. Choose the extension that matches your runtime:</p>
+
+  <h3>For Quarkus / Helidon (build-time)</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;dev.langchain4j.cdi&lt;/groupId&gt;
+    &lt;artifactId&gt;langchain4j-cdi-build-compatible-ext&lt;/artifactId&gt;
+    &lt;version&gt;$\{langchain4j-cdi.version}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+  <h3>For WildFly / GlassFish / Liberty (portable)</h3>
+<pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;dev.langchain4j.cdi&lt;/groupId&gt;
+    &lt;artifactId&gt;langchain4j-cdi-portable-ext&lt;/artifactId&gt;
+    &lt;version&gt;$\{langchain4j-cdi.version}&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+
+  <p>See the <a href="getting-started">Getting Started</a> guide for full setup instructions.</p>
+</section>
+
+<section class="roq-section">
+  <h2>Compatibility</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>CDI Extension Version</th>
+        <th>LangChain4j</th>
+        <th>Java</th>
+        <th>Jakarta EE</th>
+        <th>MicroProfile</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1.3.4</td>
+        <td>1.17.1</td>
+        <td>17+</td>
+        <td>10</td>
+        <td>6.1</td>
+      </tr>
+      <tr>
+        <td>1.2.0</td>
+        <td>1.14.1</td>
+        <td>17+</td>
+        <td>10</td>
+        <td>6.1</td>
+      </tr>
+      <tr>
+        <td>1.1.0</td>
+        <td>1.12.2</td>
+        <td>17+</td>
+        <td>10</td>
+        <td>6.1</td>
+      </tr>
+      <tr>
+        <td>1.0.0</td>
+        <td>1.9.1</td>
+        <td>17+</td>
+        <td>10</td>
+        <td>6.1</td>
+      </tr>
+      <tr>
+        <td>dev (unreleased)</td>
+        <td>1.18.0</td>
+        <td>17+</td>
+        <td>10</td>
+        <td>6.1</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
