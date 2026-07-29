@@ -1,43 +1,43 @@
-/* Theme customization: https://iamroq.dev/theme/default/#css-customization */
-/* Color palette: teal/cyan for LangChain4j CDI */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-@theme inline {
-    /* Primary accent: Teal */
-    --color-accent-50: #e0f2f1;
-    --color-accent-100: #b2dfdb;
-    --color-accent-200: #80cbc4;
-    --color-accent-300: #4db6ac;
-    --color-accent-400: #26a69a;
-    --color-accent-500: #009688;
-    --color-accent-600: #00897b;
-    --color-accent-700: #00796b;
-    --color-accent-800: #00695c;
-    --color-accent-900: #004d40;
-    --color-accent-950: #002e27;
+/* Theme customization: https://iamroq.dev/theme/default/#css-customization */
+/* Color palette: green, aligned with docs.langchain4j.dev */
 
-    /* Pop color: Cyan for buttons, links, and interactive elements */
-    --color-pop-50: #e0f7fa;
-    --color-pop-100: #b2ebf2;
-    --color-pop-200: #80deea;
-    --color-pop-300: #4dd0e1;
-    --color-pop-400: #26c6da;
-    --color-pop-500: #00bcd4;
-    --color-pop-600: #00acc1;
-    --color-pop-700: #0097a7;
-    --color-pop-800: #00838f;
-    --color-pop-900: #006064;
-    --color-pop-950: #003a3d;
+@theme inline {
+    /* Accent: green ramp derived from docs.langchain4j.dev primary (#2e8555) */
+    --color-accent-50: #f0fdf4;
+    --color-accent-100: #dcfce7;
+    --color-accent-200: #bbf7d0;
+    --color-accent-300: #86efac;
+    --color-accent-400: #3cad6e;
+    --color-accent-500: #2e8555;
+    --color-accent-600: #29784c;
+    --color-accent-700: #277148;
+    --color-accent-800: #205d3b;
+    --color-accent-900: #14532d;
+    --color-accent-950: #052e16;
+
+    /* Pop color: teal-green from docs.langchain4j.dev dark theme (#25c2a0) */
+    --color-pop-50: #e0f7f3;
+    --color-pop-100: #b2ede0;
+    --color-pop-200: #80e2cc;
+    --color-pop-300: #4fddbf;
+    --color-pop-400: #32d8b4;
+    --color-pop-500: #25c2a0;
+    --color-pop-600: #21af90;
+    --color-pop-700: #1fa588;
+    --color-pop-800: #1a8870;
+    --color-pop-900: #146b58;
+    --color-pop-950: #0d4e40;
 
     /* Typography */
     --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Sidebar: deep teal gradient */
+/* Sidebar: deep green gradient */
 :root {
-    --sidebar-bg: linear-gradient(180deg, #00796b 0%, #004d40 100%);
+    --sidebar-bg: linear-gradient(180deg, #277148 0%, #205d3b 100%);
     --color-sidebar-muted: rgba(255, 255, 255, 0.75);
 }
 
@@ -98,6 +98,30 @@
     transform: none;
 }
 
+/* -- Page titles: visibly green ------------------------------------------- */
+
+.roq-hero h1,
+.roq-feature h3,
+.roq-section h2,
+.roq-section h3,
+.content-prose h1,
+.content-prose h2,
+.content-prose h3,
+.content-prose h4 {
+    color: var(--color-accent-700);
+}
+
+.dark .roq-hero h1,
+.dark .roq-feature h3,
+.dark .roq-section h2,
+.dark .roq-section h3,
+.dark .content-prose h1,
+.dark .content-prose h2,
+.dark .content-prose h3,
+.dark .content-prose h4 {
+    color: var(--color-accent-400);
+}
+
 /* -- Content column width ------------------------------------------------- */
 
 .page-content .content-main {
@@ -119,18 +143,37 @@
 .roq-section td {
     padding: 0.6rem 1rem;
     text-align: left;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--color-neutral-300);
+}
+
+.dark .page-content th,
+.dark .page-content td,
+.dark .roq-section th,
+.dark .roq-section td {
+    border-color: var(--color-neutral-700);
 }
 
 .page-content th,
 .roq-section th {
     font-weight: 600;
-    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-accent-700);
+    background: var(--color-accent-50);
+}
+
+.dark .page-content th,
+.dark .roq-section th {
+    color: var(--color-accent-400);
+    background: var(--color-neutral-800);
 }
 
 .page-content tr:nth-child(even),
 .roq-section tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--color-neutral-50);
+}
+
+.dark .page-content tr:nth-child(even),
+.dark .roq-section tr:nth-child(even) {
+    background: var(--color-neutral-800);
 }
 
 /* -- Quick Install section ------------------------------------------------ */
