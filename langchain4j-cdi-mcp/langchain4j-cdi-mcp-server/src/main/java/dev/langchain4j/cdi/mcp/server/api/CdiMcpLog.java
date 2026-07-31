@@ -2,7 +2,6 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.logging.McpLogLevel;
 import dev.langchain4j.cdi.mcp.server.logging.McpLogger;
-import org.mcp_java.server.McpLog;
 
 /** Implementation of {@link McpLog} that delegates to our internal {@link McpLogger}. */
 public class CdiMcpLog implements McpLog {

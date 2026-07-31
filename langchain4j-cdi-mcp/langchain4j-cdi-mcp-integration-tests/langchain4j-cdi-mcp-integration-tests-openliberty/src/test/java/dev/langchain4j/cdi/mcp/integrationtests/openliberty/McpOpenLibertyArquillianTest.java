@@ -63,7 +63,7 @@ public class McpOpenLibertyArquillianTest {
                         "dev.langchain4j.cdi.mcp:langchain4j-cdi-mcp-portable-ext",
                         "dev.langchain4j:langchain4j-mcp",
                         "org.assertj:assertj-core",
-                        "org.mcp-java:mcp-server-api")
+                        "org.mcpjava:mcp-server-api")
                 .withTransitivity()
                 .asFile();
 

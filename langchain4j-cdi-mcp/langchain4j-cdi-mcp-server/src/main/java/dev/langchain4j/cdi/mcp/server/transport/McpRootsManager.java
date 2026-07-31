@@ -1,5 +1,6 @@
 package dev.langchain4j.cdi.mcp.server.transport;
 
+import dev.langchain4j.cdi.mcp.server.protocol.McpRoot;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.JsonArray;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
-import org.mcp_java.model.roots.Root;
 
 /**
  * Manages file roots reported by MCP clients. Roots represent the base directories or URIs that the client has made
@@ -26,7 +26,7 @@ public class McpRootsManager {
     /** CDI-required default constructor. */
     public McpRootsManager() {}
 
-    private final Map<String, List<Root>> rootsBySession = new ConcurrentHashMap<>();
+    private final Map<String, List<McpRoot>> rootsBySession = new ConcurrentHashMap<>();
 
     /**
      * Requests the list of roots from a client session. Sends a {@code roots/list} request via SSE and waits for the
@@ -35,13 +35,13 @@ public class McpRootsManager {
      * @param sessionId the target session
      * @return the list of roots, or empty list on timeout/error
      */
-    public List<Root> requestRoots(String sessionId) {
+    public List<McpRoot> requestRoots(String sessionId) {
         JsonObject result = requestManager.sendRequest(sessionId, "roots/list", Map.of());
         if (result == null) {
             return Collections.emptyList();
         }
 
-        List<Root> roots = parseRoots(result);
+        List<McpRoot> roots = parseRoots(result);
         rootsBySession.put(sessionId, roots);
         LOGGER.info("MCP: Received " + roots.size() + " root(s) from session " + sessionId);
         return roots;
@@ -62,7 +62,7 @@ public class McpRootsManager {
      * @param sessionId the session identifier
      * @return the list of roots, or empty list if none are cached
      */
-    public List<Root> getRoots(String sessionId) {
+    public List<McpRoot> getRoots(String sessionId) {
         return rootsBySession.getOrDefault(sessionId, Collections.emptyList());
     }
 
@@ -75,14 +75,14 @@ public class McpRootsManager {
         rootsBySession.remove(sessionId);
     }
 
-    private List<Root> parseRoots(JsonObject result) {
+    private List<McpRoot> parseRoots(JsonObject result) {
         if (!result.containsKey("roots")) {
             return Collections.emptyList();
         }
         JsonArray rootsArray = result.getJsonArray("roots");
         return rootsArray.stream()
                 .map(v -> (JsonObject) v)
-                .map(obj -> Root.of(
+                .map(obj -> McpRoot.of(
                         obj.containsKey("uri") ? obj.getString("uri") : "",
                         obj.containsKey("name") ? obj.getString("name") : ""))
                 .toList();

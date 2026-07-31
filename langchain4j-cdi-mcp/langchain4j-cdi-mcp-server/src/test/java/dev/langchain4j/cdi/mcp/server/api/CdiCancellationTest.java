@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
-import org.mcp_java.server.Cancellation;
+import org.mcpjava.server.Cancellation;
 
 class CdiCancellationTest {
 

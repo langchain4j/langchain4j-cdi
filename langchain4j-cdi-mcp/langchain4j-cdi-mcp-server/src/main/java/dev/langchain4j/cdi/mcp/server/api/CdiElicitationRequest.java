@@ -5,8 +5,6 @@ import jakarta.json.JsonObject;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.mcp_java.server.ElicitationRequest;
-import org.mcp_java.server.ElicitationResponse;
 
 /** Implementation of {@link ElicitationRequest} that delegates to {@link McpElicitationManager}. */
 public class CdiElicitationRequest implements ElicitationRequest {
@@ -62,11 +60,13 @@ public class CdiElicitationRequest implements ElicitationRequest {
 
     static class CdiBuilder implements ElicitationRequest.Builder {
 
+        private static final long DEFAULT_TIMEOUT_SECONDS = 30L;
+
         private final McpElicitationManager elicitationManager;
         private final String sessionId;
         private String message;
         private final Map<String, PrimitiveSchema> requestedSchema = new LinkedHashMap<>();
-        private long timeoutSeconds = 30;
+        private long timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
 
         CdiBuilder(McpElicitationManager elicitationManager, String sessionId) {
             this.elicitationManager = elicitationManager;
@@ -87,7 +87,10 @@ public class CdiElicitationRequest implements ElicitationRequest {
 
         @Override
         public Builder setTimeout(Duration timeout) {
-            this.timeoutSeconds = timeout.toSeconds();
+            if (timeout != null && timeout.isNegative()) {
+                throw new IllegalArgumentException("timeout must not be negative");
+            }
+            this.timeoutSeconds = timeout != null ? timeout.toSeconds() : DEFAULT_TIMEOUT_SECONDS;
             return this;
         }
 

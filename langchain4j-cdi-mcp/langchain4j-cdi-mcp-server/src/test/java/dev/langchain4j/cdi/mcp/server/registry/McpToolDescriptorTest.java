@@ -3,9 +3,9 @@ package dev.langchain4j.cdi.mcp.server.registry;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import dev.langchain4j.cdi.mcp.server.fixtures.WeatherTool;
+import dev.langchain4j.cdi.mcp.server.protocol.McpToolModel;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
-import org.mcp_java.model.tool.Tool;
 
 class McpToolDescriptorTest {
 
@@ -27,7 +27,7 @@ class McpToolDescriptorTest {
         Method method = WeatherTool.class.getMethod("getWeather", String.class, String.class);
         McpToolDescriptor descriptor = McpToolDescriptor.fromMethod(WeatherTool.class, method);
 
-        Tool wire = descriptor.toWireFormat();
+        McpToolModel wire = descriptor.toWireFormat();
 
         assertThat(wire.name()).isEqualTo("getWeather");
         assertThat(wire.description()).isEqualTo("Get the current weather for a given city");

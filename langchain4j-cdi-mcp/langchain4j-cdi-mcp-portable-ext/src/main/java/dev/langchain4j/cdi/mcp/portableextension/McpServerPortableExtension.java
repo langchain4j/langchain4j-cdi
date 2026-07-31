@@ -17,10 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.resources.Resource;
-import org.mcp_java.annotations.resources.ResourceTemplate;
-import org.mcp_java.annotations.tools.Tool;
+import org.mcpjava.server.prompts.Prompt;
+import org.mcpjava.server.resources.Resource;
+import org.mcpjava.server.resources.ResourceTemplate;
+import org.mcpjava.server.tools.Tool;
 
 /**
  * CDI portable extension that discovers beans annotated with MCP annotations ({@code @Tool}, {@code @Resource},

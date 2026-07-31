@@ -1,8 +1,8 @@
 package dev.langchain4j.cdi.mcp.integrationtests;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.prompts.PromptArg;
+import org.mcpjava.server.prompts.Prompt;
+import org.mcpjava.server.prompts.PromptArg;
 
 /** MCP prompt that generates a summarization request. */
 @ApplicationScoped

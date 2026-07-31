@@ -3,13 +3,8 @@ package dev.langchain4j.cdi.mcp.server.api;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
-import org.mcp_java.server.Cancellation;
-import org.mcp_java.server.Elicitation;
-import org.mcp_java.server.McpConnection;
-import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.Roots;
-import org.mcp_java.server.Sampling;
+import org.mcpjava.server.Cancellation;
+import org.mcpjava.server.progress.Progress;
 
 class McpFrameworkTypesTest {
 

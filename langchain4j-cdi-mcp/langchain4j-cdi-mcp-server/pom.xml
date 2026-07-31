@@ -12,15 +12,9 @@
     <name>Langchain4J CDI: MCP Server Core</name>
 
     <dependencies>
-        <!-- MCP Common Annotations -->
+        <!-- MCP Server API (unified: annotations, server interfaces, and SPI) -->
         <dependency>
-            <groupId>org.mcp-java</groupId>
-            <artifactId>mcp-annotations</artifactId>
-        </dependency>
-
-        <!-- MCP Server API (interfaces: McpLog, Progress, Cancellation, etc.) -->
-        <dependency>
-            <groupId>org.mcp-java</groupId>
+            <groupId>org.mcpjava</groupId>
             <artifactId>mcp-server-api</artifactId>
         </dependency>
 

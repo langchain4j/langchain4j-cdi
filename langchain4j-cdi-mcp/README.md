@@ -87,8 +87,8 @@ Create a CDI bean and annotate a method with `@Tool`:
 
 ```java
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.tools.Tool;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcpjava.server.tools.Tool;
+import org.mcpjava.server.tools.ToolArg;
 
 @ApplicationScoped
 public class WeatherService {
@@ -250,7 +250,7 @@ public String importData(
 | `Sampling` | Request LLM completions from the client |
 | `Elicitation` | Request user input from the client |
 
-All types are from the `org.mcp_java.server` package.
+All types are from the `org.mcpjava.server` package.
 
 ---
 

@@ -1,7 +1,7 @@
 package dev.langchain4j.cdi.mcp.integrationtests;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.resources.Resource;
+import org.mcpjava.server.resources.Resource;
 
 /** MCP resource provider exposing application configuration and status. */
 @ApplicationScoped

@@ -2,10 +2,10 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.util.Optional;
-import org.mcp_java.server.Progress;
-import org.mcp_java.server.ProgressNotification;
-import org.mcp_java.server.ProgressToken;
-import org.mcp_java.server.ProgressTracker;
+import org.mcpjava.server.progress.Progress;
+import org.mcpjava.server.progress.ProgressNotification;
+import org.mcpjava.server.progress.ProgressToken;
+import org.mcpjava.server.progress.ProgressTracker;
 
 /** Implementation of {@link Progress} that wraps a progress token and delegates to {@link McpProgressReporter}. */
 public class CdiProgress implements Progress {
@@ -29,7 +29,7 @@ public class CdiProgress implements Progress {
         if (rawToken == null) {
             return Optional.empty();
         }
-        return Optional.of(new ProgressToken(rawToken));
+        return Optional.of(CdiProgressToken.of(rawToken));
     }
 
     @Override

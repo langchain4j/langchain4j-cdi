@@ -2,8 +2,6 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpSamplingManager;
 import dev.langchain4j.cdi.mcp.server.transport.McpSession;
-import org.mcp_java.server.Sampling;
-import org.mcp_java.server.SamplingRequest;
 
 /** Implementation of {@link Sampling} that delegates to {@link McpSamplingManager}. */
 public class CdiSampling implements Sampling {

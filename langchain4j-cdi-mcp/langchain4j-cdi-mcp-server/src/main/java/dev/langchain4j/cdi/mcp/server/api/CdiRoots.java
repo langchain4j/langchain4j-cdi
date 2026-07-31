@@ -1,10 +1,9 @@
 package dev.langchain4j.cdi.mcp.server.api;
 
+import dev.langchain4j.cdi.mcp.server.protocol.McpRoot;
 import dev.langchain4j.cdi.mcp.server.transport.McpRootsManager;
 import dev.langchain4j.cdi.mcp.server.transport.McpSession;
 import java.util.List;
-import org.mcp_java.model.roots.Root;
-import org.mcp_java.server.Roots;
 
 /** Implementation of {@link Roots} that delegates to {@link McpRootsManager}. */
 public class CdiRoots implements Roots {
@@ -38,7 +37,7 @@ public class CdiRoots implements Roots {
     }
 
     @Override
-    public List<Root> listAndAwait() {
+    public List<McpRoot> listAndAwait() {
         return rootsManager.requestRoots(sessionId);
     }
 }

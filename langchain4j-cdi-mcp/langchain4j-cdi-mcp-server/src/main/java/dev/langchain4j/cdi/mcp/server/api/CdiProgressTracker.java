@@ -2,10 +2,11 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import org.mcp_java.server.ProgressToken;
-import org.mcp_java.server.ProgressTracker;
+import org.mcpjava.server.progress.ProgressToken;
+import org.mcpjava.server.progress.ProgressTracker;
 
 /** Thread-safe implementation of {@link ProgressTracker} that delegates to {@link McpProgressReporter}. */
 public class CdiProgressTracker implements ProgressTracker {
@@ -17,6 +18,13 @@ public class CdiProgressTracker implements ProgressTracker {
     private final McpProgressReporter progressReporter;
     private final AtomicReference<BigDecimal> currentProgress;
 
+    /**
+     * @param rawToken the raw progress token from the request, or {@code null} if none
+     * @param totalValue the optional total value, or {@code null} if unknown
+     * @param stepValue the default step size for each {@link #advanceAndForget()} call
+     * @param messageBuilder optional function that produces a status message from the current progress
+     * @param progressReporter the reporter that sends progress notifications over the wire
+     */
     CdiProgressTracker(
             Object rawToken,
             BigDecimal totalValue,
@@ -33,7 +41,7 @@ public class CdiProgressTracker implements ProgressTracker {
 
     @Override
     public ProgressToken token() {
-        return rawToken != null ? new ProgressToken(rawToken) : null;
+        return rawToken != null ? CdiProgressToken.of(rawToken) : null;
     }
 
     @Override
@@ -53,20 +61,8 @@ public class CdiProgressTracker implements ProgressTracker {
         return (T) null;
     }
 
-    @Override
-    public void advanceAndForget() {
-        advanceAndForget(stepValue);
-    }
-
-    @Override
-    public void advanceAndForget(long amount) {
-        advanceAndForget(BigDecimal.valueOf(amount));
-    }
-
-    @Override
-    public void advanceAndForget(double amount) {
-        advanceAndForget(BigDecimal.valueOf(amount));
-    }
+    // advanceAndForget() / advanceAndForget(long) / advanceAndForget(double) have default implementations in the
+    // interface
 
     @Override
     public BigDecimal progress() {
@@ -74,8 +70,8 @@ public class CdiProgressTracker implements ProgressTracker {
     }
 
     @Override
-    public BigDecimal total() {
-        return totalValue;
+    public Optional<BigDecimal> total() {
+        return Optional.ofNullable(totalValue);
     }
 
     @Override

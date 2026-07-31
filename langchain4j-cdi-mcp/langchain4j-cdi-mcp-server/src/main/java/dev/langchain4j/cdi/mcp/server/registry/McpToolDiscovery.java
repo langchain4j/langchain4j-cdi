@@ -12,10 +12,10 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Logger;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.resources.Resource;
-import org.mcp_java.annotations.resources.ResourceTemplate;
-import org.mcp_java.annotations.tools.Tool;
+import org.mcpjava.server.prompts.Prompt;
+import org.mcpjava.server.resources.Resource;
+import org.mcpjava.server.resources.ResourceTemplate;
+import org.mcpjava.server.tools.Tool;
 
 /** CDI bean that discovers {@code @Tool}, {@code @Resource}, and {@code @Prompt} annotated methods at startup. */
 @ApplicationScoped

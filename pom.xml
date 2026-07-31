@@ -73,7 +73,7 @@
         <dev.langchain4j.community.version>1.18.0-beta28</dev.langchain4j.community.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
-        <org.mcp-java.version>1.0.0-Beta1</org.mcp-java.version>
+        <org.mcpjava.version>1.0.0</org.mcpjava.version>
 
         <version.asm>9.7</version.asm>
         <weld-junit5.version>4.0.5.Final</weld-junit5.version>
@@ -208,17 +208,11 @@
                 <version>3.8.1</version>
                 <scope>test</scope>
             </dependency>
-            <!-- MCP Common Annotations -->
+            <!-- MCP Server API (annotations + server interfaces) -->
             <dependency>
-                <groupId>org.mcp-java</groupId>
-                <artifactId>mcp-annotations</artifactId>
-                <version>${org.mcp-java.version}</version>
-            </dependency>
-            <!-- MCP Server API (interfaces: McpLog, Progress, Cancellation, etc.) -->
-            <dependency>
-                <groupId>org.mcp-java</groupId>
+                <groupId>org.mcpjava</groupId>
                 <artifactId>mcp-server-api</artifactId>
-                <version>${org.mcp-java.version}</version>
+                <version>${org.mcpjava.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

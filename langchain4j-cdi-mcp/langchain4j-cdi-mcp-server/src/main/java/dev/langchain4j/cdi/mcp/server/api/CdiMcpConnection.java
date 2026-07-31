@@ -3,9 +3,7 @@ package dev.langchain4j.cdi.mcp.server.api;
 import dev.langchain4j.cdi.mcp.server.logging.McpLogLevel;
 import dev.langchain4j.cdi.mcp.server.logging.McpLogger;
 import dev.langchain4j.cdi.mcp.server.transport.McpSession;
-import org.mcp_java.model.lifecycle.InitializeRequest;
-import org.mcp_java.server.McpConnection;
-import org.mcp_java.server.McpLog;
+import jakarta.json.JsonObject;
 
 /** Implementation of {@link McpConnection} that delegates to {@link McpSession} and {@link McpLogger}. */
 public class CdiMcpConnection implements McpConnection {
@@ -34,9 +32,14 @@ public class CdiMcpConnection implements McpConnection {
         return session.isInitialized() ? Status.IN_OPERATION : Status.INITIALIZING;
     }
 
+    /**
+     * Returns the MCP client's advertised capabilities from the {@code initialize} handshake.
+     *
+     * @return the client capabilities object, or {@code null} if the session has not yet been initialized
+     */
     @Override
-    public InitializeRequest initialRequest() {
-        return null;
+    public JsonObject initialRequest() {
+        return session.getClientCapabilities();
     }
 
     @Override

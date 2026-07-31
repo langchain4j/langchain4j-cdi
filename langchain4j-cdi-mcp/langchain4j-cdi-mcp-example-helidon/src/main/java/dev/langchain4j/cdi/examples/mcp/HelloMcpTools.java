@@ -1,11 +1,11 @@
 package dev.langchain4j.cdi.examples.mcp;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.mcp_java.annotations.prompts.Prompt;
-import org.mcp_java.annotations.prompts.PromptArg;
-import org.mcp_java.annotations.resources.Resource;
-import org.mcp_java.annotations.tools.Tool;
-import org.mcp_java.annotations.tools.ToolArg;
+import org.mcpjava.server.prompts.Prompt;
+import org.mcpjava.server.prompts.PromptArg;
+import org.mcpjava.server.resources.Resource;
+import org.mcpjava.server.tools.Tool;
+import org.mcpjava.server.tools.ToolArg;
 
 /** Example CDI bean exposing MCP tools, resources, and prompts for the Helidon MCP server demo. */
 @SuppressWarnings("unused")

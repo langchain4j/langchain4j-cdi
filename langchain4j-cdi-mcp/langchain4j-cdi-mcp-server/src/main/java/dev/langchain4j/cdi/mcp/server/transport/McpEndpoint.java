@@ -8,9 +8,22 @@ import dev.langchain4j.cdi.mcp.server.logging.McpLogLevel;
 import dev.langchain4j.cdi.mcp.server.logging.McpLogger;
 import dev.langchain4j.cdi.mcp.server.protocol.JsonRpcRequest;
 import dev.langchain4j.cdi.mcp.server.protocol.JsonRpcResponse;
+import dev.langchain4j.cdi.mcp.server.protocol.McpCursor;
+import dev.langchain4j.cdi.mcp.server.protocol.McpImplementation;
+import dev.langchain4j.cdi.mcp.server.protocol.McpInitializeResult;
+import dev.langchain4j.cdi.mcp.server.protocol.McpJsonSerializer;
+import dev.langchain4j.cdi.mcp.server.protocol.McpListPromptsResult;
+import dev.langchain4j.cdi.mcp.server.protocol.McpListResourceTemplatesResult;
+import dev.langchain4j.cdi.mcp.server.protocol.McpListResourcesResult;
+import dev.langchain4j.cdi.mcp.server.protocol.McpListToolsResult;
 import dev.langchain4j.cdi.mcp.server.protocol.McpPagination;
-import dev.langchain4j.cdi.mcp.server.protocol.McpPromptGetResult;
+import dev.langchain4j.cdi.mcp.server.protocol.McpPromptArgument;
 import dev.langchain4j.cdi.mcp.server.protocol.McpPromptMessage;
+import dev.langchain4j.cdi.mcp.server.protocol.McpPromptModel;
+import dev.langchain4j.cdi.mcp.server.protocol.McpProtocol;
+import dev.langchain4j.cdi.mcp.server.protocol.McpResourceModel;
+import dev.langchain4j.cdi.mcp.server.protocol.McpResourceTemplateModel;
+import dev.langchain4j.cdi.mcp.server.protocol.McpServerCapabilities;
 import dev.langchain4j.cdi.mcp.server.registry.McpBeanInvoker;
 import dev.langchain4j.cdi.mcp.server.registry.McpPromptDescriptor;
 import dev.langchain4j.cdi.mcp.server.registry.McpPromptRegistry;
@@ -25,7 +38,9 @@ import jakarta.enterprise.inject.Instance;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.json.Json;
+import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonObjectBuilder;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
@@ -47,20 +62,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import org.mcp_java.model.common.Cursor;
-import org.mcp_java.model.completion.CompleteResult;
-import org.mcp_java.model.content.TextContent;
-import org.mcp_java.model.lifecycle.Implementation;
-import org.mcp_java.model.lifecycle.InitializeResult;
-import org.mcp_java.model.lifecycle.ServerCapabilities;
-import org.mcp_java.model.prompt.ListPromptsResult;
-import org.mcp_java.model.prompt.PromptArgument;
-import org.mcp_java.model.resource.ListResourceTemplatesResult;
-import org.mcp_java.model.resource.ListResourcesResult;
-import org.mcp_java.model.resource.ReadResourceResult;
-import org.mcp_java.model.resource.ResourceContents;
-import org.mcp_java.model.tool.CallToolResult;
-import org.mcp_java.model.tool.ListToolsResult;
+import org.mcpjava.server.prompts.PromptMessage;
+import org.mcpjava.server.prompts.PromptResponse;
+import org.mcpjava.server.resources.ResourceResponse;
+import org.mcpjava.server.tools.ToolResponse;
 
 /**
  * JAX-RS resource that implements the MCP Streamable HTTP transport at the {@code /mcp} endpoint. Handles JSON-RPC
@@ -79,6 +84,7 @@ public class McpEndpoint {
     private static final String FIELD_ERROR = "error";
     private static final String FIELD_ARGUMENTS = "arguments";
     private static final String FIELD_PROGRESS_TOKEN = "progressToken";
+    private static final String MCP_PROTOCOL_VERSION = McpProtocol.VERSION;
 
     private McpToolRegistry toolRegistry;
     private McpResourceRegistry resourceRegistry;
@@ -243,14 +249,14 @@ public class McpEndpoint {
         String newSessionId = sessionManager.createSession(request.getParams());
         McpServerConfig config = resolveConfig();
 
-        InitializeResult result = InitializeResult.of(
-                "2025-03-26",
-                new ServerCapabilities(
-                        new ServerCapabilities.ToolsCapability(true),
-                        new ServerCapabilities.ResourcesCapability(true, true),
-                        new ServerCapabilities.PromptsCapability(true),
-                        new ServerCapabilities.LoggingCapability()),
-                Implementation.of(config.getServerName(), config.getServerVersion()));
+        McpInitializeResult result = new McpInitializeResult(
+                MCP_PROTOCOL_VERSION,
+                new McpServerCapabilities(
+                        new McpServerCapabilities.ToolsCapability(true),
+                        new McpServerCapabilities.ResourcesCapability(true, true),
+                        new McpServerCapabilities.PromptsCapability(true),
+                        McpServerCapabilities.LoggingCapability.INSTANCE),
+                new McpImplementation(config.getServerName(), config.getServerVersion()));
 
         if (wantsSse) {
             String json = serializeToJson(JsonRpcResponse.success(request.getId(), result));
@@ -286,8 +292,8 @@ public class McpEndpoint {
         List<McpToolDescriptor> allTools = new java.util.ArrayList<>(toolRegistry.listTools());
         McpPagination.Page<McpToolDescriptor> page = McpPagination.paginate(allTools, cursor);
 
-        Cursor nextCursor = page.nextCursor() != null ? new Cursor(page.nextCursor()) : null;
-        ListToolsResult result = new ListToolsResult(
+        McpCursor nextCursor = page.nextCursor() != null ? new McpCursor(page.nextCursor()) : null;
+        McpListToolsResult result = new McpListToolsResult(
                 page.items().stream().map(McpToolDescriptor::toWireFormat).toList(), nextCursor);
 
         return respond(request.getId(), result, sse);
@@ -316,13 +322,13 @@ public class McpEndpoint {
 
         try {
             Object callResult = toolInvoker.invoke(request.getId(), tool, arguments, ctx, session);
-            CallToolResult result;
-            if (callResult == null) {
-                result = CallToolResult.success(List.of());
+            JsonObject result;
+            if (callResult instanceof ToolResponse tr) {
+                result = McpJsonSerializer.toolResponseToJson(tr);
             } else {
-                result = CallToolResult.success(List.of(TextContent.of(callResult.toString())));
+                result = McpJsonSerializer.plainTextToolResult(callResult);
             }
-            return respond(request.getId(), result, sse);
+            return respondJson(request.getId(), result, sse);
         } catch (McpException e) {
             throw new McpException(request.getId(), e.getErrorCode(), e.getMessage());
         } finally {
@@ -339,11 +345,10 @@ public class McpEndpoint {
         List<McpResourceDescriptor> allResources = new java.util.ArrayList<>(resourceRegistry.listResources());
         McpPagination.Page<McpResourceDescriptor> page = McpPagination.paginate(allResources, cursor);
 
-        Cursor nextCursor = page.nextCursor() != null ? new Cursor(page.nextCursor()) : null;
-        ListResourcesResult result = new ListResourcesResult(
+        McpCursor nextCursor = page.nextCursor() != null ? new McpCursor(page.nextCursor()) : null;
+        McpListResourcesResult result = new McpListResourcesResult(
                 page.items().stream()
-                        .map(r -> org.mcp_java.model.resource.Resource.of(
-                                r.getUri(), r.getName(), r.getDescription(), r.getMimeType()))
+                        .map(r -> McpResourceModel.of(r.getUri(), r.getName(), r.getDescription(), r.getMimeType()))
                         .toList(),
                 nextCursor);
 
@@ -371,10 +376,16 @@ public class McpEndpoint {
         try {
             Object content = beanInvoker.invoke(
                     request.getId(), resource.getBeanType(), resource.getMethod(), null, ctx, session);
-            String text = content != null ? content.toString() : "";
-            ReadResourceResult result =
-                    ReadResourceResult.of(List.of(ResourceContents.text(uri, resource.getMimeType(), text)));
-            return respond(request.getId(), result, sse);
+            JsonObjectBuilder resultBuilder = Json.createObjectBuilder();
+            JsonArrayBuilder contentsArray = Json.createArrayBuilder();
+            if (content instanceof ResourceResponse rr) {
+                rr.getContents().forEach(rc -> contentsArray.add(McpJsonSerializer.resourceContentsToJson(rc)));
+            } else {
+                String text = content != null ? content.toString() : "";
+                contentsArray.add(McpJsonSerializer.plainTextResourceContents(uri, text, resource.getMimeType()));
+            }
+            resultBuilder.add("contents", contentsArray);
+            return respondJson(request.getId(), resultBuilder.build(), sse);
         } catch (McpException e) {
             throw new McpException(request.getId(), e.getErrorCode(), e.getMessage());
         }
@@ -389,14 +400,14 @@ public class McpEndpoint {
         List<McpPromptDescriptor> allPrompts = new java.util.ArrayList<>(promptRegistry.listPrompts());
         McpPagination.Page<McpPromptDescriptor> page = McpPagination.paginate(allPrompts, cursor);
 
-        Cursor nextCursor = page.nextCursor() != null ? new Cursor(page.nextCursor()) : null;
-        ListPromptsResult result = new ListPromptsResult(
+        McpCursor nextCursor = page.nextCursor() != null ? new McpCursor(page.nextCursor()) : null;
+        McpListPromptsResult result = new McpListPromptsResult(
                 page.items().stream()
-                        .map(p -> org.mcp_java.model.prompt.Prompt.of(
+                        .map(p -> McpPromptModel.of(
                                 p.getName(),
                                 p.getDescription(),
                                 p.getArguments().stream()
-                                        .map(a -> new PromptArgument(a.name(), a.description(), a.required()))
+                                        .map(a -> new McpPromptArgument(a.name(), a.description(), a.required()))
                                         .toList()))
                         .toList(),
                 nextCursor);
@@ -427,16 +438,27 @@ public class McpEndpoint {
         try {
             Object callResult = beanInvoker.invoke(
                     request.getId(), prompt.getBeanType(), prompt.getMethod(), arguments, ctx, session);
-            McpPromptGetResult result;
-            if (callResult instanceof List<?> messages) {
-                @SuppressWarnings("unchecked")
-                List<McpPromptMessage> typedMessages = (List<McpPromptMessage>) messages;
-                result = new McpPromptGetResult(prompt.getDescription(), typedMessages);
+            JsonObjectBuilder resultBuilder = Json.createObjectBuilder();
+            resultBuilder.add("description", prompt.getDescription());
+            JsonArrayBuilder msgsArray = Json.createArrayBuilder();
+            if (callResult instanceof PromptResponse pr) {
+                pr.messages().forEach(m -> msgsArray.add(McpJsonSerializer.promptMessageToJson(m)));
+            } else if (callResult instanceof List<?> messages) {
+                for (Object msg : messages) {
+                    if (msg instanceof PromptMessage pm) {
+                        msgsArray.add(McpJsonSerializer.promptMessageToJson(pm));
+                    } else if (msg instanceof McpPromptMessage mpm) {
+                        msgsArray.add(McpJsonSerializer.contentBlockMessageToJson(mpm.role(), mpm.content()));
+                    } else if (msg != null) {
+                        msgsArray.add(McpJsonSerializer.plainTextPromptMessage(msg.toString()));
+                    }
+                }
             } else {
                 String text = callResult != null ? callResult.toString() : "";
-                result = new McpPromptGetResult(prompt.getDescription(), List.of(McpPromptMessage.user(text)));
+                msgsArray.add(McpJsonSerializer.plainTextPromptMessage(text));
             }
-            return respond(request.getId(), result, sse);
+            resultBuilder.add("messages", msgsArray);
+            return respondJson(request.getId(), resultBuilder.build(), sse);
         } catch (McpException e) {
             throw new McpException(request.getId(), e.getErrorCode(), e.getMessage());
         }
@@ -487,10 +509,10 @@ public class McpEndpoint {
         List<McpResourceTemplateDescriptor> allTemplates = new java.util.ArrayList<>(resourceRegistry.listTemplates());
         McpPagination.Page<McpResourceTemplateDescriptor> page = McpPagination.paginate(allTemplates, cursor);
 
-        Cursor nextCursor = page.nextCursor() != null ? new Cursor(page.nextCursor()) : null;
-        ListResourceTemplatesResult result = new ListResourceTemplatesResult(
+        McpCursor nextCursor = page.nextCursor() != null ? new McpCursor(page.nextCursor()) : null;
+        McpListResourceTemplatesResult result = new McpListResourceTemplatesResult(
                 page.items().stream()
-                        .map(t -> org.mcp_java.model.resource.ResourceTemplate.of(
+                        .map(t -> McpResourceTemplateModel.of(
                                 t.getUriTemplate(), t.getName(), t.getDescription(), t.getMimeType()))
                         .toList(),
                 nextCursor);
@@ -516,39 +538,46 @@ public class McpEndpoint {
         String argName = argument != null && argument.containsKey("name") ? argument.getString("name") : null;
         String argValue = argument != null && argument.containsKey("value") ? argument.getString("value") : "";
 
-        CompleteResult result;
+        List<String> completionValues;
         if ("ref/prompt".equals(refType) && refName != null && argName != null) {
-            result = completePromptArgument(refName, argName, argValue);
+            completionValues = completePromptArgument(refName, argName, argValue);
         } else if ("ref/resource".equals(refType) && refName != null) {
-            result = completeResourceUri(refName, argValue);
+            completionValues = completeResourceUri(refName, argValue);
         } else {
-            result = new CompleteResult(new CompleteResult.Completion(List.of(), 0, false));
+            completionValues = List.of();
         }
 
-        return respond(request.getId(), result, sse);
+        return respondJson(request.getId(), buildCompletionResultJson(completionValues), sse);
     }
 
-    @SuppressWarnings("unused") // TODO check
-    private CompleteResult completePromptArgument(String promptName, String argName, String prefix) {
+    private List<String> completePromptArgument(String promptName, String argName, String prefix) {
         return promptRegistry
                 .findPrompt(promptName)
-                .map(prompt -> {
-                    List<String> matchingArgs = prompt.getArguments().stream()
-                            .map(McpPromptDescriptor.PromptArgument::name)
-                            .filter(name -> name.startsWith(prefix))
-                            .toList();
-                    return new CompleteResult(new CompleteResult.Completion(matchingArgs, matchingArgs.size(), false));
-                })
-                .orElse(new CompleteResult(new CompleteResult.Completion(List.of(), 0, false)));
+                .map(prompt -> prompt.getArguments().stream()
+                        .map(McpPromptDescriptor.PromptArgument::name)
+                        .filter(name -> name.startsWith(prefix))
+                        .toList())
+                .orElse(List.of());
     }
 
-    @SuppressWarnings("unused") // TODO check
-    private CompleteResult completeResourceUri(String uriTemplatePrefix, String prefix) {
-        List<String> matchingUris = resourceRegistry.listResources().stream()
+    private List<String> completeResourceUri(String uriTemplatePrefix, String prefix) {
+        return resourceRegistry.listResources().stream()
                 .map(McpResourceDescriptor::getUri)
                 .filter(uri -> uri.startsWith(prefix))
                 .toList();
-        return new CompleteResult(new CompleteResult.Completion(matchingUris, matchingUris.size(), false));
+    }
+
+    private JsonObject buildCompletionResultJson(List<String> values) {
+        JsonArrayBuilder valuesArray = Json.createArrayBuilder();
+        values.forEach(valuesArray::add);
+        return Json.createObjectBuilder()
+                .add(
+                        "completion",
+                        Json.createObjectBuilder()
+                                .add("values", valuesArray)
+                                .add("total", values.size())
+                                .add("hasMore", false))
+                .build();
     }
 
     // --- Notifications ---
@@ -574,7 +603,6 @@ public class McpEndpoint {
         return value.toString();
     }
 
-    @SuppressWarnings("unused") // TODO check
     private Response handleRootsListChanged(JsonRpcRequest request, String sessionId) {
         if (sessionId != null) {
             rootsManager.onRootsChanged(sessionId);
@@ -615,9 +643,26 @@ public class McpEndpoint {
 
     // --- Shared ---
 
+    private Response respondJson(Object id, JsonObject result, boolean sse) {
+        JsonObjectBuilder rpc = Json.createObjectBuilder().add("jsonrpc", "2.0");
+        addJsonRpcId(rpc, id);
+        rpc.add("result", result);
+        return sendResponse(rpc.build().toString(), sse);
+    }
+
     private Response respond(Object id, Object result, boolean sse) {
-        JsonRpcResponse rpcResponse = JsonRpcResponse.success(id, result);
-        String json = serializeToJson(rpcResponse);
+        return sendResponse(serializeToJson(JsonRpcResponse.success(id, result)), sse);
+    }
+
+    private static void addJsonRpcId(JsonObjectBuilder builder, Object id) {
+        if (id instanceof String s) {
+            builder.add("id", s);
+        } else if (id instanceof Number n) {
+            builder.add("id", n.longValue());
+        }
+    }
+
+    private Response sendResponse(String json, boolean sse) {
         if (!sse) {
             return Response.ok(json).type(MediaType.APPLICATION_JSON).build();
         }

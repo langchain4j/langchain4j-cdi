@@ -1,5 +1,7 @@
 package dev.langchain4j.cdi.mcp.server.api;
 
+import dev.langchain4j.cdi.mcp.server.protocol.McpModelPreferences;
+import dev.langchain4j.cdi.mcp.server.protocol.McpSamplingMessage;
 import dev.langchain4j.cdi.mcp.server.transport.McpSamplingManager;
 import jakarta.json.JsonObject;
 import java.math.BigDecimal;
@@ -8,33 +10,29 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.mcp_java.model.sampling.ModelPreferences;
-import org.mcp_java.model.sampling.SamplingMessage;
-import org.mcp_java.server.SamplingRequest;
-import org.mcp_java.server.SamplingResponse;
 
 /** Implementation of {@link SamplingRequest} that delegates to {@link McpSamplingManager}. */
 public class CdiSamplingRequest implements SamplingRequest {
 
     private final long maxTokens;
-    private final List<SamplingMessage> messages;
+    private final List<McpSamplingMessage> messages;
     private final List<String> stopSequences;
     private final String systemPrompt;
     private final BigDecimal temperature;
     private final IncludeContext includeContext;
-    private final ModelPreferences modelPreferences;
+    private final McpModelPreferences modelPreferences;
     private final Map<String, Object> metadata;
     private final McpSamplingManager samplingManager;
     private final String sessionId;
 
     CdiSamplingRequest(
             long maxTokens,
-            List<SamplingMessage> messages,
+            List<McpSamplingMessage> messages,
             List<String> stopSequences,
             String systemPrompt,
             BigDecimal temperature,
             IncludeContext includeContext,
-            ModelPreferences modelPreferences,
+            McpModelPreferences modelPreferences,
             Map<String, Object> metadata,
             McpSamplingManager samplingManager,
             String sessionId) {
@@ -56,7 +54,7 @@ public class CdiSamplingRequest implements SamplingRequest {
     }
 
     @Override
-    public List<SamplingMessage> messages() {
+    public List<McpSamplingMessage> messages() {
         return messages;
     }
 
@@ -81,7 +79,7 @@ public class CdiSamplingRequest implements SamplingRequest {
     }
 
     @Override
-    public ModelPreferences modelPreferences() {
+    public McpModelPreferences modelPreferences() {
         return modelPreferences;
     }
 
@@ -126,12 +124,12 @@ public class CdiSamplingRequest implements SamplingRequest {
         private final McpSamplingManager samplingManager;
         private final String sessionId;
         private long maxTokens = 1024;
-        private final List<SamplingMessage> messages = new ArrayList<>();
+        private final List<McpSamplingMessage> messages = new ArrayList<>();
         private List<String> stopSequences = List.of();
         private String systemPrompt;
         private BigDecimal temperature;
         private IncludeContext includeContext;
-        private ModelPreferences modelPreferences;
+        private McpModelPreferences modelPreferences;
         private Map<String, Object> metadata = Map.of();
 
         CdiBuilder(McpSamplingManager samplingManager, String sessionId) {
@@ -140,7 +138,7 @@ public class CdiSamplingRequest implements SamplingRequest {
         }
 
         @Override
-        public Builder addMessage(SamplingMessage message) {
+        public Builder addMessage(McpSamplingMessage message) {
             messages.add(message);
             return this;
         }
@@ -170,7 +168,7 @@ public class CdiSamplingRequest implements SamplingRequest {
         }
 
         @Override
-        public Builder setModelPreferences(ModelPreferences modelPreferences) {
+        public Builder setModelPreferences(McpModelPreferences modelPreferences) {
             this.modelPreferences = modelPreferences;
             return this;
         }
@@ -195,15 +193,21 @@ public class CdiSamplingRequest implements SamplingRequest {
 
         @Override
         public SamplingRequest build() {
+            if (messages.isEmpty()) {
+                throw new IllegalStateException("At least one sampling message is required");
+            }
+            if (maxTokens <= 0) {
+                throw new IllegalStateException("maxTokens must be positive");
+            }
             return new CdiSamplingRequest(
                     maxTokens,
                     List.copyOf(messages),
-                    stopSequences,
+                    List.copyOf(stopSequences),
                     systemPrompt,
                     temperature,
                     includeContext,
                     modelPreferences,
-                    metadata,
+                    Map.copyOf(metadata),
                     samplingManager,
                     sessionId);
         }

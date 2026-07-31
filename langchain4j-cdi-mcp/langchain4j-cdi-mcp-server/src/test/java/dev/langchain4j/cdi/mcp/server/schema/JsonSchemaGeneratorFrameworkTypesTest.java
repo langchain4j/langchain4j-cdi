@@ -2,12 +2,12 @@ package dev.langchain4j.cdi.mcp.server.schema;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import dev.langchain4j.cdi.mcp.server.api.McpLog;
 import dev.langchain4j.cdi.mcp.server.fixtures.LoggingTool;
 import jakarta.json.JsonObject;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.Test;
-import org.mcp_java.server.McpLog;
-import org.mcp_java.server.Progress;
+import org.mcpjava.server.progress.Progress;
 
 class JsonSchemaGeneratorFrameworkTypesTest {
 

@@ -2,8 +2,11 @@ package dev.langchain4j.cdi.mcp.server.api;
 
 import dev.langchain4j.cdi.mcp.server.transport.McpProgressReporter;
 import java.math.BigDecimal;
-import org.mcp_java.server.ProgressNotification;
-import org.mcp_java.server.ProgressToken;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import org.mcpjava.server.progress.ProgressNotification;
+import org.mcpjava.server.progress.ProgressToken;
 
 /** Implementation of {@link ProgressNotification} that delegates to {@link McpProgressReporter}. */
 public class CdiProgressNotification implements ProgressNotification {
@@ -12,29 +15,40 @@ public class CdiProgressNotification implements ProgressNotification {
     private final BigDecimal progressValue;
     private final BigDecimal totalValue;
     private final String message;
+    private final Map<String, Object> metadata;
     private final McpProgressReporter progressReporter;
 
+    /**
+     * @param rawToken the raw progress token from the request, or {@code null} if none
+     * @param progressValue the current progress value
+     * @param totalValue the optional total value, or {@code null} if unknown
+     * @param message the optional human-readable status message, or {@code null}
+     * @param metadata additional metadata to include in the notification
+     * @param progressReporter the reporter that sends the notification over the wire
+     */
     CdiProgressNotification(
             Object rawToken,
             BigDecimal progressValue,
             BigDecimal totalValue,
             String message,
+            Map<String, Object> metadata,
             McpProgressReporter progressReporter) {
         this.rawToken = rawToken;
         this.progressValue = progressValue;
         this.totalValue = totalValue;
         this.message = message;
+        this.metadata = metadata;
         this.progressReporter = progressReporter;
     }
 
     @Override
     public ProgressToken token() {
-        return rawToken != null ? new ProgressToken(rawToken) : null;
+        return rawToken != null ? CdiProgressToken.of(rawToken) : null;
     }
 
     @Override
-    public BigDecimal total() {
-        return totalValue;
+    public Optional<BigDecimal> total() {
+        return Optional.ofNullable(totalValue);
     }
 
     @Override
@@ -43,8 +57,13 @@ public class CdiProgressNotification implements ProgressNotification {
     }
 
     @Override
-    public String message() {
-        return message;
+    public Optional<String> message() {
+        return Optional.ofNullable(message);
+    }
+
+    @Override
+    public Map<String, Object> metadata() {
+        return metadata;
     }
 
     @Override
@@ -69,6 +88,7 @@ public class CdiProgressNotification implements ProgressNotification {
         private BigDecimal progressValue = BigDecimal.ZERO;
         private BigDecimal totalValue = null;
         private String message = null;
+        private final Map<String, Object> metadata = new HashMap<>();
 
         CdiBuilder(Object rawToken, McpProgressReporter progressReporter) {
             this.rawToken = rawToken;
@@ -106,8 +126,24 @@ public class CdiProgressNotification implements ProgressNotification {
         }
 
         @Override
+        public Builder putMetadata(String key, Object value) {
+            this.metadata.put(key, value);
+            return this;
+        }
+
+        @Override
+        public Builder setMetadata(Map<String, Object> metadata) {
+            this.metadata.clear();
+            if (metadata != null) {
+                this.metadata.putAll(metadata);
+            }
+            return this;
+        }
+
+        @Override
         public ProgressNotification build() {
-            return new CdiProgressNotification(rawToken, progressValue, totalValue, message, progressReporter);
+            return new CdiProgressNotification(
+                    rawToken, progressValue, totalValue, message, Map.copyOf(metadata), progressReporter);
         }
     }
 }

@@ -1,7 +1,7 @@
 package dev.langchain4j.cdi.mcp.server.registry;
 
 import java.lang.reflect.Method;
-import org.mcp_java.annotations.resources.ResourceTemplate;
+import org.mcpjava.server.resources.ResourceTemplate;
 
 /**
  * Describes an MCP resource template extracted from a {@link ResourceTemplate}-annotated method, including its URI

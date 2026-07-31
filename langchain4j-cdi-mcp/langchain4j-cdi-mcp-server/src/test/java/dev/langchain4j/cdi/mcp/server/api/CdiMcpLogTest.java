@@ -6,7 +6,6 @@ import dev.langchain4j.cdi.mcp.server.logging.McpLogLevel;
 import dev.langchain4j.cdi.mcp.server.logging.McpLogger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mcp_java.server.McpLog;
 
 class CdiMcpLogTest {
 
