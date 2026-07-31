@@ -8,6 +8,8 @@ layout: page
 
 All examples demonstrate a car booking application with chat, fraud detection, and function calling.
 
+> **New to LangChain4j CDI?** Check out the [hands-on workshops](#workshops) below for a guided learning experience.
+
 ## Recommended: Quarkus
 
 The fastest way to get started:
@@ -70,3 +72,12 @@ The `liberty-car-booking-mcp` example demonstrates MCP server integration with O
 cd examples/liberty-car-booking-mcp
 mvn liberty:dev
 ```
+
+## Workshops
+
+Hands-on workshops to learn LangChain4j CDI step by step:
+
+| Workshop | Description |
+|----------|-------------|
+| [Liberty LangChain4j Workshop](https://github.com/OpenLiberty/liberty-workshop-langchain4j) | Open Liberty workshop for building AI-powered applications with LangChain4j |
+| [LangChain4j CDI Lab 2026](https://github.com/ehsavoie/langchain4j-cdi-lab-2026) | Practical lab exercises covering LangChain4j CDI integration |
