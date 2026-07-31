@@ -134,4 +134,17 @@ public @interface RegisterAIService {
      * @return the output guardrail bean names
      */
     String[] outputGuardrailNames() default {};
+
+    /**
+     * Named CDI beans implementing {@link dev.langchain4j.observability.api.listener.AiServiceListener} to register on
+     * the AI service. Each listener receives lifecycle events (request issued, response received, errors, etc.) for
+     * this service only. Unresolvable names are skipped with a WARNING log.
+     *
+     * <p>To capture model thinking/reasoning content, register a bean implementing
+     * {@link dev.langchain4j.observability.api.listener.AiServiceResponseReceivedListener} and inspect
+     * {@code event.response().aiMessage().thinking()}.
+     *
+     * @return the listener bean names
+     */
+    String[] listenerNames() default {};
 }

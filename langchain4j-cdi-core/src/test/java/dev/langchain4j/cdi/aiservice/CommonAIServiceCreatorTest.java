@@ -15,15 +15,27 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.moderation.ModerationModel;
+import dev.langchain4j.model.output.TokenUsage;
+import dev.langchain4j.observability.api.listener.AiServiceResponseReceivedListener;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CommonAIServiceCreatorTest {
+
+    @BeforeEach
+    void resetStaticState() {
+        CAPTURED_THINKING.set(null);
+        THROWING_HANDLER_CALLED.set(false);
+    }
 
     interface ToolA {
         String ping();
@@ -404,5 +416,233 @@ class CommonAIServiceCreatorTest {
         @SuppressWarnings("unchecked")
         Instance<Object> lookup = mock(Instance.class);
         assertNull(CdiLookupHelper.getInstance(lookup, ChatModel.class, ""));
+    }
+
+    // --- listenerNames tests ---
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService(listenerNames = {"myListener"})
+    interface MyAIServiceWithListener {
+        String chat(String question);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_wiresNamedListeners() {
+        Instance<Object> lookup = prepareLookups();
+
+        Instance<Object> listenerInstance = mock(Instance.class);
+        AiServiceResponseReceivedListener listener = event -> {};
+        when(lookup.select(Object.class, NamedLiteral.of("myListener"))).thenReturn(listenerInstance);
+        when(listenerInstance.isResolvable()).thenReturn(true);
+        when(listenerInstance.get()).thenReturn(listener);
+
+        Object service = CommonAIServiceCreator.create(lookup, MyAIServiceWithListener.class);
+        assertNotNull(service);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService(listenerNames = {"nonExistentListener"})
+    interface MyAIServiceWithUnresolvableListener {
+        String chat(String question);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_skipsUnresolvableNamedListeners() {
+        Instance<Object> lookup = prepareLookups();
+
+        Instance<Object> listenerInstance = mock(Instance.class);
+        when(lookup.select(Object.class, NamedLiteral.of("nonExistentListener")))
+                .thenReturn(listenerInstance);
+        when(listenerInstance.isResolvable()).thenReturn(false);
+
+        Object service = CommonAIServiceCreator.create(lookup, MyAIServiceWithUnresolvableListener.class);
+        assertNotNull(service);
+    }
+
+    // --- @OnThinking tests ---
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static void onThinking(ThinkingEmitted event) {}
+    }
+
+    @Test
+    void create_wiresOnThinkingHandler() {
+        Instance<Object> lookup = prepareLookups();
+        Object service = CommonAIServiceCreator.create(lookup, ServiceWithOnThinking.class);
+        assertNotNull(service);
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithNonStaticOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        default void onThinking(ThinkingEmitted event) {}
+    }
+
+    @Test
+    void create_throwsWhenOnThinkingMethodNotStatic() {
+        Instance<Object> lookup = prepareLookups();
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAIServiceCreator.create(lookup, ServiceWithNonStaticOnThinking.class));
+        assertTrue(ex.getMessage().contains("must be static"));
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithNonVoidOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static String onThinking(ThinkingEmitted event) {
+            return "";
+        }
+    }
+
+    @Test
+    void create_throwsWhenOnThinkingMethodNotVoid() {
+        Instance<Object> lookup = prepareLookups();
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAIServiceCreator.create(lookup, ServiceWithNonVoidOnThinking.class));
+        assertTrue(ex.getMessage().contains("must return void"));
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithWrongParamOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static void onThinking(String wrongType) {}
+    }
+
+    @Test
+    void create_throwsWhenOnThinkingMethodHasWrongParam() {
+        Instance<Object> lookup = prepareLookups();
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAIServiceCreator.create(lookup, ServiceWithWrongParamOnThinking.class));
+        assertTrue(ex.getMessage().contains("ThinkingEmitted"));
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithMultipleOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static void handler1(ThinkingEmitted event) {}
+
+        @OnThinking
+        static void handler2(ThinkingEmitted event) {}
+    }
+
+    @Test
+    void create_throwsWhenMultipleOnThinkingMethods() {
+        Instance<Object> lookup = prepareLookups();
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> CommonAIServiceCreator.create(lookup, ServiceWithMultipleOnThinking.class));
+        assertTrue(ex.getMessage().contains("Only one @OnThinking"));
+    }
+
+    // --- @OnThinking invocation tests ---
+
+    static final AtomicReference<String> CAPTURED_THINKING = new AtomicReference<>();
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithInvocableOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static void onThinking(ThinkingEmitted event) {
+            CAPTURED_THINKING.set(event.text());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_onThinkingHandlerIsInvokedWhenThinkingPresent() {
+        Instance<Object> lookup = prepareLookups();
+
+        ChatModel thinkingModel = new ChatModel() {
+            @Override
+            public ChatResponse doChat(ChatRequest chatRequest) {
+                return ChatResponse.builder()
+                        .aiMessage(AiMessage.builder()
+                                .text("result")
+                                .thinking("deep thought")
+                                .build())
+                        .tokenUsage(new TokenUsage(10))
+                        .build();
+            }
+        };
+
+        Instance<ChatModel> cmInstance = mock(Instance.class);
+        when(cmInstance.isResolvable()).thenReturn(true);
+        when(cmInstance.get()).thenReturn(thinkingModel);
+        when(lookup.select(ChatModel.class)).thenReturn(cmInstance);
+
+        ServiceWithInvocableOnThinking service =
+                CommonAIServiceCreator.create(lookup, ServiceWithInvocableOnThinking.class);
+        service.chat("hello");
+
+        assertEquals("deep thought", CAPTURED_THINKING.get());
+    }
+
+    static final AtomicReference<Boolean> THROWING_HANDLER_CALLED = new AtomicReference<>(false);
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService
+    interface ServiceWithThrowingOnThinking {
+        String chat(String question);
+
+        @OnThinking
+        static void onThinking(ThinkingEmitted event) {
+            THROWING_HANDLER_CALLED.set(true);
+            throw new RuntimeException("handler explosion");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_onThinkingHandlerExceptionIsSwallowed() {
+        Instance<Object> lookup = prepareLookups();
+
+        ChatModel thinkingModel = new ChatModel() {
+            @Override
+            public ChatResponse doChat(ChatRequest chatRequest) {
+                return ChatResponse.builder()
+                        .aiMessage(AiMessage.builder()
+                                .text("result")
+                                .thinking("some thinking")
+                                .build())
+                        .tokenUsage(new TokenUsage(10))
+                        .build();
+            }
+        };
+
+        Instance<ChatModel> cmInstance = mock(Instance.class);
+        when(cmInstance.isResolvable()).thenReturn(true);
+        when(cmInstance.get()).thenReturn(thinkingModel);
+        when(lookup.select(ChatModel.class)).thenReturn(cmInstance);
+
+        ServiceWithThrowingOnThinking service =
+                CommonAIServiceCreator.create(lookup, ServiceWithThrowingOnThinking.class);
+        String result = service.chat("hello");
+
+        assertNotNull(result);
+        assertTrue(THROWING_HANDLER_CALLED.get());
     }
 }

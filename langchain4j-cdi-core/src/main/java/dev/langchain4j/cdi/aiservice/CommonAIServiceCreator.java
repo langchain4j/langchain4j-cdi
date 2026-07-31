@@ -8,12 +8,18 @@ import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.moderation.ModerationModel;
+import dev.langchain4j.observability.api.listener.AiServiceListener;
+import dev.langchain4j.observability.api.listener.AiServiceResponseReceivedListener;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.time.Instant;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -129,7 +135,87 @@ public class CommonAIServiceCreator {
             LOGGER.fine("OutputGuardrails " + outputGuardrails);
             builder.outputGuardrails(outputGuardrails);
         }
+        registerNamedListeners(builder, lookup, annotation.listenerNames(), interfaceClass);
+        registerThinkingHandler(builder, interfaceClass);
         return builder.build();
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void registerNamedListeners(
+            AiServices<?> builder, Instance<Object> lookup, String[] listenerNames, Class<?> interfaceClass) {
+        for (String name : listenerNames) {
+            if (!CdiLookupHelper.hasText(name)) {
+                continue;
+            }
+            Object resolved = CdiLookupHelper.resolveSingle(lookup, Object.class, name);
+            if (resolved instanceof AiServiceListener listener) {
+                LOGGER.fine(() -> "AiServiceListener '" + name + "' on " + interfaceClass.getSimpleName());
+                builder.registerListener(listener);
+            } else if (resolved != null) {
+                LOGGER.warning("Bean '" + name + "' on " + interfaceClass.getSimpleName()
+                        + " does not implement AiServiceListener — skipped");
+            } else {
+                LOGGER.warning("AiServiceListener '" + name + "' not resolvable for " + interfaceClass.getSimpleName()
+                        + " — skipped");
+            }
+        }
+    }
+
+    private static void registerThinkingHandler(AiServices<?> builder, Class<?> interfaceClass) {
+        Method handler = findOnThinkingMethod(interfaceClass);
+        if (handler == null) {
+            return;
+        }
+        handler.setAccessible(true);
+        Method thinkingMethod = handler;
+        AiServiceResponseReceivedListener listener = event -> {
+            String thinking = event.response().aiMessage().thinking();
+            if (thinking == null || thinking.isBlank()) {
+                return;
+            }
+            try {
+                var ctx = event.invocationContext();
+                ThinkingEmitted emitted = new DefaultThinkingEmitted(
+                        thinking,
+                        ctx != null ? ctx.methodName() : null,
+                        interfaceClass,
+                        ctx != null ? ctx.chatMemoryId() : null,
+                        Instant.now());
+                thinkingMethod.invoke(null, emitted);
+            } catch (Exception e) {
+                LOGGER.log(Level.WARNING, "@OnThinking handler on " + interfaceClass.getSimpleName() + " failed", e);
+            }
+        };
+        LOGGER.fine(() -> "@OnThinking handler on " + interfaceClass.getSimpleName());
+        builder.registerListener(listener);
+    }
+
+    private static Method findOnThinkingMethod(Class<?> interfaceClass) {
+        Method handler = null;
+        for (Method m : interfaceClass.getDeclaredMethods()) {
+            if (m.getAnnotation(OnThinking.class) == null) {
+                continue;
+            }
+            if (handler != null) {
+                throw new IllegalArgumentException("Only one @OnThinking method is allowed on "
+                        + interfaceClass.getName() + " but found both " + handler.getName() + " and " + m.getName());
+            }
+            if (!Modifier.isStatic(m.getModifiers())) {
+                throw new IllegalArgumentException(
+                        "@OnThinking method " + interfaceClass.getName() + "." + m.getName() + " must be static");
+            }
+            if (m.getReturnType() != void.class) {
+                throw new IllegalArgumentException(
+                        "@OnThinking method " + interfaceClass.getName() + "." + m.getName() + " must return void");
+            }
+            Class<?>[] params = m.getParameterTypes();
+            if (params.length != 1 || !ThinkingEmitted.class.isAssignableFrom(params[0])) {
+                throw new IllegalArgumentException("@OnThinking method " + interfaceClass.getName() + "." + m.getName()
+                        + " must accept a single ThinkingEmitted parameter");
+            }
+            handler = m;
+        }
+        return handler;
     }
 
     /**

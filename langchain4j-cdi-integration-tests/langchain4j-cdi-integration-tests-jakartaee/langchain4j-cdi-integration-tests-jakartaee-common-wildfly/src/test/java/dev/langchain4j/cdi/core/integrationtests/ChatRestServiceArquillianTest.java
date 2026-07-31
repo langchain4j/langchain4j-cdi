@@ -10,6 +10,7 @@ import dev.langchain4j.cdi.integrationtests.GuardrailChatAiService;
 import dev.langchain4j.cdi.integrationtests.GuardrailChatRestService;
 import dev.langchain4j.cdi.integrationtests.NoEmptyMessageInputGuardrail;
 import dev.langchain4j.cdi.integrationtests.PassThroughOutputGuardrail;
+import dev.langchain4j.cdi.integrationtests.ThinkingChatModelMock;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
@@ -84,7 +85,8 @@ public class ChatRestServiceArquillianTest {
                         DummyLLConfig.class,
                         ChatModelMock.class,
                         EmbeddingStoreString.class,
-                        EmbeddingStoreTextSegment.class)
+                        EmbeddingStoreTextSegment.class,
+                        ThinkingChatModelMock.class)
                 .addAsLibraries(fixedDeps)
                 .addAsWebInfResource(EmptyAsset.INSTANCE, "beans.xml")
                 .addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml")
