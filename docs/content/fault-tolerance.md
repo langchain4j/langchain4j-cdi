@@ -31,6 +31,10 @@ public interface ChatBot {
 }
 ```
 
+*Note*: LangChain4J has a built-in resiliency in its service. It's retry policy (enabled by default) is set to `maxRetries = 2`. 
+So, should you include Microprofile `@Retry` policy, disable LangChain4J's `ChatModel`'s `maxRetries` by setting it to 0 so that you won't experience the `MxN` execution problem.
+
+
 ## Timeout
 
 Set a maximum duration for AI calls:

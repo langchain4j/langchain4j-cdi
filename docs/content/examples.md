@@ -81,3 +81,4 @@ Hands-on workshops to learn LangChain4j CDI step by step:
 |----------|-------------|
 | [Liberty LangChain4j Workshop](https://github.com/OpenLiberty/liberty-workshop-langchain4j) | Open Liberty workshop for building AI-powered applications with LangChain4j |
 | [LangChain4j CDI Lab 2026](https://github.com/ehsavoie/langchain4j-cdi-lab-2026) | Practical lab exercises covering LangChain4j CDI integration |
+| [LangChain4j CDI Lab 2026 (JCON Slovenia)](https://github.com/TheEliteGentleman/langchain4j-cdi-lab-jcon-slovenia-2026) | Practical lab exercises covering LangChain4j CDI integration (for JCON Slovenia 2026) |
