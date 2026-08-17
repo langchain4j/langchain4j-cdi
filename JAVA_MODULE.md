@@ -1,4 +1,4 @@
-# JPMS (Java Platform Module System) support
+# Java module (Java Platform Module System) support
 
 This project ships explicit Java module descriptors so its artifacts can be consumed on the **module path** and
 assembled into a **custom modular runtime image** (jlink) by downstream consumers such as *vidocq*.
@@ -45,7 +45,7 @@ module com.example.app {
 
 Notes:
 
-- `langchain4j-agentic` is an **optional** dependency (agent topologies). In JPMS it is declared `requires static`
+- `langchain4j-agentic` is an **optional** dependency (agent topologies). As a Java module dependency it is declared `requires static`
   (compile-time, optional at runtime). If you use the agent API, add `requires static langchain4j.agentic;` and put
   the jar on your module path.
 - Jakarta APIs are `provided`: the target runtime (application server, or your jlink image) must supply
@@ -57,7 +57,7 @@ Notes:
 
 ## Breaking change (SPI package move)
 
-To make the modules JPMS-legal, the split packages shared by `langchain4j-cdi-core` and
+To make the jars valid Java modules, the split packages shared by `langchain4j-cdi-core` and
 `langchain4j-cdi-build-compatible-ext` (`dev.langchain4j.cdi.aiservice`, `.plugin`, `.spi`) were removed by moving
 the build-compatible classes into `dev.langchain4j.cdi.core.buildcompatibleextension`. This includes the **public SPI**:
 

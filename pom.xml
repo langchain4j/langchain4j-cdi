@@ -456,7 +456,7 @@
             </modules>
         </profile>
         <!--
-            Opt-in tooling to build a fully-modular (JPMS) runtime image for downstream consumers such as vidocq.
+            Opt-in tooling to build a fully-modular (Java module) runtime image for downstream consumers such as vidocq.
             NOT active by default and NEVER deployed to Maven Central. It:
               1. Enforces a permissive-license allow-list on the whole dependency closure (transitive included) and
                  fails the build if any non-modular jar we would patch/redistribute carries a non-permissive license.

@@ -9,8 +9,8 @@
     </parent>
 
     <artifactId>langchain4j-cdi-jlink</artifactId>
-    <name>Langchain4J CDI: JPMS runtime-image tooling (vidocq)</name>
-    <description>Opt-in tooling (profile jlink-vidocq) that produces a fully-modular (JPMS) runtime image for downstream
+    <name>Langchain4J CDI: Java module runtime-image tooling (vidocq)</name>
+    <description>Opt-in tooling (profile jlink-vidocq) that produces a fully-modular (Java module) runtime image for downstream
         consumers such as vidocq. It (1) enforces a permissive-license allow-list on the whole dependency closure,
         (2) patches the non-modular third-party jars with a generated module-info via ModiTect, and (3) can jlink a
         runtime image from the resulting 100%-modular graph. This module is never deployed to Maven Central.</description>
@@ -124,7 +124,7 @@
 
                 To extend to a full jlink image, add every remaining automatic-module jar of your closure here as well
                 (jlink cannot link automatic modules). List the closure with a jdeps 'list-deps' run over the
-                assembled module path (see JPMS.md for the exact command).
+                assembled module path (see JAVA_MODULE.md for the exact command).
             -->
             <plugin>
                 <groupId>org.moditect</groupId>
