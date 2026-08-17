@@ -52,29 +52,28 @@ Notes:
   `jakarta.cdi`, `jakarta.interceptor`, `jakarta.annotation`, `jakarta.el`, `jakarta.ws.rs`, `jakarta.json`,
   `jakarta.json.bind`, etc.
 - The upstream LangChain4j and MCP-Java jars are not modular yet; on a plain module path they resolve as automatic
-  modules (`langchain4j`, `langchain4j.core`, `langchain4j.agentic`, `langchain4j.http.client`, `mcp.annotations`,
-  `mcp.model`, `mcp.server.api`). For a **jlink** image they must be patched — see below.
+  modules (`langchain4j`, `langchain4j.core`, `langchain4j.agentic`, `langchain4j.http.client`,
+  `mcp.server.api`). For a **jlink** image they must be patched — see below.
 
 ## Breaking change (SPI package move)
 
-To make the modules JPMS-legal, the split package shared by `langchain4j-cdi-core` and
-`langchain4j-cdi-build-compatible-ext` was removed by moving the build-compatible classes into
-`dev.langchain4j.cdi.buildcompatible.*`. This includes the **public SPI**:
+To make the modules JPMS-legal, the split packages shared by `langchain4j-cdi-core` and
+`langchain4j-cdi-build-compatible-ext` (`dev.langchain4j.cdi.aiservice`, `.plugin`, `.spi`) were removed by moving
+the build-compatible classes into `dev.langchain4j.cdi.core.buildcompatibleextension`. This includes the **public SPI**:
 
 ```
 dev.langchain4j.cdi.spi.AISyntheticBeanCreatorClassFactory
-        →  dev.langchain4j.cdi.buildcompatible.spi.AISyntheticBeanCreatorClassFactory
+        →  dev.langchain4j.cdi.core.buildcompatibleextension.AISyntheticBeanCreatorClassFactory
 ```
 
 Downstream implementers of this SPI (for example the WildFly integration) must:
 
 1. update their `implements` / `import` to the new package, and
 2. rename their service file to
-   `META-INF/services/dev.langchain4j.cdi.buildcompatible.spi.AISyntheticBeanCreatorClassFactory`.
+   `META-INF/services/dev.langchain4j.cdi.core.buildcompatibleextension.AISyntheticBeanCreatorClassFactory`.
 
-The internal build-compatible creators and extensions moved too
-(`dev.langchain4j.cdi.buildcompatible.aiservice.*`, `...buildcompatible.plugin.*`), but those are discovered via
-`META-INF/services` and are not referenced by name from consumer code.
+The internal build-compatible creators and extensions moved to the same package, but those are discovered via
+`META-INF/services` / `provides` and are not referenced by name from consumer code.
 
 ## Known limitations
 
@@ -118,8 +117,7 @@ that ship neither a `module-info` nor an `Automatic-Module-Name`, writing the mo
 `langchain4j-cdi-jlink/target/modules/`. The seeded list covers the LangChain4j and MCP-Java jars and assigns the
 same module names the first-party descriptors already `require`, so those names become stable/explicit:
 
-`langchain4j`, `langchain4j.core`, `langchain4j.http.client`, `langchain4j.agentic`, `mcp.annotations`,
-`mcp.model`, `mcp.server.api`.
+`langchain4j`, `langchain4j.core`, `langchain4j.http.client`, `langchain4j.agentic`, `mcp.server.api`.
 
 ### Extending to a full jlink image
 

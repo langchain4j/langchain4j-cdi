@@ -186,29 +186,9 @@
                                 </module>
                                 <module>
                                     <artifact>
-                                        <groupId>org.mcp-java</groupId>
-                                        <artifactId>mcp-annotations</artifactId>
-                                        <version>${org.mcp-java.version}</version>
-                                    </artifact>
-                                    <moduleInfo>
-                                        <name>mcp.annotations</name>
-                                    </moduleInfo>
-                                </module>
-                                <module>
-                                    <artifact>
-                                        <groupId>org.mcp-java</groupId>
-                                        <artifactId>mcp-model</artifactId>
-                                        <version>${org.mcp-java.version}</version>
-                                    </artifact>
-                                    <moduleInfo>
-                                        <name>mcp.model</name>
-                                    </moduleInfo>
-                                </module>
-                                <module>
-                                    <artifact>
-                                        <groupId>org.mcp-java</groupId>
+                                        <groupId>org.mcpjava</groupId>
                                         <artifactId>mcp-server-api</artifactId>
-                                        <version>${org.mcp-java.version}</version>
+                                        <version>${org.mcpjava.version}</version>
                                     </artifact>
                                     <moduleInfo>
                                         <name>mcp.server.api</name>

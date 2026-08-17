@@ -12,9 +12,9 @@ open module dev.langchain4j.cdi.buildcompatible {
     // agent topologies rely on the optional langchain4j-agentic dependency
     requires static langchain4j.agentic;
 
-    uses dev.langchain4j.cdi.buildcompatible.spi.AISyntheticBeanCreatorClassFactory;
+    uses dev.langchain4j.cdi.core.buildcompatibleextension.AISyntheticBeanCreatorClassFactory;
 
     provides jakarta.enterprise.inject.build.compatible.spi.BuildCompatibleExtension with
-            dev.langchain4j.cdi.buildcompatible.aiservice.Langchain4JAIServiceBuildCompatibleExtension,
-            dev.langchain4j.cdi.buildcompatible.plugin.LangChain4JPluginsBuildCompatibleExtension;
+            dev.langchain4j.cdi.core.buildcompatibleextension.Langchain4JAIServiceBuildCompatibleExtension,
+            dev.langchain4j.cdi.core.buildcompatibleextension.LangChain4JPluginsBuildCompatibleExtension;
 }

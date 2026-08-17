@@ -7,12 +7,10 @@
  */
 open module dev.langchain4j.cdi.mcp.server {
     requires transitive jakarta.cdi;
-    requires transitive mcp.annotations;
+    requires transitive mcp.server.api;
     requires jakarta.inject;
     requires jakarta.json;
     requires jakarta.ws.rs;
-    requires mcp.model;
-    requires mcp.server.api;
     requires jakarta.annotation;
     requires jakarta.json.bind;
     requires java.logging;

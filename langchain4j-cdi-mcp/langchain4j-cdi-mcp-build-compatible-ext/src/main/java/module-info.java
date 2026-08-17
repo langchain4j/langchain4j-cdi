@@ -7,7 +7,7 @@ open module dev.langchain4j.cdi.mcp.buildcompatible {
     requires dev.langchain4j.cdi.mcp.server;
     requires jakarta.cdi.lang.model;
     requires java.logging;
-    requires mcp.annotations;
+    requires mcp.server.api;
 
     provides jakarta.enterprise.inject.build.compatible.spi.BuildCompatibleExtension with
             dev.langchain4j.cdi.mcp.buildcompatible.McpServerBuildCompatibleExtension;
