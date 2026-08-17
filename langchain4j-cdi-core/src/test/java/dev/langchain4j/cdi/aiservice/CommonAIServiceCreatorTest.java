@@ -25,7 +25,13 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -400,9 +406,82 @@ class CommonAIServiceCreatorTest {
         when(lookup.select(UninstantiableGuardrail.class)).thenReturn(igInstance);
         when(igInstance.isResolvable()).thenReturn(false);
 
-        // Should not throw - guardrail is skipped with a warning
-        Object service = CommonAIServiceCreator.create(lookup, MyAIServiceWithUninstantiableGuardrail.class);
-        assertNotNull(service);
+        Logger logger = Logger.getLogger(CdiLookupHelper.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            Object service = CommonAIServiceCreator.create(lookup, MyAIServiceWithUninstantiableGuardrail.class);
+            assertNotNull(service);
+            assertTrue(
+                    records.stream().noneMatch(r -> r.getLevel().intValue() >= Level.WARNING.intValue()),
+                    "No WARNING should be logged for a missing no-arg constructor — it is an expected fallback");
+        } finally {
+            logger.removeHandler(handler);
+        }
+    }
+
+    // --- Uninstantiable tool test ---
+
+    public static class UninstantiableTool {
+        public UninstantiableTool(String required) {}
+
+        @Tool
+        public String doWork() {
+            return "unreachable";
+        }
+    }
+
+    @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
+    @RegisterAIService(tools = {UninstantiableTool.class})
+    interface MyAIServiceWithUninstantiableTool {
+        String chat(String question);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void create_skipsToolWhenBothCdiAndConstructorFail() {
+        Instance<Object> lookup = prepareLookups();
+
+        Instance<UninstantiableTool> toolInstance = mock(Instance.class);
+        when(lookup.select(UninstantiableTool.class)).thenReturn(toolInstance);
+        when(toolInstance.isResolvable()).thenReturn(false);
+
+        Logger logger = Logger.getLogger(CdiLookupHelper.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            Object service = CommonAIServiceCreator.create(lookup, MyAIServiceWithUninstantiableTool.class);
+            assertNotNull(service);
+            assertTrue(
+                    records.stream().noneMatch(r -> r.getLevel().intValue() >= Level.WARNING.intValue()),
+                    "No WARNING should be logged for a missing no-arg constructor — it is an expected fallback");
+        } finally {
+            logger.removeHandler(handler);
+        }
     }
 
     @SuppressWarnings("CdiManagedBeanInconsistencyInspection")
@@ -638,11 +717,40 @@ class CommonAIServiceCreatorTest {
         when(cmInstance.get()).thenReturn(thinkingModel);
         when(lookup.select(ChatModel.class)).thenReturn(cmInstance);
 
-        ServiceWithThrowingOnThinking service =
-                CommonAIServiceCreator.create(lookup, ServiceWithThrowingOnThinking.class);
-        String result = service.chat("hello");
+        Logger logger = Logger.getLogger(CommonAIServiceCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
 
-        assertNotNull(result);
-        assertTrue(THROWING_HANDLER_CALLED.get());
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            ServiceWithThrowingOnThinking service =
+                    CommonAIServiceCreator.create(lookup, ServiceWithThrowingOnThinking.class);
+            String result = service.chat("hello");
+
+            assertNotNull(result);
+            assertTrue(THROWING_HANDLER_CALLED.get());
+            assertEquals(
+                    1,
+                    records.stream().filter(r -> r.getLevel() == Level.WARNING).count(),
+                    "A single WARNING should be logged when the @OnThinking handler throws");
+            LogRecord warning = records.stream()
+                    .filter(r -> r.getLevel() == Level.WARNING)
+                    .findFirst()
+                    .orElseThrow();
+            assertTrue(warning.getMessage().contains("handler explosion"));
+            assertNull(warning.getThrown(), "Stack trace should not be attached for InvocationTargetException");
+        } finally {
+            logger.removeHandler(handler);
+        }
     }
 }

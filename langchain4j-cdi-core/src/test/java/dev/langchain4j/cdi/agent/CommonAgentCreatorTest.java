@@ -1584,8 +1584,30 @@ class CommonAgentCreatorTest {
 
     @Test
     void resolveTypedKeyName_withNoDefaultConstructor_fallsBackToSimpleName() {
-        String result = CommonAgentCreator.resolveTypedKeyName(NoDefaultConstructorTypedKey.class);
-        assertEquals("NoDefaultConstructorTypedKey", result);
+        Logger logger = Logger.getLogger(CommonAgentCreator.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {}
+
+            @Override
+            public void close() {}
+        };
+        logger.addHandler(handler);
+        try {
+            String result = CommonAgentCreator.resolveTypedKeyName(NoDefaultConstructorTypedKey.class);
+            assertEquals("NoDefaultConstructorTypedKey", result);
+            assertTrue(
+                    records.stream().noneMatch(r -> r.getLevel().intValue() >= Level.WARNING.intValue()),
+                    "No WARNING should be logged for a missing no-arg constructor — it is an expected fallback");
+        } finally {
+            logger.removeHandler(handler);
+        }
     }
 
     // =========================================================================

@@ -83,8 +83,8 @@ Guardrails validate messages before they are sent to the model (input) or before
 
 ```java
 @RegisterAIService(
-    inputGuardrails = {NoEmptyMessageGuardrail.class},
-    outputGuardrails = {ContentFilterGuardrail.class}
+    inputGuardrails = \{NoEmptyMessageGuardrail.class},
+    outputGuardrails = \{ContentFilterGuardrail.class}
 )
 public interface SafeChatService {
     String chat(String userMessage);

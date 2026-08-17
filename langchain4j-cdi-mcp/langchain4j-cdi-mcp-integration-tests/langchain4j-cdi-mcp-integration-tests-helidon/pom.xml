@@ -21,6 +21,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Import langchain4j-bom first so its versions take precedence over Helidon's bundled langchain4j (1.6.0) -->
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-bom</artifactId>
+                <version>${dev.langchain4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <dependency>
                 <groupId>io.helidon</groupId>
                 <artifactId>helidon-bom</artifactId>

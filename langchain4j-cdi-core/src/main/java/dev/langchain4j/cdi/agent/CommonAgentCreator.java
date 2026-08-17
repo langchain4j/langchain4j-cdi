@@ -726,12 +726,14 @@ public class CommonAgentCreator {
             TypedKey<?> instance = typedKeyClass.getDeclaredConstructor().newInstance();
             String name = instance.name();
             return hasText(name) ? name : typedKeyClass.getSimpleName();
+        } catch (NoSuchMethodException e) {
+            return typedKeyClass.getSimpleName();
         } catch (Exception e) {
             LOGGER.log(
                     Level.WARNING,
                     e,
                     () -> "Cannot instantiate TypedKey class " + typedKeyClass.getName()
-                            + " (no accessible no-arg constructor?), falling back to simple class name");
+                            + ", falling back to simple class name");
             return typedKeyClass.getSimpleName();
         }
     }

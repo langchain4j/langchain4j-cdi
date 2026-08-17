@@ -103,8 +103,8 @@ public final class CdiLookupHelper {
 
     /**
      * Resolve guardrail instances by class. For each class, first attempts CDI lookup; if the bean is not resolvable,
-     * falls back to instantiation via the no-arg constructor. Classes that fail both resolution paths are skipped with
-     * a WARNING log.
+     * falls back to instantiation via the no-arg constructor. Classes without a no-arg constructor are skipped silently
+     * (FINE log). Other instantiation failures are skipped with a WARNING log.
      *
      * @param <G> the guardrail type
      * @param lookup the CDI {@link Instance} used for bean resolution
@@ -122,6 +122,12 @@ public final class CdiLookupHelper {
                     guardrails.add(
                             guardrailClass.getConstructor((Class<?>[]) null).newInstance((Object[]) null));
                 }
+            } catch (NoSuchMethodException ex) {
+                LOGGER.log(
+                        Level.FINE,
+                        ex,
+                        () -> "No public no-arg constructor for guardrail class " + guardrailClass
+                                + " and not resolvable as a CDI bean, skipping");
             } catch (ReflectiveOperationException | IllegalArgumentException ex) {
                 LOGGER.log(
                         Level.WARNING,
@@ -186,8 +192,8 @@ public final class CdiLookupHelper {
 
     /**
      * Resolve tool instances from an array of tool classes. For each class, first attempts CDI lookup; if the bean is
-     * not resolvable, falls back to instantiation via the no-arg constructor. Classes that fail both resolution paths
-     * are skipped with a SEVERE log.
+     * not resolvable, falls back to instantiation via the no-arg constructor. Classes without a no-arg constructor are
+     * skipped silently (FINE log). Other instantiation failures are skipped with a SEVERE log.
      *
      * @param toolClasses the tool classes to resolve or instantiate
      * @param lookup the CDI {@link Instance} used for bean resolution
@@ -203,6 +209,12 @@ public final class CdiLookupHelper {
                 } else {
                     tools.add(toolClass.getConstructor((Class<?>[]) null).newInstance((Object[]) null));
                 }
+            } catch (NoSuchMethodException ex) {
+                LOGGER.log(
+                        Level.FINE,
+                        ex,
+                        () -> "No public no-arg constructor for tool class " + toolClass
+                                + " and not resolvable as a CDI bean, skipping");
             } catch (ReflectiveOperationException | IllegalArgumentException ex) {
                 LOGGER.log(Level.SEVERE, "Failed to create tool " + toolClass + ", skipping: " + ex.getMessage(), ex);
             }

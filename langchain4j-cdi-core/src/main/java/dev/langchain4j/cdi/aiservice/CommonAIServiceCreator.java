@@ -15,6 +15,7 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
@@ -182,6 +183,11 @@ public class CommonAIServiceCreator {
                         ctx != null ? ctx.chatMemoryId() : null,
                         Instant.now());
                 thinkingMethod.invoke(null, emitted);
+            } catch (InvocationTargetException e) {
+                LOGGER.log(
+                        Level.WARNING,
+                        "@OnThinking handler on " + interfaceClass.getSimpleName() + " failed: "
+                                + e.getCause().getMessage());
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "@OnThinking handler on " + interfaceClass.getSimpleName() + " failed", e);
             }
