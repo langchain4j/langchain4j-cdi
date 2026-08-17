@@ -82,9 +82,27 @@ The internal build-compatible creators and extensions moved to the same package,
   `org.a2aproject.sdk.util`; the module system forbids the same package in two modules, so an explicit
   `module-info.java` cannot be compiled until those upstream jars are modularized (or patched — the
   `jlink-vidocq` tooling can patch them by merging the split package).
-- `langchain4j-cdi-build-compatible-ext` targets Quarkus/Helidon, which deploy on the class path. Do not place it
-  together with `langchain4j-cdi-core` on a strict module path unless you also resolve any remaining differences —
-  the traditional-server path uses `langchain4j-cdi-portable-ext`, which is split-free with core.
+- `langchain4j-cdi-build-compatible-ext` is split-package-free with core and resolves fine next to it on a strict
+  module path (verified with `java -p ... --add-modules ALL-MODULE-PATH`). It is nevertheless left out of the
+  `jlink-vidocq` set because its consumers (Quarkus, Helidon) deploy on the class path; the traditional-server /
+  jlink path uses `langchain4j-cdi-portable-ext`.
+
+## Verifying the module graph
+
+The following was verified on JDK 21 with the first-party jars, the ModiTect-patched LangChain4j/MCP-Java jars from
+`langchain4j-cdi-jlink/target/modules/`, and the `provided` Jakarta/MicroProfile API jars assembled on one module
+path — the boot layer resolves all first-party roots without any split-package or missing-module error:
+
+```bash
+java -p <module-path> \
+     --add-modules dev.langchain4j.cdi.core,dev.langchain4j.cdi.portable,dev.langchain4j.cdi.el,\
+dev.langchain4j.cdi.mp.config,dev.langchain4j.cdi.mp.faulttolerance,dev.langchain4j.cdi.mp.telemetry,\
+dev.langchain4j.cdi.mcp.server,dev.langchain4j.cdi.mcp.portable \
+     -version
+```
+
+Note that `jakarta.cdi` itself `requires jakarta.cdi.lang.model` (`jakarta.enterprise.lang-model`), so that jar must
+also be present on the module path of the target runtime.
 
 ## Building a modular runtime image for vidocq (`jlink-vidocq` profile)
 
@@ -92,8 +110,11 @@ The optional, **opt-in** module `langchain4j-cdi-jlink` (activated by the `jlink
 Maven Central) turns the module-path-friendly set into a fully-modular graph:
 
 ```bash
-mvn -Pjlink-vidocq -pl langchain4j-cdi-jlink verify
+mvn -Pjlink-vidocq -pl langchain4j-cdi-jlink clean verify
 ```
+
+(`clean` matters: `target/modules/` is not purged between runs, so a version bump would otherwise leave stale
+patched jars next to the fresh ones.)
 
 It performs two steps:
 

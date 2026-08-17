@@ -26,7 +26,8 @@
     <!--
         The module-path-friendly first-party set (traditional-server / jlink target). Excludes:
           - langchain4j-cdi-a2a          : automatic module only (upstream a2a-sdk package split),
-          - langchain4j-cdi-buildcompatible : targets Quarkus/Helidon class-path builds, not the module path.
+          - langchain4j-cdi-build-compatible-ext : targets Quarkus/Helidon class-path builds, not the module path
+            (it is split-free with core and would resolve fine; it is simply not part of the jlink target).
     -->
     <dependencies>
         <dependency>
