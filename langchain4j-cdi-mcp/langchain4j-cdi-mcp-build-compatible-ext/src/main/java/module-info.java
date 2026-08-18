@@ -3,7 +3,7 @@
  * for ahead-of-time frameworks (Quarkus, Helidon).
  */
 open module dev.langchain4j.cdi.mcp.buildcompatible {
-    requires transitive jakarta.cdi;
+    requires jakarta.cdi;
     requires dev.langchain4j.cdi.mcp.server;
     requires jakarta.cdi.lang.model;
     requires java.logging;

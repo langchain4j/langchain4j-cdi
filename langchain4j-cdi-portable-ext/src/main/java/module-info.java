@@ -8,6 +8,7 @@
 open module dev.langchain4j.cdi.portable {
     requires transitive dev.langchain4j.cdi.core;
     requires jakarta.cdi;
+    requires java.logging;
     // agent topologies rely on the optional langchain4j-agentic dependency
     requires static langchain4j.agentic;
 

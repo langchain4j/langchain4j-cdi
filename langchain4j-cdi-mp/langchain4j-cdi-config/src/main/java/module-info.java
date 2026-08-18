@@ -8,6 +8,7 @@
 open module dev.langchain4j.cdi.mp.config {
     requires dev.langchain4j.cdi.core;
     requires transitive org.eclipse.microprofile.config;
+    requires java.logging;
 
     provides dev.langchain4j.cdi.core.config.spi.LLMConfig with
             dev.langchain4j.cdi.core.mpconfig.LLMConfigMPConfig;

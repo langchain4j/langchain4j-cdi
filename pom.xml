@@ -88,6 +88,15 @@
         <maven.compiler.release>17</maven.compiler.release>
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
         <compiler-plugin.version>3.14.0</compiler-plugin.version>
+        <!-- MicroProfile API versions (langchain4j-cdi-mp modules and the jlink-vidocq module path) -->
+        <version.eclipse.microprofile.config>3.1.1</version.eclipse.microprofile.config>
+        <version.eclipse.microprofile.fault-tolerance>4.1.2</version.eclipse.microprofile.fault-tolerance>
+        <version.eclipse.microprofile.telemetry>2.0.1</version.eclipse.microprofile.telemetry>
+        <!-- Opt-in jlink-vidocq tooling (langchain4j-cdi-jlink) -->
+        <moditect.version>1.2.2.Final</moditect.version>
+        <license-plugin.version>2.7.1</license-plugin.version>
+        <dependency-plugin.version>3.8.1</dependency-plugin.version>
+        <exec-plugin.version>3.5.0</exec-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -461,7 +470,9 @@
               1. Enforces a permissive-license allow-list on the whole dependency closure (transitive included) and
                  fails the build if any non-modular jar we would patch/redistribute carries a non-permissive license.
               2. Patches the remaining non-modular third-party jars with a generated module-info (ModiTect).
-              3. Produces a jlink runtime image from the now 100%-modular graph.
+              3. Verifies that the resulting module graph resolves on a strict module path (java -p ... -version).
+            It does NOT run jlink itself: it prepares the modular dependency set; producing the actual runtime
+            image is a manual extension step described in JAVA_MODULE.md.
             Usage:  mvn -Pjlink-vidocq verify   (add -pl langchain4j-cdi-jlink to run it alone)
         -->
         <profile>

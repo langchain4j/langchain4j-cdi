@@ -6,7 +6,7 @@
  * class-path discovery).
  */
 open module dev.langchain4j.cdi.mp.faulttolerance {
-    requires transitive jakarta.cdi;
+    requires jakarta.cdi;
     requires dev.langchain4j.cdi.core;
     requires dev.langchain4j.cdi.portable;
     requires jakarta.annotation;

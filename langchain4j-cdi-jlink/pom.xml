@@ -10,17 +10,21 @@
 
     <artifactId>langchain4j-cdi-jlink</artifactId>
     <name>Langchain4J CDI: Java module runtime-image tooling (vidocq)</name>
-    <description>Opt-in tooling (profile jlink-vidocq) that produces a fully-modular (Java module) runtime image for downstream
-        consumers such as vidocq. It (1) enforces a permissive-license allow-list on the whole dependency closure,
-        (2) patches the non-modular third-party jars with a generated module-info via ModiTect, and (3) can jlink a
-        runtime image from the resulting 100%-modular graph. This module is never deployed to Maven Central.</description>
+    <description>Opt-in tooling (profile jlink-vidocq) that prepares a fully-modular (Java module) dependency set for
+        downstream consumers such as vidocq. It (1) enforces a permissive-license allow-list on the whole dependency
+        closure, (2) patches the non-modular third-party jars with a generated module-info via ModiTect, and (3)
+        verifies that the resulting module graph resolves on a strict module path. Producing the actual jlink image
+        is a manual extension step (see JAVA_MODULE.md). This module is never deployed to Maven Central.</description>
 
     <properties>
         <maven.deploy.skip>true</maven.deploy.skip>
         <maven.install.skip>true</maven.install.skip>
         <gpg.skip>true</gpg.skip>
-        <moditect.version>1.2.2.Final</moditect.version>
-        <license-plugin.version>2.7.1</license-plugin.version>
+        <!-- Assembled module path used by the (3) verification step. -->
+        <module-path.deps>${project.build.directory}/module-path</module-path.deps>
+        <module-path.patched>${project.build.directory}/modules</module-path.patched>
+        <!-- First-party roots that must resolve on the strict module path (mirrors JAVA_MODULE.md). -->
+        <module-path.roots>dev.langchain4j.cdi.core,dev.langchain4j.cdi.portable,dev.langchain4j.cdi.el,dev.langchain4j.cdi.mp.config,dev.langchain4j.cdi.mp.faulttolerance,dev.langchain4j.cdi.mp.telemetry,dev.langchain4j.cdi.mcp.server,dev.langchain4j.cdi.mcp.portable</module-path.roots>
     </properties>
 
     <!--
@@ -30,6 +34,56 @@
             (it is split-free with core and would resolve fine; it is simply not part of the jlink target).
     -->
     <dependencies>
+        <!--
+            'provided' API jars of the first-party modules. Maven does not propagate the provided scope transitively,
+            so they are re-declared here to land on the verified module path (the target runtime supplies them).
+        -->
+        <dependency>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json.bind</groupId>
+            <artifactId>jakarta.json.bind-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.config</groupId>
+            <artifactId>microprofile-config-api</artifactId>
+            <version>${version.eclipse.microprofile.config}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.fault-tolerance</groupId>
+            <artifactId>microprofile-fault-tolerance-api</artifactId>
+            <version>${version.eclipse.microprofile.fault-tolerance}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.microprofile.telemetry</groupId>
+            <artifactId>microprofile-telemetry-api</artifactId>
+            <version>${version.eclipse.microprofile.telemetry}</version>
+            <type>pom</type>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- First-party modules -->
         <dependency>
             <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-core</artifactId>
@@ -87,7 +141,8 @@
                             <failOnBlacklist>true</failOnBlacklist>
                             <failOnMissing>true</failOnMissing>
                             <includeTransitiveDependencies>true</includeTransitiveDependencies>
-                            <excludedScopes>test</excludedScopes>
+                            <!-- provided = supplied by the target runtime, never patched nor redistributed by us -->
+                            <excludedScopes>test,provided</excludedScopes>
                             <!-- Permissive licenses we are allowed to patch & redistribute. -->
                             <includedLicenses>
                                 <includedLicense>Apache License, Version 2.0</includedLicense>
@@ -196,6 +251,57 @@
                                     </moduleInfo>
                                 </module>
                             </modules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                (3) MODULE-GRAPH VERIFICATION. Assembles the whole dependency closure (provided Jakarta/MicroProfile
+                APIs included) next to the ModiTect-patched jars and asks the JVM to resolve every first-party root on
+                a strict module path. Any split package, missing 'requires' or unreadable module fails the build here,
+                before downstream consumers hit it. The jars patched in (2) are excluded from the copy so that only
+                their modularized copies are on the module path.
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>${dependency-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>assemble-module-path</id>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <outputDirectory>${module-path.deps}</outputDirectory>
+                            <includeScope>compile</includeScope>
+                            <excludeArtifactIds>langchain4j,langchain4j-core,langchain4j-http-client,langchain4j-agentic,mcp-server-api</excludeArtifactIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>verify-module-graph</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>verify</phase>
+                        <configuration>
+                            <executable>${java.home}/bin/java</executable>
+                            <arguments>
+                                <!-- single 'module-path=' token: exec-maven-plugin gives a bare '-p' special treatment -->
+                                <argument>--module-path=${module-path.patched}${path.separator}${module-path.deps}</argument>
+                                <argument>--add-modules</argument>
+                                <argument>${module-path.roots}</argument>
+                                <argument>-version</argument>
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>

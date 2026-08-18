@@ -11,7 +11,7 @@ open module dev.langchain4j.cdi.core {
     requires jakarta.annotation;
     requires java.naming;
     requires java.net.http;
-    requires transitive java.logging;
+    requires java.logging;
 
     // LangChain4j (automatic modules — names derived from the jar file names)
     requires transitive langchain4j;

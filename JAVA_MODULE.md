@@ -89,9 +89,16 @@ The internal build-compatible creators and extensions moved to the same package,
 
 ## Verifying the module graph
 
-The following was verified on JDK 21 with the first-party jars, the ModiTect-patched LangChain4j/MCP-Java jars from
-`langchain4j-cdi-jlink/target/modules/`, and the `provided` Jakarta/MicroProfile API jars assembled on one module
-path — the boot layer resolves all first-party roots without any split-package or missing-module error:
+The `jlink-vidocq` profile verifies the module graph automatically (also run in CI, see `.github/workflows/build.yml`):
+
+```bash
+mvn -Pjlink-vidocq -DskipTests verify -pl langchain4j-cdi-jlink
+```
+
+`langchain4j-cdi-jlink` assembles the first-party jars, the ModiTect-patched LangChain4j/MCP-Java jars
+(`target/modules/`) and the `provided` Jakarta/MicroProfile API jars (`target/module-path/`) on one module path and
+asks the JVM to resolve every first-party root; a split package, a missing `requires` or an unreadable module fails
+the build. This is equivalent to the manual check below:
 
 ```bash
 java -p <module-path> \
@@ -116,14 +123,15 @@ mvn -Pjlink-vidocq -pl langchain4j-cdi-jlink clean verify
 (`clean` matters: `target/modules/` is not purged between runs, so a version bump would otherwise leave stale
 patched jars next to the fresh ones.)
 
-It performs two steps:
+It performs three steps:
 
 ### 1. License gate (redistribution safety)
 
 Before patching/redistributing any third-party jar, the `license-maven-plugin` resolves the license of the **entire
-dependency closure (transitive included)** and fails the build if any of them is **not** on the permissive
-allow-list (Apache-2.0, MIT, BSD-2/3-Clause, EPL-1.0/2.0, EDL-1.0). This enforces the policy: *never patch and
-redistribute a jar whose license does not allow it.* The resolved report is written to
+dependency closure (transitive included, `provided` and `test` excluded — the `provided` Jakarta/MicroProfile
+APIs are supplied by the target runtime and never patched nor redistributed)** and fails the build if any of them is
+**not** on the permissive allow-list (Apache-2.0, MIT, BSD-2/3-Clause, EPL-1.0/2.0, EDL-1.0). This enforces the
+policy: *never patch and redistribute a jar whose license does not allow it.* The resolved report is written to
 `langchain4j-cdi-jlink/target/generated-sources/license/THIRD-PARTY.txt`.
 
 Tune `<includedLicenses>` / `<licenseMerges>` in `langchain4j-cdi-jlink/pom.xml` against that report if a new
@@ -139,6 +147,13 @@ that ship neither a `module-info` nor an `Automatic-Module-Name`, writing the mo
 same module names the first-party descriptors already `require`, so those names become stable/explicit:
 
 `langchain4j`, `langchain4j.core`, `langchain4j.http.client`, `langchain4j.agentic`, `mcp.server.api`.
+
+### 3. Module-graph verification
+
+`maven-dependency-plugin` copies the rest of the closure (first-party jars and the `provided` API jars, minus the
+jars patched in step 2) to `langchain4j-cdi-jlink/target/module-path/`, then `exec-maven-plugin` runs
+`java --module-path=target/modules:target/module-path --add-modules <first-party roots> -version` in the `verify`
+phase. See [Verifying the module graph](#verifying-the-module-graph).
 
 ### Extending to a full jlink image
 

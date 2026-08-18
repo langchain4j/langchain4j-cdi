@@ -49,6 +49,9 @@ jobs:
       - name: build with maven
         run: ./mvnw -B spotless:check install --file pom.xml
 
+      - name: verify the Java module graph (jlink-vidocq profile)
+        run: ./mvnw -B -Pjlink-vidocq -DskipTests verify -pl langchain4j-cdi-jlink --file pom.xml
+
   build-windows:
     runs-on: windows-latest
     name: build with jdk 25 on windows (target 17)

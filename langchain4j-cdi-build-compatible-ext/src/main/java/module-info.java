@@ -9,6 +9,7 @@ open module dev.langchain4j.cdi.buildcompatible {
     requires dev.langchain4j.cdi.core;
     requires jakarta.cdi;
     requires jakarta.annotation;
+    requires java.logging;
     // agent topologies rely on the optional langchain4j-agentic dependency
     requires static langchain4j.agentic;
 
