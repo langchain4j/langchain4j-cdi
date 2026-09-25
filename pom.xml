@@ -89,7 +89,7 @@
         <surefire-plugin.version>3.5.6</surefire-plugin.version>
         <compiler-plugin.version>3.14.0</compiler-plugin.version>
         <!-- MicroProfile API versions (langchain4j-cdi-mp modules and the jlink-vidocq module path) -->
-        <version.eclipse.microprofile.config>3.1.1</version.eclipse.microprofile.config>
+        <version.eclipse.microprofile.config>3.1.2</version.eclipse.microprofile.config>
         <version.eclipse.microprofile.fault-tolerance>4.1.2</version.eclipse.microprofile.fault-tolerance>
         <version.eclipse.microprofile.telemetry>2.0.1</version.eclipse.microprofile.telemetry>
         <!-- Opt-in jlink-vidocq tooling (langchain4j-cdi-jlink) -->
