@@ -193,17 +193,17 @@
             </dependency>
             <!-- MCP -->
             <dependency>
-                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <groupId>dev.langchain4j.cdi</groupId>
                 <artifactId>langchain4j-cdi-mcp-server</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <groupId>dev.langchain4j.cdi</groupId>
                 <artifactId>langchain4j-cdi-mcp-portable-ext</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j.cdi.mcp</groupId>
+                <groupId>dev.langchain4j.cdi</groupId>
                 <artifactId>langchain4j-cdi-mcp-build-compatible-ext</artifactId>
                 <version>${project.version}</version>
             </dependency>

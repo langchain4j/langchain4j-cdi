@@ -23,9 +23,7 @@ import jakarta.json.bind.JsonbConfig;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.StreamingOutput;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -86,10 +84,10 @@ public class McpLegacyProtocolHandler {
      * @param wantsSse whether the client accepts {@code text/event-stream} responses
      * @return the JAX-RS response
      */
-    public Response handle(JsonRpcRequest request, String sessionId, boolean wantsSse) {
+    public Response handle(JsonRpcRequest request, String sessionId) {
         Response response;
         try {
-            response = dispatch(request, sessionId, wantsSse);
+            response = dispatch(request, sessionId);
         } catch (McpException | WebApplicationException e) {
             throw e;
         } catch (RuntimeException e) {
@@ -98,7 +96,7 @@ public class McpLegacyProtocolHandler {
         return request.getId() == null ? accepted() : response;
     }
 
-    private Response dispatch(JsonRpcRequest request, String sessionId, boolean wantsSse) {
+    private Response dispatch(JsonRpcRequest request, String sessionId) {
         Object id = request.getId();
         JsonObject params = request.getParams();
         return switch (request.getMethod()) {
@@ -109,32 +107,26 @@ public class McpLegacyProtocolHandler {
                     throw new McpException(
                             null, McpErrorCode.INVALID_REQUEST, "initialize must be a request, not a notification");
                 }
-                yield initialize(request, wantsSse);
+                yield initialize(request);
             }
             case "notifications/initialized" -> {
                 sessionManager.requireSession(id, sessionId).markInitialized();
                 yield accepted();
             }
-            case "tools/list" ->
-                listing(id, sessionId, wantsSse, () -> features.listTools(McpFeatureService.cursor(params)));
+            case "tools/list" -> listing(id, sessionId, () -> features.listTools(McpFeatureService.cursor(params)));
             case "resources/list" ->
-                listing(id, sessionId, wantsSse, () -> features.listResources(McpFeatureService.cursor(params)));
+                listing(id, sessionId, () -> features.listResources(McpFeatureService.cursor(params)));
             case "resources/templates/list" ->
-                listing(
-                        id,
-                        sessionId,
-                        wantsSse,
-                        () -> features.listResourceTemplates(McpFeatureService.cursor(params)));
-            case "prompts/list" ->
-                listing(id, sessionId, wantsSse, () -> features.listPrompts(McpFeatureService.cursor(params)));
-            case "completion/complete" -> listing(id, sessionId, wantsSse, () -> features.complete(id, params));
-            case "tools/call" -> invoke(request, sessionId, wantsSse, features::callTool);
-            case "resources/read" -> invoke(request, sessionId, wantsSse, features::readResource);
-            case "prompts/get" -> invoke(request, sessionId, wantsSse, features::getPrompt);
+                listing(id, sessionId, () -> features.listResourceTemplates(McpFeatureService.cursor(params)));
+            case "prompts/list" -> listing(id, sessionId, () -> features.listPrompts(McpFeatureService.cursor(params)));
+            case "completion/complete" -> listing(id, sessionId, () -> features.complete(id, params));
+            case "tools/call" -> invoke(request, sessionId, features::callTool);
+            case "resources/read" -> invoke(request, sessionId, features::readResource);
+            case "prompts/get" -> invoke(request, sessionId, features::getPrompt);
             case "resources/subscribe" -> subscription(request, sessionId, true);
             case "resources/unsubscribe" -> subscription(request, sessionId, false);
             case "logging/setLevel" -> setLevel(request, sessionId);
-            case "ping" -> json(id, JsonValue.EMPTY_JSON_OBJECT, false);
+            case "ping" -> json(id, JsonValue.EMPTY_JSON_OBJECT);
             case "notifications/cancelled" -> cancelled(request);
             case "notifications/roots/list_changed" -> {
                 if (sessionId != null) {
@@ -215,24 +207,11 @@ public class McpLegacyProtocolHandler {
         return accepted();
     }
 
-    private Response initialize(JsonRpcRequest request, boolean wantsSse) {
+    private Response initialize(JsonRpcRequest request) {
         String newSessionId = sessionManager.createSession(request.getParams());
 
         McpInitializeResult result = new McpInitializeResult(
                 McpProtocolVersions.LEGACY_2025_03_26, features.capabilities(), features.serverInfo());
-
-        if (wantsSse) {
-            String json = serializeToJson(JsonRpcResponse.success(request.getId(), result));
-            String payload = "event: message\ndata: " + json + "\n\n";
-            StreamingOutput stream = out -> {
-                out.write(payload.getBytes(StandardCharsets.UTF_8));
-                out.flush();
-            };
-            return Response.ok(stream, MediaType.SERVER_SENT_EVENTS)
-                    .header(HEADER_CACHE_CONTROL, HEADER_NO_CACHE)
-                    .header(McpHttpHeaders.SESSION_ID, newSessionId)
-                    .build();
-        }
 
         return Response.ok(serializeToJson(JsonRpcResponse.success(request.getId(), result)))
                 .type(MediaType.APPLICATION_JSON)
@@ -245,7 +224,7 @@ public class McpLegacyProtocolHandler {
         JsonObject call(Object requestId, JsonObject params, McpRequestContext ctx, McpSession session);
     }
 
-    private Response invoke(JsonRpcRequest request, String sessionId, boolean sse, Invocation invocation) {
+    private Response invoke(JsonRpcRequest request, String sessionId, Invocation invocation) {
         McpSession session = sessionManager.requireSession(request.getId(), sessionId);
         McpRequestContext ctx = new McpRequestContext(
                 sessionId,
@@ -255,12 +234,12 @@ public class McpLegacyProtocolHandler {
                 McpProtocolContext.legacy(McpProtocolVersions.LEGACY_2025_03_26),
                 new McpLegacyClientRequester(session, serverRequestManager),
                 new McpBroadcastResponseChannel(broadcaster));
-        return json(request.getId(), invocation.call(request.getId(), request.getParams(), ctx, session), sse);
+        return json(request.getId(), invocation.call(request.getId(), request.getParams(), ctx, session));
     }
 
-    private Response listing(Object id, String sessionId, boolean sse, Supplier<JsonObject> supplier) {
+    private Response listing(Object id, String sessionId, Supplier<JsonObject> supplier) {
         sessionManager.requireSession(id, sessionId);
-        return json(id, supplier.get(), sse);
+        return json(id, supplier.get());
     }
 
     private Response subscription(JsonRpcRequest request, String sessionId, boolean subscribe) {
@@ -327,11 +306,11 @@ public class McpLegacyProtocolHandler {
         return Response.status(Response.Status.ACCEPTED).build();
     }
 
-    private Response json(Object id, JsonObject result, boolean sse) {
+    private Response json(Object id, JsonObject result) {
         JsonObjectBuilder rpc = Json.createObjectBuilder().add("jsonrpc", "2.0");
         addJsonRpcId(rpc, id);
         rpc.add("result", result);
-        return sendResponse(rpc.build().toString(), sse);
+        return sendResponse(rpc.build().toString());
     }
 
     private static void addJsonRpcId(JsonObjectBuilder builder, Object id) {
@@ -342,18 +321,8 @@ public class McpLegacyProtocolHandler {
         }
     }
 
-    private Response sendResponse(String json, boolean sse) {
-        if (!sse) {
-            return Response.ok(json).type(MediaType.APPLICATION_JSON).build();
-        }
-        String payload = "event: message\ndata: " + json + "\n\n";
-        StreamingOutput stream = out -> {
-            out.write(payload.getBytes(StandardCharsets.UTF_8));
-            out.flush();
-        };
-        return Response.ok(stream, MediaType.SERVER_SENT_EVENTS)
-                .header(HEADER_CACHE_CONTROL, HEADER_NO_CACHE)
-                .build();
+    private Response sendResponse(String json) {
+        return Response.ok(json).type(MediaType.APPLICATION_JSON).build();
     }
 
     private String serializeToJson(Object obj) {

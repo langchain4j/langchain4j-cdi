@@ -53,7 +53,7 @@ public class McpWildFlyArquillianTest {
                 .loadPomFromFile("pom.xml")
                 .importRuntimeDependencies()
                 .resolve(
-                        "dev.langchain4j.cdi.mcp:langchain4j-cdi-mcp-portable-ext",
+                        "dev.langchain4j.cdi:langchain4j-cdi-mcp-portable-ext",
                         "dev.langchain4j:langchain4j-mcp",
                         "org.assertj:assertj-core",
                         "org.mcpjava:mcp-server-api")

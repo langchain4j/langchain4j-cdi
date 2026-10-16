@@ -58,7 +58,7 @@ class McpLegacyProtocolHandlerErrorTest {
                 .thenThrow(new ClassCastException(
                         "class org.eclipse.parsson.JsonStringImpl cannot be cast to class jakarta.json.JsonNumber"));
 
-        assertThatThrownBy(() -> handler.handle(toolsCall(7), sessionId, false))
+        assertThatThrownBy(() -> handler.handle(toolsCall(7), sessionId))
                 .isInstanceOfSatisfying(McpException.class, e -> {
                     assertThat(e.getErrorCode()).isEqualTo(McpErrorCode.INTERNAL_ERROR);
                     assertThat(e.getMessage()).isEqualTo("Internal error");
@@ -73,7 +73,7 @@ class McpLegacyProtocolHandlerErrorTest {
                 new McpInvalidArgumentException(7, "limit", "expected integer, got string \"5\"");
         when(features.callTool(eq(7), any(), any(), any())).thenThrow(invalid);
 
-        assertThatThrownBy(() -> handler.handle(toolsCall(7), sessionId, false)).isSameAs(invalid);
+        assertThatThrownBy(() -> handler.handle(toolsCall(7), sessionId)).isSameAs(invalid);
     }
 
     private static JsonRpcRequest toolsCall(Object id) {

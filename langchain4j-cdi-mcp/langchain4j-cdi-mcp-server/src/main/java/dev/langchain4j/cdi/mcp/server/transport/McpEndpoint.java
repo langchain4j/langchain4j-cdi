@@ -23,7 +23,10 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
 import jakarta.ws.rs.sse.Sse;
 import jakarta.ws.rs.sse.SseEventSink;
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * JAX-RS resource that implements the MCP Streamable HTTP transport at the {@code /mcp} endpoint. Validates the
@@ -38,6 +41,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Path("/mcp")
 @ApplicationScoped
 public class McpEndpoint {
+
+    private static final Logger LOGGER = Logger.getLogger(McpEndpoint.class.getName());
 
     /** Internal sub-path serving {@code subscriptions/listen} requests routed by {@link McpListenRoutingFilter}. */
     public static final String LISTEN_PATH = "_listen";
@@ -95,7 +100,7 @@ public class McpEndpoint {
             // body before a tools/call is dispatched; the legacy branch below predates SEP-2243 and is untouched
             return toResponse(modern.handle(request, protocol, wantsSse, headers::getHeaderString));
         }
-        return legacy.handle(request, sessionId, wantsSse);
+        return legacy.handle(request, sessionId);
     }
 
     /**
@@ -157,7 +162,13 @@ public class McpEndpoint {
 
     private static Response toResponse(McpReply reply) {
         if (reply.isStream()) {
-            StreamingOutput output = reply.stream()::write;
+            StreamingOutput output = out -> {
+                try {
+                    reply.stream().write(out);
+                } catch (IOException e) {
+                    LOGGER.log(Level.FINE, "MCP: SSE response stream closed by client", e);
+                }
+            };
             return Response.ok(output, MediaType.SERVER_SENT_EVENTS)
                     .header("Cache-Control", "no-cache")
                     .header("X-Accel-Buffering", "no")

@@ -114,11 +114,11 @@
             <artifactId>langchain4j-cdi-telemetry</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j.cdi.mcp</groupId>
+            <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-mcp-server</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j.cdi.mcp</groupId>
+            <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-mcp-portable-ext</artifactId>
         </dependency>
     </dependencies>

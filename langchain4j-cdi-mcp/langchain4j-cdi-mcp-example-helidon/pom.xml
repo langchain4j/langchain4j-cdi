@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>dev.langchain4j.cdi.mcp</groupId>
+        <groupId>dev.langchain4j.cdi</groupId>
         <artifactId>langchain4j-cdi-mcp</artifactId>
         <version>1.4.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
@@ -12,6 +12,8 @@
     <name>Langchain4J CDI: MCP Example Helidon Server</name>
 
     <properties>
+        <maven.deploy.skip>true</maven.deploy.skip>
+        <maven.install.skip>true</maven.install.skip>
         <helidon.version>4.3.4</helidon.version>
         <mainClass>io.helidon.Main</mainClass>
         <maven.compiler.source combine.self="override">21</maven.compiler.source>
@@ -41,7 +43,7 @@
     <dependencies>
         <!-- MCP Server -->
         <dependency>
-            <groupId>dev.langchain4j.cdi.mcp</groupId>
+            <groupId>dev.langchain4j.cdi</groupId>
             <artifactId>langchain4j-cdi-mcp-server</artifactId>
         </dependency>
         <!-- Helidon MicroProfile -->

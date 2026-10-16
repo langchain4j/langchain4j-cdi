@@ -50,7 +50,7 @@ class McpLegacyProtocolHandlerStatusTest {
         String sessionId = sessionManager.createSession(null);
         sessionManager.terminateSession(sessionId);
 
-        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), sessionId, false))
+        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), sessionId))
                 .isInstanceOfSatisfying(
                         McpSessionException.class,
                         e -> assertThat(e.getHttpStatus()).isEqualTo(404));
@@ -58,7 +58,7 @@ class McpLegacyProtocolHandlerStatusTest {
 
     @Test
     void unknownSessionIsNotFound() {
-        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), "bogus-session", false))
+        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), "bogus-session"))
                 .isInstanceOfSatisfying(
                         McpSessionException.class,
                         e -> assertThat(e.getHttpStatus()).isEqualTo(404));
@@ -66,7 +66,7 @@ class McpLegacyProtocolHandlerStatusTest {
 
     @Test
     void missingSessionIsBadRequest() {
-        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), null, false))
+        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), null))
                 .isInstanceOfSatisfying(
                         McpSessionException.class,
                         e -> assertThat(e.getHttpStatus()).isEqualTo(400));
@@ -74,7 +74,7 @@ class McpLegacyProtocolHandlerStatusTest {
 
     @Test
     void sessionErrorCodeStaysSessionNotFound() {
-        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), "bogus-session", false))
+        assertThatThrownBy(() -> handler.handle(request(1, "tools/list"), "bogus-session"))
                 .isInstanceOfSatisfying(
                         McpSessionException.class,
                         e -> assertThat(e.getErrorCode().getCode()).isEqualTo(-32001));
@@ -82,7 +82,7 @@ class McpLegacyProtocolHandlerStatusTest {
 
     @Test
     void idLessInitializeIsRejectedAsInvalidRequest() throws Exception {
-        assertThatThrownBy(() -> handler.handle(request(null, "initialize"), null, false))
+        assertThatThrownBy(() -> handler.handle(request(null, "initialize"), null))
                 .isInstanceOfSatisfying(McpException.class, e -> {
                     assertThat(e.getErrorCode().getCode()).isEqualTo(-32600);
                     assertThat(e.getRequestId()).isNull();

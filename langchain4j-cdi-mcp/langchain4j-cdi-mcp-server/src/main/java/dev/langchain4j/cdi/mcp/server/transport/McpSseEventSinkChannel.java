@@ -84,6 +84,11 @@ public class McpSseEventSinkChannel implements McpSseChannel {
             LOGGER.log(Level.FINE, "MCP: SSE event sink closed by client", failure);
         }
         open = false;
+        try {
+            sink.close();
+        } catch (RuntimeException e) {
+            LOGGER.log(Level.FINE, "MCP: failed to close SSE event sink after send failure", e);
+        }
         if (cancelledFlag != null) {
             cancelledFlag.set(true);
         }
