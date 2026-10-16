@@ -35,10 +35,9 @@ jobs:
           gpg-passphrase-env-var: GPG_PASSPHRASE
       - name: Configure GPG for CI
         run: |
-          echo "allow-loopback-pinentry" >> "$GNUPGHOME/gpg-agent.conf"
-          echo "pinentry-mode loopback" >> "$GNUPGHOME/gpg.conf"
-          gpgconf --kill gpg-agent
-          gpg --batch --passphrase "$GPG_PASSPHRASE" --sign --armor /dev/null || true
+          printf '#!/bin/bash\ngpg --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" "$@"\n' > /tmp/gpg-loopback.sh
+          chmod +x /tmp/gpg-loopback.sh
+          /tmp/gpg-loopback.sh --sign --armor /dev/null || true
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       - name: Configure Git for release
@@ -47,7 +46,7 @@ jobs:
           git config --global user.email 'langchain4j.cdi@gmail.com'
           git config --global commit.gpgsign true
           git config --global user.signingkey ${{ secrets.GPG_SIGNING_KEY_ID }}
-          git config --global gpg.program gpg
+          git config --global gpg.program /tmp/gpg-loopback.sh
       - name: Git environment
         run: |
           git remote -v
