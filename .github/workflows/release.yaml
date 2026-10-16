@@ -17,12 +17,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    environment: release
     steps:
       - name: Git checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Set up JDK 21
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -35,6 +36,8 @@ jobs:
       - run: |
           git config --global user.name 'Langchain4J CDI'
           git config --global user.email 'langchain4j.cdi@gmail.com'
+          git config --global commit.gpgsign true
+          git config --global user.signingkey ${{ secrets.GPG_SIGNING_KEY_ID }}
       - name: Git environment
         run: |
           git remote -v
@@ -50,7 +53,6 @@ jobs:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-
       - name: Push result report
         run: |
           git remote -v
@@ -63,7 +65,7 @@ jobs:
     needs: deploy
     steps:
       - name: Git checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-tags: true
       - name: "Determine tag"
