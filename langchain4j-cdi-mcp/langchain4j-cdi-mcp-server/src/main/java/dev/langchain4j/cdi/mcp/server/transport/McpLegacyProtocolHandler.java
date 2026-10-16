@@ -81,7 +81,6 @@ public class McpLegacyProtocolHandler {
      *
      * @param request the parsed JSON-RPC request
      * @param sessionId the {@code Mcp-Session-Id} header value, or {@code null}
-     * @param wantsSse whether the client accepts {@code text/event-stream} responses
      * @return the JAX-RS response
      */
     public Response handle(JsonRpcRequest request, String sessionId) {
