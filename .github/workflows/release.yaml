@@ -36,8 +36,9 @@ jobs:
       - name: Configure GPG for CI
         run: |
           echo "allow-loopback-pinentry" >> "$GNUPGHOME/gpg-agent.conf"
+          echo "pinentry-mode loopback" >> "$GNUPGHOME/gpg.conf"
           gpgconf --kill gpg-agent
-          gpg --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --sign --armor /dev/null || true
+          gpg --batch --passphrase "$GPG_PASSPHRASE" --sign --armor /dev/null || true
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       - name: Configure Git for release
