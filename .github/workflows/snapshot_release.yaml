@@ -20,14 +20,14 @@ jobs:
           cache: 'maven'
           cache-dependency-path: '**/pom.xml'
           server-id: central # Value of the distributionManagement/repository/id field of the pom.xml
-          server-username: MAVEN_CENTRAL_USERNAME
-          server-password: MAVEN_CENTRAL_PASSWORD
+          server-username-env-var: MAVEN_CENTRAL_USERNAME
+          server-password-env-var: MAVEN_CENTRAL_PASSWORD
       - name: snapshot_release
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         run: |
-          ./mvnw -B -U --fail-at-end \
+          mvn -B -U --fail-at-end \
             -DperformRelease -DskipTests \
             clean deploy
 

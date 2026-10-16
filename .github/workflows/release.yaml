@@ -29,30 +29,41 @@ jobs:
           distribution: 'temurin'
           cache: maven
           server-id: central # Value of the distributionManagement/repository/id field of the pom.xml
-          server-username: MAVEN_CENTRAL_USERNAME
-          server-password: MAVEN_CENTRAL_PASSWORD
+          server-username-env-var: MAVEN_CENTRAL_USERNAME
+          server-password-env-var: MAVEN_CENTRAL_PASSWORD
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
-      - run: |
+          gpg-passphrase-env-var: GPG_PASSPHRASE
+      - name: Configure GPG for CI
+        run: |
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          gpgconf --kill gpg-agent
+          gpg --batch --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --sign --armor /dev/null || true
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      - name: Configure Git for release
+        run: |
           git config --global user.name 'Langchain4J CDI'
           git config --global user.email 'langchain4j.cdi@gmail.com'
           git config --global commit.gpgsign true
           git config --global user.signingkey ${{ secrets.GPG_SIGNING_KEY_ID }}
+          git config --global gpg.program gpg
       - name: Git environment
         run: |
           git remote -v
           git log
       - name: Release Prepare
-        run: ./mvnw --batch-mode release:prepare -e -DreleaseVersion=${{ github.event.inputs.version }} -DdevelopmentVersion=${{ github.event.inputs.nextVersion }}-SNAPSHOT
+        run: mvn --batch-mode release:prepare -e -DreleaseVersion=${{ github.event.inputs.version }} -DdevelopmentVersion=${{ github.event.inputs.nextVersion }}-SNAPSHOT
         env:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_TTY: ""
       - name: Release Perform
         run: |
-          ./mvnw --batch-mode release:perform -P\!unpublished
+          mvn --batch-mode release:perform -P\!unpublished
         env:
           MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GPG_TTY: ""
       - name: Push result report
         run: |
           git remote -v
