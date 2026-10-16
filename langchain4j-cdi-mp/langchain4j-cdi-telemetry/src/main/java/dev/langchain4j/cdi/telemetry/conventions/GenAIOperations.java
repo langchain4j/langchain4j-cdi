@@ -23,6 +23,7 @@ public enum GenAIOperations {
     DECISION(
             "decision",
             "Decision-model inference that answers typed questions about input, such as predicates, choices, or scores."),
+    /** Delete memory records. */
     DELETE_MEMORY("delete_memory", "Delete memory records"),
     /** Delete or deprovision a memory store. */
     DELETE_MEMORY_STORE("delete_memory_store", "Delete or deprovision a memory store"),

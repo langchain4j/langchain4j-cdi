@@ -35,6 +35,9 @@ import java.util.stream.Collectors;
  */
 public abstract class GenAITracingTelemetry {
 
+    /** Creates a new instance. */
+    protected GenAITracingTelemetry() {}
+
     private static final Logger LOGGER = Logger.getLogger(GenAITracingTelemetry.class.getName());
 
     /**
@@ -124,6 +127,12 @@ public abstract class GenAITracingTelemetry {
         }
     }
 
+    /**
+     * Traces optional request attributes (seed, reasoning effort) via reflection.
+     *
+     * @param span the span to populate
+     * @param parameters the chat request parameters
+     */
     protected static void traceFurtherAttributes(final Span span, final ChatRequestParameters parameters) {
         try {
             final Method seedMethod = parameters.getClass().getMethod("seed");
@@ -225,6 +234,11 @@ public abstract class GenAITracingTelemetry {
         span.addEvent(GenAIExceptionAttributes.CLIENT_OPERATION_EXCEPTION_EVENT.toString(), builder.build());
     }
 
+    /**
+     * Closes the given scope if non-null.
+     *
+     * @param scope the scope to close, may be {@code null}
+     */
     protected static void closeScope(Scope scope) {
         if (scope != null) {
             scope.close();

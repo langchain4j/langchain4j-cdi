@@ -13,17 +13,21 @@ package dev.langchain4j.cdi.telemetry.conventions;
  */
 public enum GenAIExceptionAttributes {
 
-    // Exception event name
+    /** Client operation exception event name ({@code gen_ai.client.operation.exception}). */
     CLIENT_OPERATION_EXCEPTION_EVENT("gen_ai.client.operation.exception"),
 
-    // Exception attributes
+    /** Exception message ({@code exception.message}). */
     EXCEPTION_MESSAGE("exception.message"),
+
+    /** Exception type ({@code exception.type}). */
     EXCEPTION_TYPE("exception.type"),
+
+    /** Exception stacktrace ({@code exception.stacktrace}). */
     EXCEPTION_STACKTRACE("exception.stacktrace");
 
     private final String value;
 
-    /** @param value */
+    /** @param value the OpenTelemetry semantic convention attribute key */
     private GenAIExceptionAttributes(String value) {
         this.value = value;
     }

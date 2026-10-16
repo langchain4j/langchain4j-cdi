@@ -30,6 +30,9 @@ import java.util.Map;
 @Dependent
 public class GenAISpanDecisionModelListener extends GenAITracingTelemetry implements DecisionModelListener {
 
+    /** Creates a new instance. */
+    public GenAISpanDecisionModelListener() {}
+
     private static final String OTEL_SCOPE_KEY_NAME = "OTelScope_Decision";
     private static final String OTEL_SPAN_KEY_NAME = "OTelSpan_Decision";
 

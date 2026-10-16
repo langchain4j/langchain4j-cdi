@@ -30,6 +30,9 @@ import java.util.Map;
 @Dependent
 public class GenAISpanEmbeddingModelListener extends GenAITracingTelemetry implements EmbeddingModelListener {
 
+    /** Creates a new instance. */
+    public GenAISpanEmbeddingModelListener() {}
+
     private static final String OTEL_SCOPE_KEY_NAME = "OTelScope_Embedding";
     private static final String OTEL_SPAN_KEY_NAME = "OTelSpan_Embedding";
 

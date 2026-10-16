@@ -13,4 +13,7 @@ updates:
   directory: "/"
   schedule:
     interval: daily
-  open-pull-requests-limit: 10
+  cooldown:
+      default-days: 7      # Quarantine: never a release published the same day   # Checks every week
+  commit-message:
+      prefix: "ci"         # Commit prefix: "ci: ..."

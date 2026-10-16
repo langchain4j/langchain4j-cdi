@@ -27,6 +27,9 @@ import java.util.Map;
 @Dependent
 public class GenAISpanModerationModelListener extends GenAITracingTelemetry implements ModerationModelListener {
 
+    /** Creates a new instance. */
+    public GenAISpanModerationModelListener() {}
+
     private static final String OTEL_SCOPE_KEY_NAME = "OTelScope_Moderation";
     private static final String OTEL_SPAN_KEY_NAME = "OTelSpan_Moderation";
 

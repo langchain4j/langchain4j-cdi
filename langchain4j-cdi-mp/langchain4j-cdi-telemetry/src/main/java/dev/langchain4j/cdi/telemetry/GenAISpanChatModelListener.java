@@ -27,6 +27,9 @@ import java.util.Map;
 @Dependent
 public class GenAISpanChatModelListener extends GenAITracingTelemetry implements ChatModelListener {
 
+    /** Creates a new instance. */
+    public GenAISpanChatModelListener() {}
+
     private static final String OTEL_SCOPE_KEY_NAME = "OTelScope_Chat";
     private static final String OTEL_SPAN_KEY_NAME = "OTelSpan_Chat";
 

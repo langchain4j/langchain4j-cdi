@@ -39,7 +39,7 @@ public class LangChain4JDecisionServiceBean<T> implements Bean<T>, InterceptorBe
     /**
      * Creates a new bean definition for the given AI service interface.
      *
-     * @param decisionServiceInterfaceClass the interface annotated with {@link RegisterDecisionService}
+     * @param aiServiceInterfaceClass the interface annotated with {@link RegisterDecisionService}
      * @param beanManager the CDI bean manager used for interception support
      */
     public LangChain4JDecisionServiceBean(Class<T> aiServiceInterfaceClass, BeanManager beanManager) {

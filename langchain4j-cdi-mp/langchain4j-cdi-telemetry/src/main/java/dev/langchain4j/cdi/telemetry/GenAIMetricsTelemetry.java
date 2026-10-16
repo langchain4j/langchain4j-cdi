@@ -21,9 +21,15 @@ import java.util.logging.Logger;
  */
 public abstract class GenAIMetricsTelemetry {
 
+    /** Creates a new instance. */
+    protected GenAIMetricsTelemetry() {}
+
+    /** Logger for subclasses. */
     protected final Logger LOGGER = Logger.getLogger(this.getClass().getName());
 
+    /** Attribute key for the token type ({@code gen_ai.token.type}). */
     protected static final AttributeKey<String> TOKEN_TYPE = AttributeKey.stringKey("gen_ai.token.type");
+
     private static final String METRIC_CLIENT_TOKEN_USAGE_NAME = "gen_ai.client.token.usage";
 
     private LongHistogram clientTokenUsage;
@@ -50,10 +56,23 @@ public abstract class GenAIMetricsTelemetry {
                 .build();
     }
 
+    /**
+     * Records a client token usage metric.
+     *
+     * @param value the token count
+     * @param attributes the metric attributes
+     */
     protected void recordClientTokenUsageMetrics(final long value, final Attributes attributes) {
         clientTokenUsage.record(value, attributes);
     }
 
+    /**
+     * Records the client operation duration metric.
+     *
+     * @param startTimeNanos the operation start time in nanoseconds
+     * @param endTimeNanos the operation end time in nanoseconds
+     * @param attributes the metric attributes
+     */
     protected void recordClientOperationDurationMetrics(
             final long startTimeNanos, final long endTimeNanos, final Attributes attributes) {
         // Use TimeUnit to get the conversion factor dynamically, then divide using double literals

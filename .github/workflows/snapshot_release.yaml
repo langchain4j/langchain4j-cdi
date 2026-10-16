@@ -3,9 +3,6 @@ name: LangChain4J CDI Snapshot Release
 
 # Only run on pushes to main.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:

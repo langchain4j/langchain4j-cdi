@@ -27,6 +27,9 @@ import jakarta.inject.Inject;
 @Dependent
 public class SpanAgentListener extends GenAITracingTelemetry implements AgentListener {
 
+    /** Creates a new instance. */
+    public SpanAgentListener() {}
+
     @Inject
     private Tracer tracer;
 
