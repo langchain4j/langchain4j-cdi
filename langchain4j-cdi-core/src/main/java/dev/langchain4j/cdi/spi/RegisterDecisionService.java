@@ -38,7 +38,7 @@ public @interface RegisterDecisionService {
     String decisionModelName() default "#default";
 
     /**
-     * CDI bean name of the {@link ThresholdProvider}. Blank means no streaming model is wired.
+     * CDI bean name of the {@link ThresholdProvider}. Blank means no threshold provider of that name is wired.
      *
      * @return the streaming chat model bean name
      */

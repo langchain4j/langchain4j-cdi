@@ -21,6 +21,7 @@ Full documentation is available at **[langchain4j.github.io/langchain4j-cdi](htt
 
 - **AI Service Injection** — declare AI services as CDI beans using `@RegisterAIService`
 - **Agentic Topologies** — 11 per-topology annotations (`@RegisterSimpleAgent`, `@RegisterSequenceAgent`, `@RegisterLoopAgent`, etc.) for multi-agent workflows
+- **Decision Service Injection** — declare decision services as CDI beans using `@RegisterDecisionService`
 - **MCP Server** — expose CDI beans as a Model Context Protocol server
 - **Configuration via Properties** — configure LLM components through MicroProfile Config or a custom SPI
 - **Fault Tolerance** — resilience with `@Retry`, `@Timeout`, `@CircuitBreaker`, `@Fallback`
