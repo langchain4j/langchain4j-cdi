@@ -77,7 +77,7 @@
         <org.mcpjava.version>1.0.0</org.mcpjava.version>
 
         <version.asm>9.7</version.asm>
-        <weld-junit5.version>4.0.5.Final</weld-junit5.version>
+        <weld-junit5.version>4.0.6.Final</weld-junit5.version>
         <version.weld>5.1.7.Final</version.weld>
         <version.org.jboss.logging>3.6.1.Final</version.org.jboss.logging>
 
