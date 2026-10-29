@@ -68,10 +68,10 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.outputTimestamp>2026-10-16T20:19:23Z</project.build.outputTimestamp>
 
-        <dev.langchain4j.version>1.22.0</dev.langchain4j.version>
-        <dev.langchain4j.agentic.version>1.22.0-beta32</dev.langchain4j.agentic.version>
-        <dev.langchain4j.community.version>1.22.0-beta32</dev.langchain4j.community.version>
-        <dev.langchain4j.guardrails.version>1.22.0-beta32</dev.langchain4j.guardrails.version>
+        <dev.langchain4j.version>1.23.0</dev.langchain4j.version>
+        <dev.langchain4j.agentic.version>1.23.0-beta33</dev.langchain4j.agentic.version>
+        <dev.langchain4j.community.version>1.23.0-beta33</dev.langchain4j.community.version>
+        <dev.langchain4j.guardrails.version>1.23.0-beta33</dev.langchain4j.guardrails.version>
         <jakartaee-api.version>10.0.0</jakartaee-api.version>
         <jakarta.enterprise.cdi-api.version>4.0.1</jakarta.enterprise.cdi-api.version>
         <org.mcpjava.version>1.0.0</org.mcpjava.version>
