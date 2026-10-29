@@ -48,7 +48,7 @@ Components can also be created from configuration properties:
 
 ```properties
 # Using TypeSafe AI Jev Decision Model
-dev.langchain4j.cdi.plugin.my-decision-model.class=dev.langchain4j.model.decision.typesafe.TypeSafeDecisionModel
+dev.langchain4j.cdi.plugin.my-decision-model.class=dev.langchain4j.model.typesafe.TypeSafeDecisionModel
 dev.langchain4j.cdi.plugin.my-decision-model.scope=jakarta.enterprise.context.ApplicationScoped
 dev.langchain4j.cdi.plugin.my-decision-model.config.apiKey=$\{TYPESAFE_AI_API_KEY}
 dev.langchain4j.cdi.plugin.my-decision-model.config.modelName=jev-latest
