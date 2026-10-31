@@ -9,6 +9,7 @@ import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
+import dev.langchain4j.cdi.spi.RegisterDecisionAgent;
 import dev.langchain4j.cdi.spi.RegisterDecisionService;
 import dev.langchain4j.cdi.spi.RegisterHumanInTheLoopAgent;
 import dev.langchain4j.cdi.spi.RegisterLoopAgent;
@@ -165,7 +166,8 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
                 RegisterPlannerAgent.class,
                 RegisterA2AAgent.class,
                 RegisterMcpClientAgent.class,
-                RegisterHumanInTheLoopAgent.class
+                RegisterHumanInTheLoopAgent.class,
+                RegisterDecisionAgent.class
             },
             withSubtypes = true)
     @Priority(11)
@@ -246,7 +248,8 @@ public class Langchain4JAIServiceBuildCompatibleExtension implements BuildCompat
                 || classInfo.annotation(RegisterPlannerAgent.class) != null
                 || classInfo.annotation(RegisterA2AAgent.class) != null
                 || classInfo.annotation(RegisterMcpClientAgent.class) != null
-                || classInfo.annotation(RegisterHumanInTheLoopAgent.class) != null;
+                || classInfo.annotation(RegisterHumanInTheLoopAgent.class) != null
+                || classInfo.annotation(RegisterDecisionAgent.class) != null;
     }
 
     private static Class<?> getLoadClass(String className) throws ClassNotFoundException {
