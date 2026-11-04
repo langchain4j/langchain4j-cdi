@@ -169,7 +169,7 @@ public class McpBeanInvoker {
             // container.
             throw mapInvocationException(requestId, method, e);
         } catch (IllegalAccessException e) {
-            throw new McpException(requestId, McpErrorCode.INTERNAL_ERROR, "Invocation failed: " + method.getName());
+            throw new McpException(requestId, McpErrorCode.INTERNAL_ERROR, "Invocation failed: " + method.getName(), e);
         } finally {
             creationalCtx.release();
         }
@@ -210,7 +210,7 @@ public class McpBeanInvoker {
             return mcpException;
         }
         LOGGER.log(Level.WARNING, "MCP: invocation of " + method.getName() + " failed", cause);
-        return new McpException(requestId, McpErrorCode.INTERNAL_ERROR, "Tool execution failed");
+        return new McpException(requestId, McpErrorCode.INTERNAL_ERROR, "Tool execution failed", cause);
     }
 
     /** A single invocation to perform, abstracting over reflective and provider-supplied invokers. */
