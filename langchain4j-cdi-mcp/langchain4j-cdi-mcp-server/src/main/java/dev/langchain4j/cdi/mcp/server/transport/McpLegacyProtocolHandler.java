@@ -79,6 +79,10 @@ public class McpLegacyProtocolHandler {
      * never reaches the Jakarta REST container, whose error page is runtime-specific and may carry internal class
      * names.
      *
+     * <p>The parameters of the request are type-checked before dispatch, by the very method the 2026-07-28 path uses: a
+     * request whose parameters do not have the JSON types the method reads is {@code -32602 Invalid params} on both
+     * eras, instead of failing while the parameter is read and surfacing as {@code -32603 Internal error}.
+     *
      * @param request the parsed JSON-RPC request
      * @param sessionId the {@code Mcp-Session-Id} header value, or {@code null}
      * @return the JAX-RS response
@@ -98,6 +102,11 @@ public class McpLegacyProtocolHandler {
     private Response dispatch(JsonRpcRequest request, String sessionId) {
         Object id = request.getId();
         JsonObject params = request.getParams();
+        // The parameters read below are the ones the 2026-07-28 path reads, so they are checked the same way: a
+        // "tools/call" carrying {"name": 42} is -32602 Invalid params on both eras, instead of failing while the
+        // value is read and being reported as -32603 Internal error on this one.
+        McpModernProtocolHandler.validateParams(
+                id, request.getMethod(), params != null ? params : JsonValue.EMPTY_JSON_OBJECT);
         return switch (request.getMethod()) {
             case "initialize" -> {
                 if (id == null) {
