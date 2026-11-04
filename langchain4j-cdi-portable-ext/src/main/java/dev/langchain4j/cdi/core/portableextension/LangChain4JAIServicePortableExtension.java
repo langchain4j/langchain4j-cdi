@@ -4,6 +4,7 @@ import dev.langchain4j.cdi.agent.AgentAnnotationMeta;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterAIService;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
+import dev.langchain4j.cdi.spi.RegisterDecisionAgent;
 import dev.langchain4j.cdi.spi.RegisterDecisionService;
 import dev.langchain4j.cdi.spi.RegisterHumanInTheLoopAgent;
 import dev.langchain4j.cdi.spi.RegisterLoopAgent;
@@ -101,7 +102,8 @@ public class LangChain4JAIServicePortableExtension implements Extension {
                         RegisterPlannerAgent.class,
                         RegisterA2AAgent.class,
                         RegisterMcpClientAgent.class,
-                        RegisterHumanInTheLoopAgent.class
+                        RegisterHumanInTheLoopAgent.class,
+                        RegisterDecisionAgent.class
                     })
                     ProcessAnnotatedType<T> pat) {
         if (pat.getAnnotatedType().getJavaClass().isInterface()) {

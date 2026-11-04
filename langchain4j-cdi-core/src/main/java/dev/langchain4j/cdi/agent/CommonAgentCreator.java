@@ -3,8 +3,10 @@ package dev.langchain4j.cdi.agent;
 import static dev.langchain4j.cdi.aiservice.CdiLookupHelper.hasText;
 
 import dev.langchain4j.agentic.Agent;
+import dev.langchain4j.agentic.Agent.NoTypedKey;
 import dev.langchain4j.agentic.AgenticServices;
 import dev.langchain4j.agentic.agent.AgentBuilder;
+import dev.langchain4j.agentic.agent.DecisionAgentBuilder;
 import dev.langchain4j.agentic.agent.ErrorContext;
 import dev.langchain4j.agentic.agent.ErrorRecoveryResult;
 import dev.langchain4j.agentic.declarative.PlannerSupplier;
@@ -30,6 +32,7 @@ import dev.langchain4j.agentic.workflow.ParallelMapperService;
 import dev.langchain4j.cdi.aiservice.CdiLookupHelper;
 import dev.langchain4j.cdi.spi.RegisterA2AAgent;
 import dev.langchain4j.cdi.spi.RegisterConditionalAgent;
+import dev.langchain4j.cdi.spi.RegisterDecisionAgent;
 import dev.langchain4j.cdi.spi.RegisterHumanInTheLoopAgent;
 import dev.langchain4j.cdi.spi.RegisterLoopAgent;
 import dev.langchain4j.cdi.spi.RegisterMcpClientAgent;
@@ -45,9 +48,11 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.ChatMemoryProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.decision.DecisionModel;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.decision.ThresholdProvider;
 import dev.langchain4j.service.tool.ToolProvider;
 import jakarta.enterprise.inject.Instance;
 import jakarta.enterprise.inject.literal.NamedLiteral;
@@ -174,6 +179,9 @@ public class CommonAgentCreator {
 
         RegisterHumanInTheLoopAgent hitl = interfaceClass.getAnnotation(RegisterHumanInTheLoopAgent.class);
         if (hitl != null) return createForHumanInTheLoop(lookup, interfaceClass, hitl);
+
+        RegisterDecisionAgent decision = interfaceClass.getAnnotation(RegisterDecisionAgent.class);
+        if (decision != null) return createForDecision(lookup, interfaceClass, decision);
 
         throw new IllegalArgumentException("Interface " + interfaceClass.getName()
                 + " must be annotated with a per-topology stereotype"
@@ -543,6 +551,42 @@ public class CommonAgentCreator {
                     "HUMAN_IN_THE_LOOP agents must be invoked through the agentic system");
         };
         return createAgentProxy(interfaceClass, handler, HumanInTheLoopHolder.class);
+    }
+
+    private static <X> X createForDecision(
+            Instance<Object> lookup, Class<X> interfaceClass, RegisterDecisionAgent ann) {
+        ThresholdProvider thresholdProvider =
+                CdiLookupHelper.resolveSingle(lookup, ThresholdProvider.class, ann.thresholdProviderName());
+        if (!Double.isNaN(ann.threshold()) && thresholdProvider != null) {
+            throw new IllegalArgumentException(
+                    "Only one of threshold and thresholdProvider can be set for the decision agent '" + ann.name()
+                            + "'");
+        }
+
+        DecisionModel decisionModel =
+                CdiLookupHelper.resolveSingle(lookup, DecisionModel.class, ann.decisionModelName());
+        if (decisionModel == null) {
+            throw new IllegalArgumentException(
+                    "A decision model is required for the decision agent '" + ann.name() + "'");
+        }
+
+        DecisionAgentBuilder<X> builder = AgenticServices.decisionAgentBuilder(interfaceClass)
+                .async(ann.async())
+                .decisionModel(decisionModel)
+                .description(ann.description())
+                .name(ann.name())
+                .optional(ann.optional())
+                .outputKey(ann.outputKey());
+        if (thresholdProvider != null) {
+            builder.thresholdProvider(thresholdProvider);
+        } else if (!Double.isNaN(ann.threshold())) {
+            builder.threshold(ann.threshold());
+        }
+        if (ann.typedOutputKey() != NoTypedKey.class) builder.outputKey(ann.typedOutputKey());
+        applyListener(builder::listener, ann.agentListenerName(), lookup);
+        applyDecisionActivationCondition(
+                builder, ann.activationConditionName(), ann.activationConditionDescription(), lookup);
+        return builder.build();
     }
 
     /** Wraps a delegate agent proxy so the result implements {@link AgenticScopeOwner}. */
@@ -991,6 +1035,30 @@ public class CommonAgentCreator {
         }
         if (testAfterEachIteration) {
             loopBuilder.testExitAtLoopEnd(true);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <X> void applyDecisionActivationCondition(
+            DecisionAgentBuilder<X> decisionBuilder,
+            String rawActivationConditionName,
+            String rawActivationConditionDescription,
+            Instance<Object> lookup) {
+        String name = CdiLookupHelper.resolveExpression(rawActivationConditionName);
+        if (!hasText(name)) {
+            return;
+        }
+        Object bean = resolveParameterizedBean(lookup, name, Predicate.class);
+        if (bean == null) {
+            LOGGER.log(Level.WARNING, "Activation condition ''{0}'' is not resolvable as Predicate, skipping", name);
+            return;
+        }
+        String description = CdiLookupHelper.resolveExpression(rawActivationConditionDescription);
+        Predicate<AgenticScope> typed = (Predicate<AgenticScope>) bean;
+        if (hasText(description)) {
+            decisionBuilder.activationCondition(description, typed);
+        } else {
+            decisionBuilder.activationCondition(typed);
         }
     }
 

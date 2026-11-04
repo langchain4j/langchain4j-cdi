@@ -34,6 +34,9 @@ public class AgentPortableExtensionTest {
     MyDummyNamedAgent namedAgentByQualifier;
 
     @Inject
+    MyDecisionAgent myDecisionAgent;
+
+    @Inject
     BeanManager beanManager;
 
     @WeldSetup
@@ -42,9 +45,11 @@ public class AgentPortableExtensionTest {
                     LangChain4JPluginsPortableExtension.class,
                     MyDummyAgent.class,
                     MyDummyNamedAgent.class,
+                    MyDecisionAgent.class,
                     DummyChatModel.class,
                     DummyEmbeddingStore.class,
                     DummyEmbeddingModel.class,
+                    DummyDecisionModel.class,
                     ConfigExtension.class)
             .build();
 
@@ -54,14 +59,18 @@ public class AgentPortableExtensionTest {
                 .contains(MyDummyAgent.class));
         Assertions.assertTrue(LangChain4JAIServicePortableExtension.getDetectedAgentDeclaredInterfaces()
                 .contains(MyDummyNamedAgent.class));
+        Assertions.assertTrue(LangChain4JAIServicePortableExtension.getDetectedAgentDeclaredInterfaces()
+                .contains(MyDecisionAgent.class));
     }
 
     @Test
     void ensureInjectAndScope() {
         Assertions.assertNotNull(myDummyAgent);
         Assertions.assertNotNull(myDummyNamedAgent);
+        Assertions.assertNotNull(myDecisionAgent);
         assertBeanScope(MyDummyAgent.class, ApplicationScoped.class);
         assertBeanScope(MyDummyNamedAgent.class, ApplicationScoped.class);
+        assertBeanScope(MyDecisionAgent.class, ApplicationScoped.class);
     }
 
     @Test
