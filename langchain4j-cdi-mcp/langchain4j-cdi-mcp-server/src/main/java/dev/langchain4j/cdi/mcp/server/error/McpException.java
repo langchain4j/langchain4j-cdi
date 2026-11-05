@@ -23,7 +23,23 @@ public class McpException extends RuntimeException {
      * @param message a human-readable error description
      */
     public McpException(Object requestId, McpErrorCode errorCode, String message) {
-        this(requestId, errorCode, message, 200, null);
+        this(requestId, errorCode, message, 200, null, null);
+    }
+
+    /**
+     * Creates an MCP exception with the given request context and message, chaining the failure that caused it.
+     *
+     * <p>The cause is never sent to the client: the JSON-RPC error carries only the message and {@code data}. Chaining
+     * it keeps the original exception — the one an operator has to see in the server log — reachable from the error
+     * that travels up the call chain.
+     *
+     * @param requestId the JSON-RPC request ID that triggered the error
+     * @param errorCode the MCP error code describing the failure
+     * @param message a human-readable error description
+     * @param cause the failure that led to this error, or {@code null}
+     */
+    public McpException(Object requestId, McpErrorCode errorCode, String message, Throwable cause) {
+        this(requestId, errorCode, message, 200, null, cause);
     }
 
     /**
@@ -36,7 +52,23 @@ public class McpException extends RuntimeException {
      * @param data optional JSON-RPC error {@code data}, or {@code null}
      */
     public McpException(Object requestId, McpErrorCode errorCode, String message, int httpStatus, Object data) {
-        super(message);
+        this(requestId, errorCode, message, httpStatus, data, null);
+    }
+
+    /**
+     * Creates an MCP exception with request context, error code, message, HTTP status, optional error data, and the
+     * failure that caused it.
+     *
+     * @param requestId the JSON-RPC request ID that triggered the error
+     * @param errorCode the MCP error code describing the failure
+     * @param message a human-readable error description
+     * @param httpStatus the HTTP status to use when this error is returned over Streamable HTTP
+     * @param data optional JSON-RPC error {@code data}, or {@code null}
+     * @param cause the failure that led to this error, or {@code null}
+     */
+    public McpException(
+            Object requestId, McpErrorCode errorCode, String message, int httpStatus, Object data, Throwable cause) {
+        super(message, cause);
         this.requestId = requestId;
         this.errorCode = errorCode;
         this.httpStatus = httpStatus;

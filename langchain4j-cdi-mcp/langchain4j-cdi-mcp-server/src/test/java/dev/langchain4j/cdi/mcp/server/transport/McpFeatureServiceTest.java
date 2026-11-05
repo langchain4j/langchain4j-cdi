@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import dev.langchain4j.cdi.mcp.server.api.McpRequestContext;
+import dev.langchain4j.cdi.mcp.server.error.McpErrorCode;
 import dev.langchain4j.cdi.mcp.server.error.McpException;
 import dev.langchain4j.cdi.mcp.server.error.McpInvalidArgumentException;
 import dev.langchain4j.cdi.mcp.server.error.McpToolNotFoundException;
@@ -120,6 +121,26 @@ class McpFeatureServiceTest {
                     assertThat(e.getHttpStatus()).isEqualTo(200);
                     assertThat(e.getMessage())
                             .isEqualTo("Invalid argument 'limit': expected integer, got string \"5\"");
+                });
+    }
+
+    // --- langchain4j-cdi#291: the request id is filled in, the failure behind the error is kept ---
+
+    @Test
+    void theRequestIdIsFilledInWithoutLosingTheCause() {
+        McpToolDescriptor descriptor = mock(McpToolDescriptor.class);
+        when(toolRegistry.findTool("fail")).thenReturn(Optional.of(descriptor));
+        IllegalStateException root = new IllegalStateException("database unreachable");
+        when(toolInvoker.invoke(any(), eq(descriptor), any(), any(), any()))
+                .thenThrow(new McpException(null, McpErrorCode.INTERNAL_ERROR, "Tool execution failed", root));
+        JsonObject params = Json.createObjectBuilder().add("name", "fail").build();
+
+        assertThatThrownBy(() -> service.callTool(7, params, ctx(), null))
+                .isInstanceOfSatisfying(McpException.class, e -> {
+                    assertThat(e.getRequestId()).isEqualTo(7);
+                    assertThat(e.getErrorCode()).isEqualTo(McpErrorCode.INTERNAL_ERROR);
+                    assertThat(e.getMessage()).isEqualTo("Tool execution failed");
+                    assertThat(e.getCause()).isSameAs(root);
                 });
     }
 

@@ -525,11 +525,21 @@ public class McpFeatureService {
                 .build();
     }
 
+    /**
+     * Fills in the request id of an error raised deeper in the call chain — where the id is not known — so that the
+     * client can match the answer to its request. Everything else is carried over unchanged, the cause included: this
+     * is the same failure, not a new one.
+     *
+     * @param requestId the JSON-RPC request id of the request being served
+     * @param e the error raised by the invocation
+     * @return the error to answer, with its request id set
+     */
     private static McpException withRequestId(Object requestId, McpException e) {
         if (e.getRequestId() != null) {
             return e;
         }
-        return new McpException(requestId, e.getErrorCode(), e.getMessage(), e.getHttpStatus(), e.getData());
+        return new McpException(
+                requestId, e.getErrorCode(), e.getMessage(), e.getHttpStatus(), e.getData(), e.getCause());
     }
 
     private static McpCursor nextCursor(McpPagination.Page<?> page) {
