@@ -56,4 +56,32 @@ class McpPaginationTest {
         int offset = McpPagination.decodeOffset(cursor);
         assertThat(offset).isEqualTo(42);
     }
+
+    // --- a cursor is client-controlled text: anything an int can hold can come back from it ---
+
+    @Test
+    void shouldTreatANegativeCursorAsAbsent() {
+        assertThat(McpPagination.decodeOffset(McpPagination.encodeCursor(-1))).isZero();
+    }
+
+    @Test
+    void shouldServeTheFirstPageWhenTheCursorIsNegative() {
+        List<String> items = List.of("a", "b");
+
+        McpPagination.Page<String> page = McpPagination.paginate(items, McpPagination.encodeCursor(-5));
+
+        assertThat(page.items()).containsExactly("a", "b");
+        assertThat(page.nextCursor()).isNull();
+    }
+
+    @Test
+    void shouldNotOverflowOnAnOffsetNearIntegerMaxValue() {
+        List<String> items = List.of("a", "b");
+
+        McpPagination.Page<String> page =
+                McpPagination.paginate(items, McpPagination.encodeCursor(Integer.MAX_VALUE), 2);
+
+        assertThat(page.items()).isEmpty();
+        assertThat(page.nextCursor()).isNull();
+    }
 }
