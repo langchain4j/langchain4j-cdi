@@ -39,6 +39,6 @@ open module dev.langchain4j.cdi.core {
     uses dev.langchain4j.cdi.core.config.spi.LLMConfig;
 
     // SPI implementation contributed to LangChain4j
-    provides dev.langchain4j.service.guardrail.spi.GuardrailServiceBuilderFactory with
-            dev.langchain4j.cdi.guardrail.CdiGuardrailServiceBuilderFactory;
+    provides dev.langchain4j.spi.classloading.ClassInstanceFactory with
+            dev.langchain4j.cdi.guardrail.CdiClassInstanceFactory;
 }
